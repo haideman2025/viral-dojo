@@ -223,12 +223,17 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div id="m5-rule" class="note" style="display:none"></div>
     <div class="row" style="margin:10px 0">
       <div><label>Chọn keyword đi săn (từ kho Trạm 4)</label><select id="m5-kw" multiple size="4" style="height:auto"></select></div>
-      <div style="flex:0 0 auto;display:flex;align-items:flex-end;gap:8px"><button class="btn ghost" id="m5-scrape-btn" onclick="huntViral()">🕷 Săn video viral</button></div>
+      <div style="flex:0 0 auto;display:flex;align-items:flex-end;gap:8px">
+        <button class="btn" id="m5-smart-btn" onclick="huntSmart()">⚡ Tự săn + lọc thông minh</button>
+        <button class="btn ghost" id="m5-scrape-btn" onclick="huntViral()">🕷 Săn (thủ công)</button>
+      </div>
     </div>
+    <p class="mut" id="m5-smart-hint" style="font-size:12px;margin:-2px 0 8px">⚡ 1-click: chấm lại video sẵn có → tự săn thêm tới ≥20 video đạt chuẩn → loại nhiễu, sắp xếp. Bạn chỉ việc xem lại & nộp. (Cần Gemini; săn thêm cần Apify.)</p>
     <p class="mut" id="m5-scrape-msg" style="font-size:12.5px"></p>
     <h3 style="font-size:14px;margin:14px 0 8px">Bảng research <span class="pill">≥20 video · lọc ≥500k view / 35k tim</span></h3>
     <div id="m5-table"></div>
     <button class="btn ghost sm" onclick="addVideo()">+ Thêm video (nhập tay)</button>
+    <button class="btn ghost sm" id="m5-del-rej" onclick="deleteRejected()" style="display:none;margin-left:8px">🗑 Xoá hết video bị loại</button>
     <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn ghost" id="m5-translate" onclick="translateRows()">🌐 Dịch + phân loại bằng AI</button>
       <button class="btn ghost" id="m5-coach" onclick="coach5()">💬 AI hướng dẫn</button>
@@ -935,6 +940,7 @@ function addVideo(v){
     <input class="v-trans" placeholder="bản dịch + nhãn format" value="${esc(v.trans)}" style="flex:2;min-width:150px">
     <button class="del" onclick="this.parentElement.remove()">✕</button>`;
   wrap.appendChild(d);
+  return d;
 }
 function collectM5(){
   return { videos:[...document.querySelectorAll('#m5-table .idea')].map(d=>({
@@ -994,6 +1000,90 @@ function grade5(){
     scoresShape:`{"tieuchi":"Đúng & đủ","diem":n,"max":10},{"tieuchi":"Tỷ lệ thành công cao","diem":n,"max":50},{"tieuchi":"Đầy đủ thông tin","diem":n,"max":10},{"tieuchi":"Bám insight DN","diem":n,"max":10},{"tieuchi":"Khả năng ứng dụng","diem":n,"max":20}`,
     baiText:`Định dạng kênh: ${(S.dna.m1&&S.dna.m1.dinhdang)||'?'} | Số video: ${bai.videos.length}\n`+bai.videos.map((v,i)=>`${i+1}. [${v.keyword}] ${v.view}view/${v.like}tim — ${v.trans||v.caption} (${v.link})`).join('\n'),
     bai, local:()=>gradeLocal5(bai), btn:document.getElementById('m5-grade'), res:document.getElementById('m5-result'), nextId:'m6', nextLabel:'Mở Trạm 6'});
+}
+
+/* ----- Trạm 5: Tự săn + lọc thông minh (1 click) ----- */
+const M5_TARGET=20, M5_MAX_KW=8, M5_FMT_OK=/series|thử nghiệm|thử thách|xếp hạng|chấm điểm/i;
+function countKept(){ return [...document.querySelectorAll('#m5-table .idea')].filter(r=>r.dataset.keep==='1').length; }
+function setRowStatus(row,st){
+  row.dataset.keep=st.keep?'1':'0'; row.dataset.score=st.score||0;
+  let bar=row.querySelector('.v-status');
+  if(!bar){ bar=document.createElement('div'); bar.className='v-status'; bar.style.cssText='flex:1 0 100%;font-size:12px;margin-bottom:4px;order:-1'; row.insertBefore(bar,row.firstChild); }
+  row.style.borderLeft=st.keep?'3px solid var(--ac)':'3px solid var(--red)'; row.style.opacity=st.keep?'1':'0.55';
+  bar.innerHTML=st.keep
+    ? `<span style="color:var(--ac)">✓ ĐẠT CHUẨN</span> · ${st.score}đ tiềm năng · format <b>${st.format||'?'}</b> · liên quan ${st.relevance}/3`
+    : `<span style="color:var(--red)">✗ LOẠI</span> · ${st.reason||'không đạt chuẩn'}`;
+}
+function applyFilterSort(){
+  const wrap=document.getElementById('m5-table'); const rows=[...wrap.querySelectorAll('.idea')];
+  rows.sort((a,b)=>{ const ka=+a.dataset.keep||0, kb=+b.dataset.keep||0; if(ka!==kb) return kb-ka; return (+b.dataset.score||0)-(+a.dataset.score||0); });
+  rows.forEach(r=>wrap.appendChild(r));
+  const rej=rows.filter(r=>r.dataset.keep==='0').length, btn=document.getElementById('m5-del-rej');
+  if(btn){ btn.style.display=rej?'':'none'; btn.textContent=`🗑 Xoá hết video bị loại (${rej})`; }
+}
+function deleteRejected(){ [...document.querySelectorAll('#m5-table .idea')].forEach(r=>{ if(r.dataset.keep==='0') r.remove(); }); applyFilterSort(); }
+async function scoreRowsAI(rows){
+  const todo=(rows||[]).filter(r=>r&&r.dataset.scored!=='1'&&(r.querySelector('.v-cap').value.trim()||r.querySelector('.v-trans').value.trim()));
+  const dd=(S.dna.m1&&S.dna.m1.dinhdang)||'?';
+  for(let s=0;s<todo.length;s+=40){
+    const chunk=todo.slice(s,s+40);
+    const items=chunk.map((r,i)=>`${i+1}. view=${+r.querySelector('.v-view').value||0} like=${+r.querySelector('.v-like').value||0} | ${(r.querySelector('.v-cap').value.trim()||r.querySelector('.v-trans').value.trim()).replace(/\n/g,' ')}`).join('\n');
+    const out=await geminiCall(`Bạn lọc video TikTok cho học viên làm Trạm 5 COREVIRAL (tìm video ĐÃ viral để học công thức nhân bản).
+NGÀNH & THƯƠNG HIỆU HỌC VIÊN:
+${brandContext(2500)}
+Định dạng kênh: ${dd}.
+Với MỖI video, trả: dich (bản dịch tiếng Việt ngắn của caption), nhan (nhãn format, chọn trong [series, thử nghiệm, thử thách, xếp hạng, chấm điểm, review, kể chuyện, khác]), lienquan (độ liên quan ngành hàng 0-3: 0=lạc đề hẳn như chuyện ma/drama cá nhân/tâm linh/không liên quan, 3=đúng ngành), diem (điểm tiềm năng học hỏi 0-100).
+Trả JSON: {"rows":[{"i":1,"dich":"...","nhan":"...","lienquan":2,"diem":70}]}.
+
+${items}`,{json:true,temp:0.2});
+    (out.rows||[]).forEach(o=>{
+      const r=chunk[o.i-1]; if(!r) return;
+      const view=+r.querySelector('.v-view').value||0, like=+r.querySelector('.v-like').value||0;
+      const viral=view>=500000||like>=35000, fmtOk=M5_FMT_OK.test(o.nhan||''), rel=+o.lienquan||0;
+      const keep=viral&&fmtOk&&rel>=2;
+      r.querySelector('.v-trans').value=`${o.dich||''} [${o.nhan||'khác'}]`; r.dataset.scored='1';
+      const reason=[]; if(!viral)reason.push('dưới ngưỡng viral'); if(!fmtOk)reason.push('sai format ('+(o.nhan||'?')+')'); if(rel<2)reason.push('ít liên quan ngành');
+      setRowStatus(r,{keep,score:o.diem||0,relevance:rel,format:o.nhan,reason:reason.join(' · ')});
+    });
+  }
+}
+async function huntSmart(){
+  const msg=document.getElementById('m5-scrape-msg'), btn=document.getElementById('m5-smart-btn'), oldb=btn.innerHTML;
+  if(!S.keys.gemini){ msg.innerHTML='<span style="color:var(--warn)">⚠️ Cần Gemini key — tab ⚡ Kết nối.</span>'; return; }
+  btn.disabled=true; const setp=t=>{ btn.innerHTML='<span class="spin"></span>'+t.slice(0,18); msg.innerHTML=`<span style="color:var(--ac)">${t}</span>`; };
+  try{
+    setp('Đang chấm lại bảng hiện có...');
+    await scoreRowsAI([...document.querySelectorAll('#m5-table .idea')]);
+    applyFilterSort(); let kept=countKept();
+    const token=S.keys.apify;
+    if(kept<M5_TARGET && token){
+      const allKw=[...new Set(((S.dna.m4&&S.dna.m4.cats)||[]).flatMap(c=>c.keywords))];
+      const sel=[...document.getElementById('m5-kw').selectedOptions].map(o=>o.value).filter(v=>v);
+      const order=[...new Set([...sel,...allKw])];
+      const usedLinks=new Set([...document.querySelectorAll('#m5-table .v-link')].map(i=>i.value.trim()).filter(Boolean));
+      let kwTried=0;
+      for(const kw of order){
+        if(kept>=M5_TARGET||kwTried>=M5_MAX_KW) break; kwTried++;
+        setp(`Săn ${kwTried}/${M5_MAX_KW}: "${kw}" · ${kept}/${M5_TARGET} đạt...`);
+        const newRows=[];
+        try{
+          const r=await fetch(`https://api.apify.com/v2/acts/clockworks~tiktok-scraper/run-sync-get-dataset-items?token=${token}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({searchQueries:[kw],resultsPerPage:20,shouldDownloadVideos:false,shouldDownloadCovers:false})});
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          const items=await r.json();
+          (items||[]).forEach(x=>{ const view=x.playCount||0, like=x.diggCount||0, link=x.webVideoUrl||'';
+            if((view>=500000||like>=35000)&&link&&!usedLinks.has(link)){ usedLinks.add(link); newRows.push(addVideo({keyword:kw,link,view,like,caption:(x.text||'').slice(0,140)})); } });
+        }catch(e){ msg.innerHTML=`<span style="color:var(--warn)">⚠️ "${kw}" lỗi cào (${e.message}) — thử keyword khác.</span>`; continue; }
+        if(newRows.length){ await scoreRowsAI(newRows); applyFilterSort(); kept=countKept(); }
+      }
+      const total=document.querySelectorAll('#m5-table .idea').length;
+      msg.innerHTML=`<span style="color:${kept>=M5_TARGET?'var(--ac)':'var(--warn)'}">${kept>=M5_TARGET?'🎉 Đủ rồi!':'⚠️ Mới'} ${kept}/${M5_TARGET} đạt chuẩn sau ${kwTried} keyword · ${total-kept} bị loại (đẩy xuống cuối). Xem lại rồi bấm "🧠 Nộp bài".</span>`;
+    } else {
+      const total=document.querySelectorAll('#m5-table .idea').length;
+      const tail=token?'':' (chưa có Apify token → chỉ lọc bảng sẵn có; thêm token để tự săn).';
+      msg.innerHTML=`<span style="color:${kept>=M5_TARGET?'var(--ac)':'var(--warn)'}">${kept>=M5_TARGET?'🎉':'ℹ️'} ${kept}/${M5_TARGET} đạt chuẩn · ${total-kept} bị loại (đẩy xuống cuối).${tail}</span>`;
+    }
+  }catch(e){ msg.innerHTML=`<span style="color:var(--red)">❌ Lỗi: ${e.message}</span>`; }
+  btn.disabled=false; btn.innerHTML=oldb;
 }
 
 /* ===================== TRẠM 6 — PHÂN TÍCH & NÂNG CẤP ===================== */
