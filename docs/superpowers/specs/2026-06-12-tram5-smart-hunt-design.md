@@ -8,7 +8,22 @@ Người dùng cào rất nhiều video qua Apify nhưng chấm điểm Trạm 5
 ## Mục tiêu
 Một nút **"⚡ Tự săn + lọc thông minh"** làm trọn: chấm lại video sẵn có → tự săn thêm nếu thiếu → loại nhiễu, sắp xếp → người dùng chỉ xem lại & nộp.
 
-## Quyết định đã chốt
+## v2 (2026-06-12, sau khi 65 keyword chỉ ra 7/20)
+Lỗi v1: biến rubric "có trọng số" thành **cổng AND cứng** (bắt buộc đúng 5 format + liên quan≥2) → loại oan video viral tốt. Kiến thức lõi (Module 5) xác nhận "Tỷ lệ thành công cao" là **50đ ưu tiên cộng điểm**, và "Bám insight" là *"liên quan ngành HOẶC ngành có thể liên kết"* (lỏng).
+
+**Chấm theo ĐIỂM CHẤT LƯỢNG 0–100 (bỏ cổng cứng):**
+- Đạt ngưỡng viral: 10 (gate cứng — dưới ngưỡng = loại)
+- Format an toàn: 30 (series/thử nghiệm/thử thách/xếp hạng/chấm điểm) · 18 (review/reaction/so sánh/kể chuyện/tips) · 6 (khác)
+- **🆕 Clone dễ bằng AI: 0–25** (`clone` 0-3 × 25/3) — tiêu chí mới, đúng tinh thần "nhân bản" của COREVIRAL
+- Liên quan ngành (lỏng): 0–15 (`lienquan` 0-3 × 15/3)
+- Khả năng ứng dụng DN: 0–20 (`ungdung` 0-3 × 20/3)
+- **Giữ = viral · lienquan≥1 · tổng ≥ `M5_PASS`(55).** Hằng số tinh chỉnh được.
+
+**🆕 Search video NƯỚC NGOÀI khi định dạng Hình thức/Kết hợp:** `huntSmart` dịch keyword tiếng Việt → cụm tìm kiếm tiếng Anh (1 call Gemini, hướng format challenge/ranking/review/experiment) trước khi cào Apify → ra video clone-able đúng bài (Module 5: "tìm video nước ngoài, tránh trùng, dễ nhân bản"). Định dạng Kiến thức giữ keyword VN/phương Đông.
+
+**🆕 Ưu tiên keyword dạng "hình thức"** (`M5_FMT_KW`: thử thách/xếp hạng/review/so sánh...) quét trước → chạm 20 nhanh hơn, đỡ tốn token/quota.
+
+## (v1 — superseded) Quyết định ban đầu
 - **Chuẩn giữ (khớp rubric):** `(view≥500k HOẶC like≥35k)` VÀ `format ∈ {series, thử nghiệm, thử thách, xếp hạng, chấm điểm}` VÀ `liên quan ngành ≥ 2/3`.
 - **Video trượt:** đánh dấu ✗ + đẩy xuống cuối (mờ + lý do), KHÔNG tự xoá; có nút "🗑 Xoá hết video bị loại (N)" để dọn hàng loạt.
 - **Auto-loop (mục tiêu-driven):** quét **lần lượt CẢ kho keyword Trạm 4**, không lặp lại keyword đã quét (lưu `S.dna._m5kwDone`, persist qua `save()` → lần bấm sau quét tiếp). Dừng khi `kept≥20` HOẶC hết keyword HOẶC Apify lỗi 2 lần liên tiếp (chốt an toàn quota). Chấm AI **sau mỗi keyword** để dừng sớm khi đủ.
