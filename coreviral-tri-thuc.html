@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COREVIRAL — Lộ Trình Tri Thức Xây Kênh TikTok Viral</title>
+<style>
+  :root{
+    --bg:#0a0e14; --bg2:#121826; --card:#161d2e; --card2:#1c2740;
+    --line:#26314d; --txt:#e8edf7; --mut:#9aa7c2; --dim:#6b778f;
+    --acc:#ff4d6d; --acc2:#ffb84d; --grn:#3ddc97; --blu:#4d9fff; --pur:#a06bff;
+    --rad:16px; --sh:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6;font-size:15px}
+  a{color:var(--blu);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+  /* HERO */
+  header{background:radial-gradient(900px 400px at 20% -10%,rgba(255,77,109,.18),transparent),radial-gradient(700px 400px at 90% 0%,rgba(160,107,255,.16),transparent),var(--bg2);border-bottom:1px solid var(--line);padding:46px 0 38px}
+  .badge{display:inline-block;background:linear-gradient(90deg,var(--acc),var(--acc2));color:#1a1208;font-weight:800;font-size:12px;letter-spacing:1.5px;padding:6px 14px;border-radius:20px;text-transform:uppercase}
+  h1{font-size:40px;line-height:1.12;margin:16px 0 10px;font-weight:800;letter-spacing:-.5px}
+  h1 span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{color:var(--mut);font-size:17px;max-width:760px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:30px;padding:8px 15px;font-size:13px;color:var(--mut);display:flex;align-items:center;gap:7px}
+  .chip b{color:var(--txt)}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:50;background:rgba(10,14,20,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;gap:6px;overflow-x:auto;padding:10px 0}
+  .nav-in a{white-space:nowrap;color:var(--mut);font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:10px;border:1px solid transparent}
+  .nav-in a:hover{color:var(--txt);background:var(--card);text-decoration:none;border-color:var(--line)}
+
+  section{padding:46px 0;border-bottom:1px solid var(--line)}
+  .eyebrow{color:var(--acc2);font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+  h2{font-size:28px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px}
+  .lead{color:var(--mut);max-width:780px;margin-bottom:26px;font-size:15.5px}
+
+  /* CONCEPT GRID */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}h1{font-size:30px}}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:20px}
+  .box h3{font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+  .box p{color:var(--mut);font-size:14px}
+  .ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+
+  /* ROADMAP */
+  .road{position:relative;padding-left:0}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);margin-bottom:16px;overflow:hidden;transition:.2s}
+  .step:hover{border-color:#37456b}
+  .step-head{display:flex;align-items:center;gap:16px;padding:18px 22px;cursor:pointer;user-select:none}
+  .step-num{width:46px;height:46px;flex-shrink:0;border-radius:12px;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;color:#0a0e14}
+  .step-meta{flex:1;min-width:0}
+  .step-meta .k{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-weight:700}
+  .step-meta h3{font-size:18px;margin:2px 0}
+  .step-meta .d{color:var(--mut);font-size:13.5px}
+  .step-tog{color:var(--dim);font-size:22px;transition:.25s;flex-shrink:0}
+  .step.open .step-tog{transform:rotate(45deg)}
+  .step-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+  .step.open .step-body{max-height:6000px}
+  .step-inner{padding:4px 22px 24px;border-top:1px solid var(--line)}
+  .lbl{font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--acc2);margin:18px 0 8px}
+  .step-inner ul{list-style:none}
+  .step-inner li{padding:6px 0 6px 24px;position:relative;color:var(--mut);font-size:14.2px}
+  .step-inner li::before{content:'▸';position:absolute;left:4px;color:var(--acc);font-weight:700}
+  .step-inner li b{color:var(--txt)}
+  .callout{background:var(--card2);border-left:3px solid var(--acc2);border-radius:8px;padding:12px 16px;margin:14px 0;font-size:14px;color:var(--mut)}
+  .callout b{color:var(--txt)}
+
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-size:12px;letter-spacing:.5px;text-transform:uppercase;font-weight:700}
+  td .pt{display:inline-block;min-width:42px;text-align:center;background:var(--card2);border:1px solid var(--line);border-radius:7px;padding:2px 8px;font-weight:700;color:var(--acc2)}
+  .tot td{border-top:2px solid var(--line);font-weight:800;color:var(--txt)}
+
+  .pillbar{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+  .pill{font-size:12.5px;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:5px 12px;color:var(--mut)}
+
+  .deliver{display:inline-flex;align-items:center;gap:7px;background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.3);color:var(--grn);border-radius:9px;padding:8px 14px;font-size:13.5px;font-weight:600;margin-top:14px}
+
+  /* CASE STUDIES */
+  .case{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:18px;display:flex;flex-direction:column;gap:6px}
+  .case .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .case .kw{font-weight:700;font-size:15px;color:var(--txt)}
+  .case .views{background:linear-gradient(90deg,var(--acc),var(--acc2));color:#1a1208;font-weight:800;font-size:12px;padding:4px 10px;border-radius:8px;white-space:nowrap}
+  .case .plat{font-size:11.5px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+  .case .desc{color:var(--mut);font-size:13.5px;max-height:120px;overflow:hidden;position:relative;transition:max-height .35s}
+  .case.expand .desc{max-height:1400px}
+  .case .desc.has::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(transparent,var(--card))}
+  .case.expand .desc.has::after{display:none}
+  .case .more{color:var(--blu);font-size:12.5px;cursor:pointer;font-weight:600;margin-top:2px}
+  .case .links{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .case .links a{font-size:12px;background:var(--card2);border:1px solid var(--line);padding:5px 11px;border-radius:8px;color:var(--blu)}
+
+  /* RESOURCE LIBRARY */
+  .filt{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+  .fbtn{background:var(--card);border:1px solid var(--line);color:var(--mut);padding:8px 16px;border-radius:30px;font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s}
+  .fbtn.on{background:linear-gradient(90deg,var(--acc),var(--acc2));color:#1a1208;border-color:transparent}
+  .res{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 17px;display:flex;gap:13px;align-items:flex-start}
+  .res .ic{width:40px;height:40px;font-size:19px;border-radius:10px}
+  .res .info{flex:1;min-width:0}
+  .res .info h4{font-size:14.5px;margin-bottom:2px}
+  .res .info p{font-size:12.5px;color:var(--dim)}
+  .res .info a{font-size:12.5px;word-break:break-all}
+  .tag{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:6px;white-space:nowrap}
+  .t-ai{background:rgba(160,107,255,.15);color:var(--pur)}
+  .t-music{background:rgba(61,220,151,.15);color:var(--grn)}
+  .t-tpl{background:rgba(77,159,255,.15);color:var(--blu)}
+  .t-asset{background:rgba(255,184,77,.15);color:var(--acc2)}
+
+  .note{font-size:12.5px;color:var(--dim);background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:11px 15px;margin-top:16px}
+
+  footer{padding:34px 0;text-align:center;color:var(--dim);font-size:13px}
+  .kbd{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:12px;color:var(--mut)}
+  .hl{color:var(--acc2);font-weight:700}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="badge">★ COREVIRAL FRAMEWORK</span>
+    <h1>Lộ Trình Tri Thức<br><span>Xây Kênh TikTok Viral cho E-commerce</span></h1>
+    <p class="sub">Toàn bộ kiến thức trong bộ tài liệu COREVIRAL được phân tích, phân loại và sắp xếp thành một lộ trình 6 bước — để người mới học và thực hành dễ dàng, chi tiết. Kèm thư viện link, case study đã dịch, rubric chấm điểm và bộ công cụ AI.</p>
+    <div class="meta-row">
+      <span class="chip">📚 <b>6 module</b> học tuần tự</span>
+      <span class="chip">🎯 <b>5 rubric</b> chấm điểm 100đ</span>
+      <span class="chip">🎬 <b>13 case study</b> đã dịch</span>
+      <span class="chip">🛠 <b>20+ công cụ</b> &amp; mẫu</span>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="wrap"><div class="nav-in">
+    <a href="#tongquan">Tổng quan</a>
+    <a href="#khainiem">Khái niệm gốc</a>
+    <a href="#lotrinh">Lộ trình 6 bước</a>
+    <a href="#case">Case study đã dịch</a>
+    <a href="#toolkit">Bộ công cụ AI</a>
+    <a href="#thuvien">Thư viện link</a>
+    <a href="#thuchanh">Cách thực hành</a>
+  </div></div>
+</nav>
+
+<!-- TỔNG QUAN -->
+<section id="tongquan">
+  <div class="wrap">
+    <div class="eyebrow">Bắt đầu từ đây</div>
+    <h2>COREVIRAL là gì &amp; bạn sẽ học được gì?</h2>
+    <p class="lead">COREVIRAL là một quy trình xây kênh TikTok bán hàng cho doanh nghiệp e-commerce. Triết lý cốt lõi: <span class="hl">không sáng tạo từ con số 0</span>. Thay vào đó, bạn <b>"mượn" công thức viral đã được thị trường chứng minh</b> (chủ yếu từ video nước ngoài — TikTok/Douyin), dịch &amp; phân tích điểm thành công, rồi <b>nâng cấp và ghép insight sản phẩm của mình</b> vào để ra nội dung có tỷ lệ viral cao.</p>
+
+    <div class="grid g3">
+      <div class="box"><h3><span class="ic" style="background:rgba(255,77,109,.15);color:var(--acc)">🧭</span>Tư duy 2 lớp</h3><p><b style="color:var(--txt)">Chủ đề × Cách thể hiện.</b> Mọi nội dung viral đều là sự kết hợp của một <i>chủ đề</i> (nói về cái gì) và một <i>cách thể hiện</i> (thử thách, reaction, review, tips, kể chuyện…). Nắm 2 trục này là nắm cả "ma trận" ý tưởng.</p></div>
+      <div class="box"><h3><span class="ic" style="background:rgba(160,107,255,.15);color:var(--pur)">🔁</span>Series là vũ khí</h3><p>Nội dung viral bền vững đi theo <b style="color:var(--txt)">series</b> (cùng format lặp lại). Khán giả nhớ format → quay lại → kênh lên đều. Module 2 dạy bạn "đọc vị" series của người khác.</p></div>
+      <div class="box"><h3><span class="ic" style="background:rgba(61,220,151,.15);color:var(--grn)">💰</span>Viral phải ra đơn</h3><p>Viral không phải để vui. Mỗi tuyến nội dung phải gắn với <b style="color:var(--txt)">Insight Sale</b> (Nỗi đau → Rào cản → Mong đợi → Tự hào → Thúc đẩy) và <b>Keyword Brand</b> để chuyển view thành khách.</p></div>
+    </div>
+
+    <div class="callout" style="margin-top:18px">📌 <b>Bản đồ tổng:</b> Bộ tài liệu gốc gồm 2 phần — (1) <b>6 bài tập nền tảng</b> (Module 1→6, mỗi bài có mẫu mẫu + rubric) và (2) <b>File triển khai xây kênh</b> (9 bước SKULD: Phân tích tổng quan → Chi tiết → Liên kết ý tưởng → Phân cấp → Plan Master → Kế hoạch triển khai → Khung kịch bản → Kế hoạch nội dung tháng → Kịch bản). Lộ trình dưới đây tập trung vào 6 module nền tảng — phần cốt lõi để người mới thành thạo.</div>
+  </div>
+</section>
+
+<!-- KHÁI NIỆM GỐC -->
+<section id="khainiem">
+  <div class="wrap">
+    <div class="eyebrow">Từ điển nhanh</div>
+    <h2>5 khái niệm phải thuộc trước khi làm</h2>
+    <p class="lead">Đây là "ngôn ngữ chung" xuyên suốt cả 6 module. Đọc kỹ phần này, các bài tập sau sẽ dễ hiểu hơn rất nhiều.</p>
+    <div class="grid g2">
+      <div class="box"><h3>① Chiến lược kênh</h3><p>Cách kênh gắn với thương hiệu: <span class="pill" style="display:inline-block">Thương hiệu</span> (lộ mặt brand) · <span class="pill" style="display:inline-block">Ẩn thương hiệu</span> (kênh giải trí, cài brand khéo) · <span class="pill" style="display:inline-block">Nhân hiệu</span> (xây người, người bán hàng).</p></div>
+      <div class="box"><h3>② Định dạng kênh</h3><p><span class="pill" style="display:inline-block">Kiến thức</span> (dạy/chia sẻ) · <span class="pill" style="display:inline-block">Hình thức</span> (giải trí, thử thách, hình ảnh) · <span class="pill" style="display:inline-block">Kết hợp</span>. Định dạng quyết định bạn đi "research" video ở đâu (xem Module 5).</p></div>
+      <div class="box"><h3>③ Keyword Brand</h3><p>3–4 thông điệp cốt lõi mà thương hiệu muốn khán giả nhớ (VD: <i>Thoải mái · Thanh lịch · Chân thật · Ứng dụng cao</i>). Mỗi keyword sẽ đẻ ra một tuyến nội dung.</p></div>
+      <div class="box"><h3>④ Insight Sale (5 tầng)</h3><p>Tâm lý mua hàng: <b style="color:var(--txt)">Nỗi đau → Rào cản → Mong đợi → Tự hào → Thúc đẩy.</b> Mỗi tầng là một "góc" để viết content bán hàng đúng tâm lý khách.</p></div>
+      <div class="box" style="grid-column:1/-1"><h3>⑤ Bộ từ khóa (Keyword Set)</h3><p>Hệ thống từ khóa gom từ 8 danh mục: <b style="color:var(--txt)">Sản phẩm/Dịch vụ · Phân khúc giá · Nhóm sở thích · Ngành hàng · Nghề nghiệp · Nhóm nhu cầu · Mục đích sử dụng cuối · Hình thức thể hiện.</b> Đây là "đạn" để đi tìm video viral (Module 5). Mục tiêu ≥ 30 keyword tổng hợp.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- LỘ TRÌNH 6 BƯỚC -->
+<section id="lotrinh">
+  <div class="wrap">
+    <div class="eyebrow">Con đường chính</div>
+    <h2>Lộ trình 6 bước — học &amp; thực hành</h2>
+    <p class="lead">Mỗi bước = 1 module gốc, có mục tiêu, việc cần làm, rubric chấm điểm 100đ và sản phẩm nộp. Bấm vào từng bước để mở chi tiết. Học tuần tự, output của bước trước là input của bước sau.</p>
+
+    <div class="road">
+
+      <!-- STEP 1 -->
+      <div class="step open">
+        <div class="step-head">
+          <div class="step-num" style="background:linear-gradient(135deg,#ff4d6d,#ff8a4d)">1</div>
+          <div class="step-meta"><div class="k">Module 1 · Nền móng</div><h3>Xác định Chiến lược &amp; Định dạng kênh</h3><div class="d">Chốt định hướng kênh + dựng ma trận Chủ đề × Cách thể hiện</div></div>
+          <div class="step-tog">+</div>
+        </div>
+        <div class="step-body"><div class="step-inner">
+          <div class="lbl">🎯 Mục tiêu</div>
+          <ul>
+            <li>Chọn <b>1 chiến lược kênh</b> (Thương hiệu / Ẩn thương hiệu / Nhân hiệu) phù hợp doanh nghiệp.</li>
+            <li>Chọn <b>1 định dạng kênh</b> (Kiến thức / Hình thức / Kết hợp).</li>
+            <li>Dựng ma trận ý tưởng: 1 Chủ đề → nhiều Cách thể hiện → nhiều Ý tưởng chi tiết.</li>
+          </ul>
+          <div class="lbl">✍️ Việc cần làm</div>
+          <ul>
+            <li><b>Chủ đề:</b> chọn 1 chủ đề chính bám định hướng (VD: Thời trang &amp; làm đẹp, Công nghệ chuột bàn phím…).</li>
+            <li><b>Cách thể hiện:</b> ≥ <b>5 cách</b> khác nhau cho cùng 1 chủ đề (thử thách, reaction, tips, so sánh, review, tình huống, đồng cảm…).</li>
+            <li><b>Ý tưởng chi tiết:</b> ≥ <b>3 ý tưởng</b> cụ thể cho mỗi cách thể hiện (đặt tiêu đề/mô tả rõ).</li>
+          </ul>
+          <div class="callout"><b>Ví dụ mẫu (ngành chuột máy tính):</b> Chủ đề <i>"Công nghệ chuột bàn phím"</i> × Cách thể hiện <i>"Thử thách"</i> → ý tưởng <i>"Chạy deadline với chuột chống ồn buổi trưa văn phòng"</i>, <i>"Cuộc thi ai bấm nhanh nhất trong 30 giây"</i>. Cùng chủ đề × <i>"Review"</i> → <i>"1 ngày mang chuột đi: sáng lên trường, chiều công ty, tối quán net, khuya cày deadline → lộ USP từng tình huống"</i>.</div>
+          <div class="lbl">📊 Rubric chấm (100đ)</div>
+          <table>
+            <tr><th>Tiêu chí</th><th>Mô tả</th><th>Điểm</th></tr>
+            <tr><td>Đầy đủ cấu trúc</td><td>Đủ 5 mục: chiến lược · định dạng · chủ đề · cách thể hiện · ý tưởng</td><td><span class="pt">20</span></td></tr>
+            <tr><td>Sáng tạo</td><td>Ý tưởng mới, khác biệt, không chung chung</td><td><span class="pt">20</span></td></tr>
+            <tr><td>Tính thực tiễn</td><td>Khả thi, quay được thành video ngay</td><td><span class="pt">30</span></td></tr>
+            <tr><td>Số lượng</td><td>≥ 5 cách thể hiện · ≥ 3 ý tưởng/cách</td><td><span class="pt">10</span></td></tr>
+            <tr><td>Đa dạng &amp; logic</td><td>Nhiều cách thể hiện, không lặp lại</td><td><span class="pt">20</span></td></tr>
+            <tr class="tot"><td>Tổng</td><td></td><td><span class="pt">100</span></td></tr>
+          </table>
+          <div class="deliver">✅ Sản phẩm nộp: Bảng ma trận điền theo mẫu (Lark/Google Sheet)</div>
+        </div></div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step">
+        <div class="step-head">
+          <div class="step-num" style="background:linear-gradient(135deg,#a06bff,#4d9fff)">2</div>
+          <div class="step-meta"><div class="k">Module 2 · Đọc vị</div><h3>Phân biệt Series</h3><div class="d">Tập "soi" format viral của các kênh có sẵn</div></div>
+          <div class="step-tog">+</div>
+        </div>
+        <div class="step-body"><div class="step-inner">
+          <div class="lbl">🎯 Mục tiêu</div>
+          <ul><li>Rèn khả năng nhận diện đâu là <b>series</b> (chuỗi video cùng format) trong một kênh — thay vì video lẻ.</li><li>Tách được mỗi series thành <b>Chủ đề + Cách thể hiện</b> (nối tiếp tư duy Module 1).</li></ul>
+          <div class="lbl">✍️ Việc cần làm</div>
+          <ul>
+            <li>Vào 4 kênh mẫu, mỗi kênh tìm <b>≥ 3 series</b>.</li>
+            <li>Với mỗi series điền: <b>Link video · Chủ đề · Cách thể hiện</b>.</li>
+          </ul>
+          <div class="callout"><b>4 kênh mẫu để luyện (mở trực tiếp):</b><div class="pillbar" style="margin-top:8px">
+            <a class="pill" href="https://www.tiktok.com/@maxklymenko" target="_blank">@maxklymenko</a>
+            <a class="pill" href="https://www.tiktok.com/@tussalty?lang=vi-VN" target="_blank">@tussalty</a>
+            <a class="pill" href="https://www.tiktok.com/@bradyyourtutor" target="_blank">@bradyyourtutor</a>
+            <a class="pill" href="https://www.tiktok.com/@davidcohen" target="_blank">@davidcohen</a>
+          </div></div>
+          <div class="lbl">💡 Ví dụ series đã bóc</div>
+          <ul>
+            <li><b>@maxklymenko:</b> "Phỏng vấn sự nghiệp người lạ" (bắc thang lên phỏng vấn / phỏng vấn đường phố); "Review chấm điểm các nước trên 10 hạng mục".</li>
+            <li><b>@tussalty:</b> "Hành trình mua xe" (review → ra quyết định); "Mỗi ngày 1 đôi giày chơi bóng rổ → cảm nhận".</li>
+            <li><b>@davidcohen:</b> "Chấm điểm món ăn" (quay trực diện lúc ăn, cuối có điểm); "Chia sẻ kiến thức răng miệng trong đồng phục y khoa".</li>
+            <li><b>@bradyyourtutor:</b> "Đoán tên người nổi tiếng — 2 người thi đấu trả lời câu hỏi".</li>
+          </ul>
+          <div class="lbl">📊 Rubric chấm (100đ)</div>
+          <table>
+            <tr><th>Tiêu chí</th><th>Mô tả</th><th>Điểm</th></tr>
+            <tr><td>Đầy đủ cấu trúc</td><td>Đủ Link · Chủ đề · Cách thể hiện</td><td><span class="pt">20</span></td></tr>
+            <tr><td>Đúng series</td><td>Tìm đúng nội dung thật sự là series</td><td><span class="pt">50</span></td></tr>
+            <tr><td>Số lượng</td><td>Đủ ≥ 3 series/kênh</td><td><span class="pt">30</span></td></tr>
+            <tr class="tot"><td>Tổng</td><td></td><td><span class="pt">100</span></td></tr>
+          </table>
+          <div class="deliver">✅ Sản phẩm nộp: Bảng series (link + chủ đề + cách thể hiện) theo mẫu</div>
+        </div></div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step">
+        <div class="step-head">
+          <div class="step-num" style="background:linear-gradient(135deg,#3ddc97,#4d9fff)">3</div>
+          <div class="step-meta"><div class="k">Module 3 · Linh hồn thương hiệu</div><h3>Keyword Brand &amp; Insight Sale</h3><div class="d">Chốt thông điệp cốt lõi + tâm lý mua hàng + dấu ấn riêng</div></div>
+          <div class="step-tog">+</div>
+        </div>
+        <div class="step-body"><div class="step-inner">
+          <div class="lbl">🎯 Mục tiêu</div>
+          <ul><li>Xác định <b>thông điệp cốt lõi</b> (Keyword Brand) kênh muốn khán giả nhớ.</li><li>Lập bản đồ <b>Insight Sale 5 tầng</b> đúng tâm lý khách của ngành hàng.</li><li>Tìm <b>dấu ấn riêng (signature)</b> cho kênh.</li></ul>
+          <div class="lbl">✍️ Việc cần làm</div>
+          <ul>
+            <li><b>Keyword Brand:</b> ≥ 3 keyword ngắn gọn, dễ nhớ (VD: <i>Nâng tầm · Đáng tiền · Thiết kế · Dịch vụ</i>).</li>
+            <li><b>Tuyến nội dung chứng minh:</b> ≥ 5 ý tưởng cụ thể cho mỗi thông điệp (VD keyword "Đáng tiền" → <i>test pin trâu dạng nhật ký 1/2/7 ngày, so sánh trước–sau khi đổi chuột công thái học, POV tốc độ phản hồi</i>).</li>
+            <li><b>Insight Sale:</b> điền đủ 5 tầng cho ngành hàng.</li>
+            <li><b>Dấu ấn riêng:</b> phong cách quay, cách nói, màu sắc, nhạc nền, tagline…</li>
+          </ul>
+          <div class="callout"><b>Insight Sale 5 tầng (khung điền):</b>
+            <table style="margin-top:6px"><tr><th>Tầng</th><th>Câu hỏi cốt lõi</th></tr>
+            <tr><td><b>1. Nỗi đau</b></td><td>Khách đang khổ vì điều gì với sản phẩm/ngành này?</td></tr>
+            <tr><td><b>2. Rào cản</b></td><td>Điều gì khiến họ chần chừ chưa mua?</td></tr>
+            <tr><td><b>3. Mong đợi</b></td><td>Họ thật sự muốn đạt được gì?</td></tr>
+            <tr><td><b>4. Tự hào</b></td><td>Mua xong họ tự hào/được khen điều gì?</td></tr>
+            <tr><td><b>5. Thúc đẩy</b></td><td>Yếu tố nào khiến họ quyết định NGAY (deal, FOMO, quà…)?</td></tr></table>
+          </div>
+          <div class="lbl">📊 Rubric chấm (100đ)</div>
+          <table>
+            <tr><th>Tiêu chí</th><th>Mô tả</th><th>Điểm</th></tr>
+            <tr><td>Thông điệp cốt lõi</td><td>≥ 3 keyword brand + ≥ 3 keyword insight sale</td><td><span class="pt">40</span></td></tr>
+            <tr><td>Ý tưởng chứng minh</td><td>≥ 5 ý tưởng cụ thể cho mỗi insight</td><td><span class="pt">25</span></td></tr>
+            <tr><td>Dấu ấn riêng</td><td>Đề xuất điểm khác biệt làm signature</td><td><span class="pt">5</span></td></tr>
+            <tr><td>Logic &amp; bám chiến lược</td><td>Thông điệp–ý tưởng–dấu ấn thống nhất, hợp ngành</td><td><span class="pt">30</span></td></tr>
+            <tr class="tot"><td>Tổng</td><td></td><td><span class="pt">100</span></td></tr>
+          </table>
+          <div class="deliver">✅ Sản phẩm nộp: Bảng Keyword Brand + Insight Sale + Signature</div>
+        </div></div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step">
+        <div class="step-head">
+          <div class="step-num" style="background:linear-gradient(135deg,#ffb84d,#ff4d6d)">4</div>
+          <div class="step-meta"><div class="k">Module 4 · Kho đạn</div><h3>Xây dựng Bộ từ khóa</h3><div class="d">Gom ≥ 30 keyword từ 8 danh mục để đi research</div></div>
+          <div class="step-tog">+</div>
+        </div>
+        <div class="step-body"><div class="step-inner">
+          <div class="lbl">🎯 Mục tiêu</div>
+          <ul><li>Tạo "kho đạn" từ khóa đa chiều để bước 5 dùng đi tìm video viral.</li></ul>
+          <div class="lbl">✍️ 8 danh mục cần điền (mỗi danh mục ≥ 5 keyword)</div>
+          <table>
+            <tr><th>#</th><th>Danh mục</th><th>Gợi ý</th></tr>
+            <tr><td>1</td><td><b>Sản phẩm / Dịch vụ</b></td><td>Chính sản phẩm bạn bán</td></tr>
+            <tr><td>2</td><td><b>Phân khúc giá</b></td><td>Bình dân · Trung cấp · Cao cấp</td></tr>
+            <tr><td>3</td><td><b>Nhóm sở thích</b></td><td>Sở thích của khách tiềm năng</td></tr>
+            <tr><td>4</td><td><b>Ngành hàng</b></td><td>Ngành của bạn + ngành liên quan khai thác được</td></tr>
+            <tr><td>5</td><td><b>Nghề nghiệp</b></td><td>Nghề của khách (sinh viên, dân VP, nội trợ…)</td></tr>
+            <tr><td>6</td><td><b>Nhóm nhu cầu</b></td><td>Mặc đẹp, tiết kiệm, thoải mái, an toàn…</td></tr>
+            <tr><td>7</td><td><b>Mục đích sử dụng cuối</b></td><td>Mặc, tặng, chăm sóc, giải trí…</td></tr>
+            <tr><td>8</td><td><b>Hình thức thể hiện</b></td><td>Tip, so sánh, review, thử thách, phỏng vấn, kể chuyện…</td></tr>
+          </table>
+          <div class="callout"><b>Mục tiêu số lượng:</b> mỗi danh mục ≥ 5 keyword, và cột <b>"Tổng hợp toàn bộ"</b> gom được <b>≥ 30 từ khóa</b>. Đây là danh sách bạn sẽ gõ vào ô tìm kiếm TikTok/Douyin ở bước 5.</div>
+          <div class="lbl">📊 Rubric chấm (100đ)</div>
+          <table>
+            <tr><th>Tiêu chí</th><th>Mô tả</th><th>Điểm</th></tr>
+            <tr><td>Đủ danh mục</td><td>Điền đủ 8–9 danh mục, không bỏ trống</td><td><span class="pt">20</span></td></tr>
+            <tr><td>Đủ số lượng</td><td>Mỗi danh mục ≥ 5 · tổng ≥ 30 keyword</td><td><span class="pt">20</span></td></tr>
+            <tr><td>Sát insight khách</td><td>Keyword phản ánh đúng nhu cầu/hành vi/tâm lý</td><td><span class="pt">30</span></td></tr>
+            <tr><td>Khả năng triển khai</td><td>Dễ chuyển thành chủ đề/bài/video cụ thể</td><td><span class="pt">30</span></td></tr>
+            <tr class="tot"><td>Tổng</td><td></td><td><span class="pt">100</span></td></tr>
+          </table>
+          <div class="deliver">✅ Sản phẩm nộp: Bảng 8 danh mục + cột tổng hợp ≥ 30 keyword</div>
+        </div></div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step">
+        <div class="step-head">
+          <div class="step-num" style="background:linear-gradient(135deg,#4d9fff,#a06bff)">5</div>
+          <div class="step-meta"><div class="k">Module 5 · Săn vàng</div><h3>Research nội dung viral</h3><div class="d">Tìm ≥ 20 video viral + dịch + ghi số liệu</div></div>
+          <div class="step-tog">+</div>
+        </div>
+        <div class="step-body"><div class="step-inner">
+          <div class="lbl">🎯 Mục tiêu</div>
+          <ul><li>Dùng bộ từ khóa (bước 4) đi tìm các video <b>đã viral</b> để học công thức.</li></ul>
+          <div class="lbl">✍️ Luật research</div>
+          <ul>
+            <li>Chọn keyword có tỷ lệ thành công cao từ bộ keyword.</li>
+            <li><b>Nếu định dạng Hình thức / Kết hợp</b> → tìm <b>video NƯỚC NGOÀI</b> (không lấy video VN — tránh trùng, dễ "nhân bản").</li>
+            <li><b>Nếu định dạng Kiến thức (Hình thức)</b> → tìm tại các nước phương Đông hoặc Việt Nam.</li>
+            <li>Ngưỡng viral: <b>≥ 500.000 view</b> / <b>≥ 35.000 tim</b> / hoặc nằm trong <b>Top 20 tìm kiếm</b>.</li>
+            <li>Ghi đủ: <b>keyword · link kênh · link video · view/tim · bản dịch</b> (nếu có voice-off/subtext).</li>
+            <li>Số lượng: <b>≥ 20 video</b>.</li>
+          </ul>
+          <div class="callout">⭐ <b>Ưu tiên điểm cao (50/100):</b> nội dung dạng <b>series</b> và thuộc chủ đề nhiều người quan tâm — <b>Thử nghiệm / Thử thách / Xếp hạng / Chấm điểm</b>. Đây là các format "an toàn để viral".</div>
+          <div class="lbl">📊 Rubric chấm (100đ)</div>
+          <table>
+            <tr><th>Tiêu chí</th><th>Mô tả</th><th>Điểm</th></tr>
+            <tr><td>Đúng &amp; đủ số lượng</td><td>Đúng nguồn (nước ngoài/phương Đông) · ≥ 500k view / 35k tim · 20 video</td><td><span class="pt">10</span></td></tr>
+            <tr><td>Tỷ lệ thành công cao</td><td>Dạng series · chủ đề Thử nghiệm/Thử thách/Xếp hạng/Chấm điểm</td><td><span class="pt">50</span></td></tr>
+            <tr><td>Đầy đủ thông tin</td><td>Có keyword, link, view/Top, phân tích nếu có thoại</td><td><span class="pt">10</span></td></tr>
+            <tr><td>Bám insight doanh nghiệp</td><td>Liên quan ngành hàng hoặc ngành có thể liên kết</td><td><span class="pt">10</span></td></tr>
+            <tr><td>Khả năng ứng dụng</td><td>Triển khai được cho doanh nghiệp</td><td><span class="pt">20</span></td></tr>
+            <tr class="tot"><td>Tổng</td><td></td><td><span class="pt">100</span></td></tr>
+          </table>
+          <div class="deliver">✅ Sản phẩm nộp: Bảng ≥ 20 video (keyword · link · view/tim · bản dịch) — xem <a href="#case">13 case study mẫu đã dịch ↓</a></div>
+        </div></div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="step">
+        <div class="step-head">
+          <div class="step-num" style="background:linear-gradient(135deg,#ff4d6d,#a06bff)">6</div>
+          <div class="step-meta"><div class="k">Module 6 · Biến hóa</div><h3>Phân tích &amp; Liên kết (nâng cấp)</h3><div class="d">Bóc điểm viral → nâng cấp thành ý tưởng cho kênh mình</div></div>
+          <div class="step-tog">+</div>
+        </div>
+        <div class="step-body"><div class="step-inner">
+          <div class="lbl">🎯 Mục tiêu</div>
+          <ul><li>Từ video viral đã tìm → <b>tìm ra ĐÚNG điểm làm nên thành công</b> → <b>nâng cấp thành ý tưởng riêng</b> ghép insight doanh nghiệp.</li></ul>
+          <div class="lbl">✍️ Việc cần làm</div>
+          <ul>
+            <li>Chọn video có số liệu tốt nhất để phân tích chi tiết.</li>
+            <li>Phân tích theo <b>timestamp</b> (kèm bản dịch nếu là video nước ngoài).</li>
+            <li>Xác định insight: <b>Chủ đề + Cách thể hiện</b>.</li>
+            <li>Trả lời 2 câu: <b>"Đâu là điểm làm nên thành công?"</b> và <b>"Mình sẽ áp dụng điểm nào cho kênh?"</b></li>
+            <li>Số lượng: <b>≥ 5 video</b> phân tích đầy đủ; nâng cấp lên ≥ 1 ý tưởng cho doanh nghiệp.</li>
+          </ul>
+          <div class="callout"><b>Đây là bước "ăn tiền".</b> Module 5 cho bạn nguyên liệu thô; Module 6 biến nó thành công thức của riêng bạn. Cũng là cổng nối sang <b>File triển khai 9 bước SKULD</b> (Phân tích tổng quan → … → Kịch bản) để lên kế hoạch nội dung tháng.</div>
+          <div class="lbl">📊 Rubric chấm (100đ)</div>
+          <table>
+            <tr><th>Tiêu chí</th><th>Mô tả</th><th>Điểm</th></tr>
+            <tr><td>Đủ số lượng</td><td>≥ 2 video viral được phân tích</td><td><span class="pt">20</span></td></tr>
+            <tr><td>Đúng điểm thành công</td><td>Chỉ ra yếu tố viral chính xác, không chung chung</td><td><span class="pt">30</span></td></tr>
+            <tr><td>Nâng cấp ý tưởng</td><td>Nâng lên ≥ 1 ý tưởng cho doanh nghiệp</td><td><span class="pt">20</span></td></tr>
+            <tr><td>Áp dụng vào DN</td><td>Chọn điểm học hỏi phù hợp kênh</td><td><span class="pt">30</span></td></tr>
+            <tr class="tot"><td>Tổng</td><td></td><td><span class="pt">100</span></td></tr>
+          </table>
+          <div class="deliver">✅ Sản phẩm nộp: Bảng phân tích chi tiết + ý tưởng nâng cấp cho kênh</div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CASE STUDY -->
+<section id="case">
+  <div class="wrap">
+    <div class="eyebrow">Học từ video thật</div>
+    <h2>13 Case study viral đã dịch sẵn</h2>
+    <p class="lead">Toàn bộ video research từ file gốc, đã bóc &amp; dịch tiếng Việt — dùng làm mẫu cho Module 5 &amp; 6. Bấm <b>"Xem phân tích"</b> để đọc bản dịch đầy đủ, bấm link để mở video gốc. <span style="color:var(--dim)">(Ngành demo: công nghệ chuột/bàn phím — bạn thay bằng ngành của mình.)</span></p>
+    <div class="grid g2" id="caseGrid"></div>
+  </div>
+</section>
+
+<!-- TOOLKIT -->
+<section id="toolkit">
+  <div class="wrap">
+    <div class="eyebrow">Tăng tốc bằng AI</div>
+    <h2>Bộ công cụ AI hỗ trợ</h2>
+    <p class="lead">4 Custom GPT chuyên dụng (cần đăng nhập ChatGPT) + công cụ sản xuất. Mỗi GPT có "câu lệnh mở đầu" để bạn dùng ngay.</p>
+    <div class="grid g2">
+      <div class="box"><h3><span class="ic" style="background:rgba(160,107,255,.15);color:var(--pur)">🤖</span>GPT · Dịch thuật nội dung</h3><p>Dán nội dung tiếng nước ngoài → ra bản dịch tiếng Việt sát nghĩa. <br><b style="color:var(--txt)">Câu lệnh:</b> "Nội dung bạn muốn dịch thuật".<br><a href="https://chatgpt.com/g/g-68325deb21a48191ace3e99f6a4bd2af-dich-thuat-noi-dung" target="_blank">→ Mở GPT</a></p></div>
+      <div class="box"><h3><span class="ic" style="background:rgba(160,107,255,.15);color:var(--pur)">🔑</span>GPT · Dịch &amp; gợi ý từ khóa</h3><p>Nhập ngành/chủ đề → ra từ khóa research (kể cả tiếng Trung/Anh để tìm Douyin/TikTok).<br><b style="color:var(--txt)">Câu lệnh:</b> "Nhập từ khoá bạn muốn" (VD: Nha khoa, Thời trang trẻ em).<br><a href="https://chatgpt.com/g/g-68325c4f6dc88191b67d5e5be69935f8-dich-va-goi-y-tu-khoa" target="_blank">→ Mở GPT</a></p></div>
+      <div class="box"><h3><span class="ic" style="background:rgba(160,107,255,.15);color:var(--pur)">🧬</span>GPT · Phân tách nhân bản chủ đề</h3><p>Nhập 1 chủ đề gốc → tách ra nhiều biến thể chủ đề con để nhân nội dung.<br><b style="color:var(--txt)">Câu lệnh:</b> "Chủ đề gốc bạn muốn phân tách".<br><a href="https://chatgpt.com/g/g-68cb3dcdaa8881919310b108cb748fb5-phan-tach-nhan-ban-chu-de" target="_blank">→ Mở GPT</a></p></div>
+      <div class="box"><h3><span class="ic" style="background:rgba(160,107,255,.15);color:var(--pur)">💡</span>GPT · Gợi ý nội dung chi tiết</h3><p>Ghép Chủ đề + Cách thể hiện → ra ý tưởng nội dung chi tiết (dùng cho Module 1).<br><b style="color:var(--txt)">Câu lệnh:</b> "Chủ đề + cách thể hiện" (VD: <i>Thẩm mỹ khuôn mặt / Thử nghiệm, thử thách</i>).<br><a href="https://chatgpt.com/g/g-68cb424527108191b85f6efb92674d1c-goi-y-noi-dung-chi-tiet-tu-chu-de-cach-the-hien" target="_blank">→ Mở GPT</a></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- THƯ VIỆN LINK -->
+<section id="thuvien">
+  <div class="wrap">
+    <div class="eyebrow">Toàn bộ link đã cào</div>
+    <h2>Thư viện công cụ &amp; mẫu</h2>
+    <p class="lead">Tất cả link ẩn trong file gốc, phân loại theo nhóm. Lọc nhanh bên dưới.</p>
+    <div class="filt" id="filt">
+      <button class="fbtn on" data-f="all">Tất cả</button>
+      <button class="fbtn" data-f="ai">Công cụ AI</button>
+      <button class="fbtn" data-f="music">Nhạc &amp; Âm thanh</button>
+      <button class="fbtn" data-f="tpl">Mẫu &amp; Template</button>
+      <button class="fbtn" data-f="asset">Asset &amp; Tài liệu</button>
+    </div>
+    <div class="grid g2" id="resGrid"></div>
+    <div class="note">⚠️ <b>Lưu ý về quyền truy cập:</b> Các Custom GPT (ChatGPT) cần đăng nhập tài khoản OpenAI. Các mẫu Lark / Google Sheet / Google Drive là tài liệu chia sẻ của khóa học — có thể yêu cầu quyền truy cập từ chủ sở hữu. Link video TikTok/Douyin mở trực tiếp được nhưng nội dung &amp; số liệu thay đổi theo thời gian.</div>
+  </div>
+</section>
+
+<!-- CÁCH THỰC HÀNH -->
+<section id="thuchanh" style="border-bottom:none">
+  <div class="wrap">
+    <div class="eyebrow">Bắt tay vào làm</div>
+    <h2>Cách thực hành cho người mới</h2>
+    <p class="lead">Một lịch học gợi ý để đi hết lộ trình trong ~2 tuần, vừa học vừa ra sản phẩm.</p>
+    <div class="grid g3">
+      <div class="box"><h3><span class="ic" style="background:rgba(255,77,109,.15);color:var(--acc)">📅</span>Tuần 1 — Nền tảng</h3><p><b style="color:var(--txt)">Ngày 1–2:</b> Module 1 (chiến lược + ma trận ý tưởng).<br><b style="color:var(--txt)">Ngày 3:</b> Module 2 (soi series 4 kênh mẫu).<br><b style="color:var(--txt)">Ngày 4–5:</b> Module 3 (Keyword Brand + Insight Sale).</p></div>
+      <div class="box"><h3><span class="ic" style="background:rgba(77,159,255,.15);color:var(--blu)">📅</span>Tuần 2 — Săn &amp; biến hóa</h3><p><b style="color:var(--txt)">Ngày 6:</b> Module 4 (bộ ≥ 30 keyword).<br><b style="color:var(--txt)">Ngày 7–9:</b> Module 5 (research ≥ 20 video + dịch).<br><b style="color:var(--txt)">Ngày 10:</b> Module 6 (phân tích + nâng cấp ý tưởng).</p></div>
+      <div class="box"><h3><span class="ic" style="background:rgba(61,220,151,.15);color:var(--grn)">🚀</span>Sau lộ trình</h3><p>Chuyển sang <b style="color:var(--txt)">File triển khai 9 bước SKULD</b>: Plan Master → Kế hoạch triển khai → Khung kịch bản → Kế hoạch nội dung tháng → Kịch bản → Quay dựng → Đăng &amp; tối ưu.</p></div>
+    </div>
+    <div class="callout" style="margin-top:18px">🎓 <b>Nguyên tắc tự chấm:</b> Sau mỗi module, dùng đúng rubric 100đ ở trên để tự chấm bài của mình. Đạt <b>≥ 80đ</b> mới qua module tiếp theo — đây là cách đảm bảo chất lượng trước khi tốn công quay dựng.</div>
+    <div class="callout">💎 <b>3 câu thần chú COREVIRAL:</b> (1) <i>Đừng sáng tạo — hãy nâng cấp cái đã viral.</i> (2) <i>Mọi video = Chủ đề × Cách thể hiện.</i> (3) <i>Viral phải gắn Insight Sale, nếu không chỉ là vui.</i></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Lộ trình tri thức tổng hợp từ bộ tài liệu <b>COREVIRAL — Gửi EcomLegend</b> · 6 module + 13 case study + 20+ công cụ<br>
+    <span style="color:var(--dim)">Mẹo: bấm <span class="kbd">+</span> ở mỗi bước để mở/đóng chi tiết · Tài liệu tự chạy offline, không cần internet (trừ khi mở link)</span>
+  </div>
+</footer>
+
+<script>
+// ---- DATA: case studies (translated, from file) ----
+const cases = [
+  {kw:"computer mouse rankings", plat:"TikTok", views:"956K view", vlink:"https://www.tiktok.com/@byexosi/video/7595946295735471382", clink:"https://www.tiktok.com/@xcorruptx7?lang=vi-VN",
+   desc:"Top 5 chuột chơi game cho mọi phân khúc ngân sách. $25 (~600k): Attack Shark X3 bản 'Superlight' nhẹ hơn cả bản gốc, chỉ 49g. $50 (~1,2tr): Mamba Snake M5 Ultra sợi carbon 39g, cảm giác cầm thích nhất. $70 (~1,7tr): Rapoo S21 lớp phủ bề mặt không đối thủ tầm giá. $90 (~2,2tr): Hitscan Hyperlight toàn diện nhất, nút bấm mượt. Cao cấp: Lamzu Maya X (bằng 5 chiếc X3) — làm mọi thứ X3 làm nhưng cao cấp hơn. Kết bằng câu hỏi tương tác."},
+  {kw:"电竞挑战 (Thử thách e-sport)", plat:"Douyin", views:"520K tym", vlink:"https://www.douyin.com/video/7259002139261799720", clink:"",
+   desc:"Video giải trí kiểu 'thử thách ở quán net' (网吧挑战赛). Cô gái tổ chức thử thách bắn súng Valorant cho khách: hạ đủ số mạng nhận thưởng (chuột gaming trắng, 100 tệ, giải cao nhất 1000 tệ nếu đạt 10 mạng). Khách lần lượt thử, nhiều người thất bại, cuối cùng chính anh quản lý quán net mới là người duy nhất thắng. → Format thử thách + reveal bất ngờ."},
+  {kw:"机械键盘 (Bàn phím cơ)", plat:"Douyin", views:"40K tym", vlink:"https://v.douyin.com/OMZIH6INONU/", clink:"",
+   desc:"Video kiến thức: vì sao bàn phím cơ là lựa chọn hàng đầu cho game thủ. 1) Tốc độ phản hồi nhanh (switch hiện đại phản hồi ngay khi chưa chạm đáy). 2) Cảm giác gõ bền bỉ (switch tăng cường cho cường độ cao). 3) Chống xung đột phím toàn phần (nhấn nhiều phím không mất tín hiệu — quan trọng khi vừa di chuyển vừa tung skill). 4) Tuổi thọ hàng chục triệu lần nhấn + tùy biến switch/keycap/đèn. → Format chia sẻ kiến thức theo list."},
+  {kw:"mouse gaming", plat:"TikTok", views:"52K tym", vlink:"https://www.tiktok.com/@xcorruptx7/video/7424631904248286467", clink:"https://www.tiktok.com/@xcorruptx7?lang=en",
+   desc:"Hook 0–3s: 'BUDGET GEAR YOU NEED FOR YOUR SETUP'. 3–6s mở hộp; 6–9s cận cảnh thiết bị nhiều nút/núm xoay/thanh gạt; 9–15s cắm dây bật LED, bấm thử; 15–18s mở app tùy chỉnh chức năng từng nút; 18–24s test đèn RGB đổi màu; 24–26s show tổng thể. → Review macro keyboard mini giá rẻ nhìn 'xịn', đèn RGB, nhiều nút tùy chỉnh. Công thức: hook ngân sách + unbox + demo + RGB reveal."},
+  {kw:"Wireless gamer mouse", plat:"TikTok", views:"58.6K tym", vlink:"https://www.tiktok.com/@tussalty/video/7347756472434117934", clink:"https://www.tiktok.com/@tussalty?lang=en",
+   desc:"Hook 'BUDGET GEAR YOU NEED FOR YOUR SETUP'. Mở đầu cảnh setup gọn gàng → giới thiệu thiết bị điều khiển mini màu trắng (macro keyboard/stream deck mini), gán phím tắt thao tác nhanh khi làm việc/livestream/edit. Cắm dây sáng LED RGB, bấm thử nút/xoay núm, show tùy chỉnh màu. Phần mềm gán nút: mở app, chỉnh âm lượng, chuyển cảnh, điều khiển nhạc. Kết: cận sản phẩm sáng đèn — món nhỏ nhưng nâng cấp setup chuyên nghiệp."},
+  {kw:"游戏POV (Game POV)", plat:"Douyin", views:"36K tym", vlink:"https://www.douyin.com/video/7494124849036528936", clink:"",
+   desc:"Video ngắn về game Valorant, quay cảnh một người đang chơi máy tính và được người quay bình luận về kỹ năng. → Format POV game + bình luận, gắn vào nhu cầu thể hiện kỹ năng."},
+  {kw:"学习直到蜡烛熄灭 (Học tới khi nến tắt)", plat:"Douyin", views:"100K tym", vlink:"https://www.douyin.com/video/7585818790035574058", clink:"",
+   desc:"Thử thách học bài cho tới khi nến tắt. Ứng dụng bán chuột silent: làm 'thử thách làm việc trong khi nhân sự nghỉ trưa hoặc vợ ngủ' — nhấn mạnh USP chống ồn. → Format thử thách bền bỉ + gắn USP sản phẩm tự nhiên."},
+  {kw:"Chồng cầm chuột vợ cầm bàn phím", plat:"Douyin", views:"140K tym", vlink:"https://www.douyin.com/video/7517229746049862946", clink:"",
+   desc:"Chồng cầm chuột, vợ cầm bàn phím cùng chơi game. Đánh vào nhu cầu 'có bạn gái/cùng chơi' của người dùng. → Format tình huống cặp đôi, chạm cảm xúc kết nối."},
+  {kw:"Techreview (AirUp bottle)", plat:"TikTok", views:"2.2M view", vlink:"https://www.tiktok.com/@beowulftiktok/video/7318119585817824554", clink:"https://www.tiktok.com/@beowulftiktok",
+   desc:"(00:00) 'Chai nước AirUp có thực sự hiệu quả không? Đảm bảo bạn rời video này biết chắc AirUp có lừa đảo hay không.' Trả $32 chai + $9 ba viên hương liệu. (00:23) Thử nước thường trước để so sánh, rồi thử AirUp — kéo viên hương vị để kích hoạt, hút bọt khí cùng nước, có vị dưa hấu nhẹ không ngọt, như nước có hương vị không ga. (00:46) Tổng thể chấm 6/10 — có hiệu quả nhưng không thay đổi cuộc sống. → Format review trung thực có chấm điểm + hook nghi vấn 'lừa đảo hay không'."},
+  {kw:"Buying each other's fave thing (cặp đôi)", plat:"TikTok", views:"Series mẫu", vlink:"", clink:"",
+   desc:"Thử thách mua đồ yêu thích cho đối phương: 1) Đồ uống (cold brew ↔ rosé). 2) Món ngẫu nhiên (thức ăn cá ↔ giấy vệ sinh — tình huống hài). 3) Đồ ăn (ramen ↔ sushi). 4) Món gợi nhớ đối phương (túi giữ ấm tay ↔ chăn trọng lực giảm lo âu). 5) Thứ đối phương nên thử (kem nền tông khác ↔ mì Easy Mac). → Format thử thách cặp đôi 5 vòng, mỗi vòng 1 reveal + thoại hài."},
+  {kw:"Series chấm điểm món ăn (@davidcohen)", plat:"TikTok", views:"Series", vlink:"https://www.tiktok.com/@davidcohen/video/7599168862931701005", clink:"https://www.tiktok.com/@davidcohen",
+   desc:"Quay trực diện lúc ăn, cuối video có chấm điểm. Format 'chấm điểm' đơn giản, lặp lại được vô hạn — một trong các format viral 'an toàn' (Xếp hạng/Chấm điểm) mà COREVIRAL khuyến nghị."},
+  {kw:"Review chấm điểm các nước (@maxklymenko)", plat:"TikTok", views:"Series", vlink:"https://www.tiktok.com/@maxklymenko/video/7630612710052482326", clink:"https://www.tiktok.com/@maxklymenko",
+   desc:"Di chuyển tới đất nước khác, đánh giá trên 10 hạng mục cố định. Cũng có series 'ăn thử & đánh giá món ăn vặt các nước' và 'phỏng vấn sự nghiệp người lạ'. → Format xếp hạng/đánh giá theo khung cố định = dễ nhận diện = dễ thành series."},
+  {kw:"Đoán tên người nổi tiếng (@bradyyourtutor)", plat:"TikTok", views:"Series", vlink:"https://www.tiktok.com/@bradyyourtutor/video/7644673216031526174", clink:"https://www.tiktok.com/@bradyyourtutor",
+   desc:"2 người ngẫu nhiên thi đấu trả lời câu hỏi (đoán tên người nổi tiếng / câu hỏi địa lý, sai bị phạt) hoặc 'nhận diện nhanh' hình mờ/zoom (quốc kỳ, bản đồ, nhân vật lịch sử) bấm chuông giành quyền trả lời. → Format game show 2 người = kịch tính, tương tác cao."}
+];
+
+// ---- DATA: resource library (all hidden links) ----
+const res = [
+  // AI
+  {c:"ai", ic:"🤖", bg:"rgba(160,107,255,.15)", col:"var(--pur)", tag:"AI · GPT", title:"GPT — Dịch thuật nội dung", desc:"Dịch nội dung video nước ngoài sang tiếng Việt", url:"https://chatgpt.com/g/g-68325deb21a48191ace3e99f6a4bd2af-dich-thuat-noi-dung"},
+  {c:"ai", ic:"🔑", bg:"rgba(160,107,255,.15)", col:"var(--pur)", tag:"AI · GPT", title:"GPT — Dịch & gợi ý từ khóa", desc:"Sinh từ khóa research từ ngành/chủ đề", url:"https://chatgpt.com/g/g-68325c4f6dc88191b67d5e5be69935f8-dich-va-goi-y-tu-khoa"},
+  {c:"ai", ic:"🧬", bg:"rgba(160,107,255,.15)", col:"var(--pur)", tag:"AI · GPT", title:"GPT — Phân tách nhân bản chủ đề", desc:"Tách 1 chủ đề gốc thành nhiều biến thể", url:"https://chatgpt.com/g/g-68cb3dcdaa8881919310b108cb748fb5-phan-tach-nhan-ban-chu-de"},
+  {c:"ai", ic:"💡", bg:"rgba(160,107,255,.15)", col:"var(--pur)", tag:"AI · GPT", title:"GPT — Gợi ý nội dung chi tiết", desc:"Ghép Chủ đề + Cách thể hiện ra ý tưởng", url:"https://chatgpt.com/g/g-68cb424527108191b85f6efb92674d1c-goi-y-noi-dung-chi-tiet-tu-chu-de-cach-the-hien"},
+  {c:"ai", ic:"🎭", bg:"rgba(160,107,255,.15)", col:"var(--pur)", tag:"AI · Tool", title:"Bot tạo prompt KOC AI", desc:"Google AI Studio app — sinh prompt nhân vật KOC ảo", url:"https://ai.studio/apps/53eac5a6-363e-4125-a84d-cb34839ff1c1"},
+  {c:"ai", ic:"🖼", bg:"rgba(160,107,255,.15)", col:"var(--pur)", tag:"AI · Tool", title:"Google Flow — Tạo ảnh & video", desc:"labs.google/fx — tạo ảnh và video AI", url:"https://labs.google/fx/vi/tools/flow"},
+  {c:"ai", ic:"🎙", bg:"rgba(160,107,255,.15)", col:"var(--pur)", tag:"AI · Tool", title:"MiniMax — Clone voice", desc:"Nhân bản giọng nói cho voice-over", url:"https://www.minimax.io/"},
+  {c:"ai", ic:"📊", bg:"rgba(160,107,255,.15)", col:"var(--pur)", tag:"AI · Tool", title:"Canva — Slide AI", desc:"Tạo slide/ấn phẩm bằng AI", url:"https://canva.link/3vo167yz85kcykm"},
+  // MUSIC
+  {c:"music", ic:"🎵", bg:"rgba(61,220,151,.15)", col:"var(--grn)", tag:"Nhạc bản quyền", title:"Epidemic Sound", desc:"55.000+ track royalty-free cho video", url:"https://www.epidemicsound.com/music/?refresh=true"},
+  {c:"music", ic:"🎼", bg:"rgba(61,220,151,.15)", col:"var(--grn)", tag:"Nhạc AI", title:"Suno", desc:"Tạo nhạc bằng AI / khám phá track", url:"https://suno.com/discover"},
+  {c:"music", ic:"🎬", bg:"rgba(61,220,151,.15)", col:"var(--grn)", tag:"Nhạc + Element", title:"Motion Array", desc:"Nhạc bản quyền + template video", url:"https://motionarray.com/"},
+  {c:"music", ic:"💸", bg:"rgba(61,220,151,.15)", col:"var(--grn)", tag:"Nhạc giá rẻ", title:"GetLinkFreepik", desc:"Tải nhạc Motion Array giá rẻ", url:"https://getlinkfreepik.com/"},
+  {c:"music", ic:"🔊", bg:"rgba(61,220,151,.15)", col:"var(--grn)", tag:"Sound effect", title:"MyInstants", desc:"Tải hiệu ứng âm thanh (SFX)", url:"https://www.myinstants.com/fr/instant/10-diem-64132/"},
+  {c:"music", ic:"➡️", bg:"rgba(61,220,151,.15)", col:"var(--grn)", tag:"Element", title:"Envato Elements — Arrow", desc:"Tải element/template video (mũi tên…)", url:"https://elements.envato.com/video-templates/elements/arrow"},
+  // TEMPLATES
+  {c:"tpl", ic:"📋", bg:"rgba(77,159,255,.15)", col:"var(--blu)", tag:"Mẫu · Lark", title:"Lark Base — Mẫu nộp bài #1", desc:"Bảng điền bài tập theo mẫu (KPOIs2zg…)", url:"https://rsgo6nshkbbo.sg.larksuite.com/sheets/KPOIs2zguhLngxtFXuClN5BYgDg?from=from_copylink"},
+  {c:"tpl", ic:"📋", bg:"rgba(77,159,255,.15)", col:"var(--blu)", tag:"Mẫu · Lark", title:"Lark Base — Mẫu nộp bài #2", desc:"Bảng điền bài tập theo mẫu (MoYksjjc…)", url:"https://rsgo6nshkbbo.sg.larksuite.com/sheets/MoYksjjcUhCU2itOggSlS19GgPf?from=from_copylink"},
+  {c:"tpl", ic:"📗", bg:"rgba(77,159,255,.15)", col:"var(--blu)", tag:"Mẫu · Sheet", title:"Google Sheet — Mẫu chính", desc:"File mẫu triển khai (1emQy0KAL…)", url:"https://docs.google.com/spreadsheets/d/1emQy0KALFwzjqgPR0ksBpgxHBNJqBF8m/edit?usp=sharing"},
+  {c:"tpl", ic:"📗", bg:"rgba(77,159,255,.15)", col:"var(--blu)", tag:"Mẫu · Sheet", title:"Google Sheet — Mẫu phụ A", desc:"File mẫu (1jElKd9sT…)", url:"https://docs.google.com/spreadsheets/d/1jElKd9sT_QWfQNlQJX1UauhWJgkcej9g/edit?usp=sharing"},
+  {c:"tpl", ic:"📗", bg:"rgba(77,159,255,.15)", col:"var(--blu)", tag:"Mẫu · Sheet", title:"Google Sheet — Mẫu phụ B", desc:"File mẫu (10VO4SYx…)", url:"https://docs.google.com/spreadsheets/d/10VO4SYxZMbCbVEaBuqcZ546Ik09GOgGq/edit?usp=sharing"},
+  {c:"tpl", ic:"📗", bg:"rgba(77,159,255,.15)", col:"var(--blu)", tag:"Mẫu · Sheet", title:"Google Sheet — Mẫu phụ C", desc:"File mẫu (1UBKUCG…)", url:"https://docs.google.com/spreadsheets/d/1UBKUCG-lH8yyNrAuabkR88AFXjmWw0wL/edit?usp=sharing"},
+  {c:"tpl", ic:"📗", bg:"rgba(77,159,255,.15)", col:"var(--blu)", tag:"Mẫu · Sheet", title:"Google Sheet — Mẫu phụ D", desc:"File mẫu (1RQxnqy9…)", url:"https://docs.google.com/spreadsheets/d/1RQxnqy9eKiCo5gRTd5QebG-Hs2egPd6O/edit?usp=sharing"},
+  {c:"tpl", ic:"📗", bg:"rgba(77,159,255,.15)", col:"var(--blu)", tag:"Mẫu · Sheet", title:"Google Sheet — Bảng dữ liệu", desc:"File mẫu (1zNZPv-XGF…)", url:"https://docs.google.com/spreadsheets/d/1zNZPv-XGF1TyFx1cJmbO2KmaWlinDJWxKz3xN0qf9fM/edit?usp=sharing"},
+  {c:"tpl", ic:"🎨", bg:"rgba(77,159,255,.15)", col:"var(--blu)", tag:"Mẫu · Canva", title:"Canva — Chủ đề & Cách thể hiện", desc:"Bảng gợi ý chủ đề × cách thể hiện (Module 1)", url:"https://www.canva.com/design/DAHESlCdTWM/QD8GvR9xLWuTmrxUNgjt2g/view"},
+  // ASSETS
+  {c:"asset", ic:"📄", bg:"rgba(255,184,77,.15)", col:"var(--acc2)", tag:"Tài liệu · Doc", title:"Google Doc — Hướng dẫn", desc:"Tài liệu hướng dẫn (1qQhMOzKah…)", url:"https://docs.google.com/document/d/1qQhMOzKahddzAHMTLA6hKR2e5SALsnFe/edit"},
+  {c:"asset", ic:"📁", bg:"rgba(255,184,77,.15)", col:"var(--acc2)", tag:"Tài liệu · Drive", title:"Google Drive — Folder asset", desc:"Thư mục tài nguyên (1G0EAlfZoDrf…)", url:"https://drive.google.com/drive/folders/1G0EAlfZoDrf50raygLIc2m06gclea1eA"},
+  {c:"asset", ic:"🎥", bg:"rgba(255,184,77,.15)", col:"var(--acc2)", tag:"Tài liệu · Record", title:"Record buổi học (2/6)", desc:"Bản ghi kiến thức buổi sáng — chỉ mở 1 tuần, nên tải về", url:"https://drive.google.com/file/d/1l5AQS8Jsf8CFzHG3ehVoyaEhaVbDwO59/view?usp=sharing"},
+  {c:"asset", ic:"🎞", bg:"rgba(255,184,77,.15)", col:"var(--acc2)", tag:"Tài liệu · Video", title:"Video hướng dẫn A", desc:"Hướng dẫn (1lT79AUP…)", url:"https://drive.google.com/file/d/1lT79AUP523-sCkojg91WwRg3kGdSTkrm/view?usp=sharing"},
+  {c:"asset", ic:"🎞", bg:"rgba(255,184,77,.15)", col:"var(--acc2)", tag:"Tài liệu · Video", title:"Video hướng dẫn B", desc:"Hướng dẫn (18p61Qw5DQT…)", url:"https://drive.google.com/file/d/18p61Qw5DQT214PV8Di-ww93J1xYtGH7v/view?usp=sharing"},
+  {c:"asset", ic:"🎞", bg:"rgba(255,184,77,.15)", col:"var(--acc2)", tag:"Tài liệu · Video", title:"Video hướng dẫn C", desc:"Hướng dẫn (178gBC8AwyQ…)", url:"https://drive.google.com/file/d/178gBC8AwyQZKXNuoYyeB2hehqyqXGM3e/view?usp=sharing"}
+];
+
+// render cases
+const cg = document.getElementById('caseGrid');
+cases.forEach(c=>{
+  const links = [];
+  if(c.vlink) links.push(`<a href="${c.vlink}" target="_blank">▶ Video gốc</a>`);
+  if(c.clink) links.push(`<a href="${c.clink}" target="_blank">👤 Kênh</a>`);
+  const el = document.createElement('div');
+  el.className='case';
+  el.innerHTML=`<div class="top"><div class="kw">${c.kw}</div><div class="views">${c.views}</div></div>
+    <div class="plat">${c.plat}</div>
+    <div class="desc has">${c.desc}</div>
+    <div class="more">＋ Xem phân tích đầy đủ</div>
+    <div class="links">${links.join('')}</div>`;
+  const more = el.querySelector('.more');
+  more.onclick=()=>{el.classList.toggle('expand'); more.textContent = el.classList.contains('expand')?'－ Thu gọn':'＋ Xem phân tích đầy đủ';};
+  cg.appendChild(el);
+});
+
+// render resources
+const rg = document.getElementById('resGrid');
+function renderRes(f){
+  rg.innerHTML='';
+  res.filter(r=>f==='all'||r.c===f).forEach(r=>{
+    const el=document.createElement('div');
+    el.className='res';
+    el.innerHTML=`<div class="ic" style="background:${r.bg};color:${r.col}">${r.ic}</div>
+      <div class="info"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h4>${r.title}</h4><span class="tag t-${r.c}">${r.tag}</span></div>
+      <p>${r.desc}</p><a href="${r.url}" target="_blank">${r.url.length>52?r.url.slice(0,52)+'…':r.url}</a></div>`;
+    rg.appendChild(el);
+  });
+}
+renderRes('all');
+document.querySelectorAll('#filt .fbtn').forEach(b=>{
+  b.onclick=()=>{document.querySelectorAll('#filt .fbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderRes(b.dataset.f);};
+});
+
+// accordion
+document.querySelectorAll('.step-head').forEach(h=>{
+  h.onclick=()=>h.parentElement.classList.toggle('open');
+});
+</script>
+</body>
+</html>

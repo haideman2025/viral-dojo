@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIRAL DOJO — Học bằng cách ship kênh viral</title>
+<style>
+:root{--bg:#0c0f14;--card:#151b24;--card2:#1c242f;--bd:#2a3442;--tx:#e9eef4;--mut:#8fa0b3;--ac:#1fd1a8;--ac2:#16b894;--warn:#ffcf6b;--red:#ff6b6b;--blue:#6db3ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 -apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:20px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:6px 0 16px}
+h1{font-size:20px;margin:0}h1 small{color:var(--ac);font-size:12px;display:block;font-weight:600}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{background:var(--card);border:1px solid var(--bd);color:var(--mut);border-radius:9px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.tab.act{background:var(--ac);color:#0c0f14;border-color:var(--ac)}
+.sec{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin:0 0 16px}
+.sec h2{font-size:16px;margin:0 0 10px}
+.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;font-size:11px;border:1px solid var(--bd);border-radius:20px;padding:1px 10px;color:var(--mut);margin-left:6px}
+.btn{background:var(--ac);color:#0c0f14;border:0;border-radius:9px;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer}
+.btn:hover{background:var(--ac2)}.btn.sm{padding:6px 12px;font-size:12px}.btn.ghost{background:var(--card2);color:var(--tx);border:1px solid var(--bd)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--bd);border-radius:9px;color:var(--tx);padding:9px 11px;font:14px/1.5 inherit}
+textarea{resize:vertical;min-height:38px}
+label{font-size:12.5px;color:var(--mut);font-weight:700;display:block;margin:0 0 4px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>div{flex:1;min-width:180px}
+.prog{height:8px;background:var(--card2);border-radius:6px;overflow:hidden;margin:8px 0 2px}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--blue));transition:width .5s}
+.station{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.st{flex:1;min-width:110px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--mut);text-align:center}
+.st.done{border-color:var(--ac);color:var(--ac)}.st.cur{border-color:var(--warn);color:var(--warn)}
+.cách{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:0 0 12px}
+.cách h3{font-size:14px;margin:0 0 8px;color:var(--warn)}
+.idea{display:flex;gap:8px;margin:0 0 8px}.idea textarea{flex:1}
+.del{background:none;border:0;color:var(--red);cursor:pointer;font-size:16px}
+.score{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.sc{flex:1;min-width:120px;background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:10px;text-align:center}
+.sc b{font-size:22px;display:block}.sc span{font-size:11px;color:var(--mut)}
+.fb{background:#10261f;border:1px solid #1c4a3c;border-radius:10px;padding:12px;font-size:13.5px;white-space:pre-wrap;margin:10px 0}
+.fb.bad{background:#261515;border-color:#4a2424}
+.conn{display:flex;gap:12px;flex-wrap:wrap}
+.cc{flex:1;min-width:230px;background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:14px}
+.cc h3{margin:0 0 4px;font-size:14px}.cc .st-dot{font-size:11px;font-weight:700}
+.ok{color:var(--ac)}.no{color:var(--mut)}
+.note{background:#221d12;border:1px solid #4a3d1c;color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin:0 0 14px}
+.learn p{margin:0 0 10px}.learn b{color:var(--warn)}
+.big{font-size:38px;font-weight:900;text-align:center;margin:6px 0}
+.lock{text-align:center;padding:30px;color:var(--mut)}
+footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #0c0f14;border-top-color:transparent;border-radius:50%;animation:r .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes r{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>🥋 VIRAL DOJO <small>Đừng học về viral. Hãy ship một kênh viral.</small></h1>
+  <div class="tabs">
+    <button class="tab act" data-v="home">Dojo</button>
+    <button class="tab" data-v="lib">📚 Tri thức</button>
+    <button class="tab" data-v="conn">⚡ Kết nối</button>
+    <button class="tab" data-v="dna">🧬 Channel DNA</button>
+  </div>
+</header>
+
+<!-- ============ VIEW: HOME ============ -->
+<div id="v-home">
+  <div class="station" id="stations"></div>
+
+  <!-- ONBOARD -->
+  <div class="sec" id="onboard">
+    <h2>Bước 0 · Kênh của bạn</h2>
+    <div class="row">
+      <div><label>Ngành hàng / sản phẩm</label><input id="ob-nganh" placeholder="VD: Bọt vệ sinh nam ONIIZ / thời trang nữ / đồ gia dụng..."></div>
+      <div><label>Tên kênh dự kiến</label><input id="ob-kenh" placeholder="VD: @tuannoithat"></div>
+    </div>
+    <div class="row">
+      <div><label>Khách hàng mục tiêu</label><input id="ob-kh" placeholder="VD: nam 18-30, sinh viên + đi làm, mua trên TikTok Shop"></div>
+    </div>
+
+    <h3 style="font-size:14px;margin:16px 0 6px">📦 Brand Vault — nạp dữ liệu thương hiệu/sản phẩm <span class="pill">txt · md · csv · json · html — kéo thả nhiều file</span></h3>
+    <p class="mut" style="margin:0 0 8px">Mọi thứ bạn có: brand DNA, mô tả sản phẩm, bảng giá, review khách, insight pack, script cũ... AI sẽ dùng kho này làm bối cảnh cho MỌI bước phía sau (hướng dẫn, chấm điểm, tự làm hết).</p>
+    <input type="file" id="bv-file" multiple accept=".txt,.md,.csv,.json,.html,.htm" onchange="addBrandFiles(this.files)">
+    <div style="margin:8px 0"><textarea id="bv-paste" placeholder="Hoặc paste thẳng nội dung vào đây (mô tả sản phẩm, USP, giá, đối tượng...)" style="min-height:60px"></textarea>
+    <button class="btn ghost sm" style="margin-top:6px" onclick="addBrandPaste()">+ Thêm vào Vault</button></div>
+    <div id="bv-list" class="mut" style="font-size:13px"></div>
+
+    <div style="margin-top:14px"><button class="btn" onclick="saveOnboard()">Lưu & vào Trạm 1 →</button></div>
+  </div>
+
+  <!-- TRẠM 1 -->
+  <div class="sec" id="m1" style="display:none">
+    <h2>Trạm 1 · Nền móng — Chiến lược & Định dạng kênh <span class="pill">Rubric 100đ · cần ≥70đ để mở Trạm 2</span></h2>
+
+    <details class="learn" open>
+      <summary style="cursor:pointer;font-weight:800;color:var(--ac);margin-bottom:8px">📖 Học nhanh 10 phút (bấm để thu gọn)</summary>
+      <p><b>1. Chiến lược kênh</b> — kênh gắn với thương hiệu theo 1 trong 3 kiểu: <b>Thương hiệu</b> (lộ mặt brand, bán trực diện) · <b>Ẩn thương hiệu</b> (kênh giải trí, cài brand khéo) · <b>Nhân hiệu</b> (xây con người, người đó bán hàng).</p>
+      <p><b>2. Định dạng kênh</b> — <b>Kiến thức</b> (dạy/chia sẻ) · <b>Hình thức</b> (giải trí, thử thách, hình ảnh) · <b>Kết hợp</b>. Định dạng quyết định bạn đi research video viral ở đâu (Trạm 5).</p>
+      <p><b>3. Tư duy 2 lớp = Chủ đề × Cách thể hiện.</b> Mọi nội dung viral là 1 <b>Chủ đề</b> (nói về cái gì) ghép 1 <b>Cách thể hiện</b> (thử thách, reaction, review, tips, so sánh, tình huống, kể chuyện, đồng cảm...). Nắm 2 trục này là nắm cả ma trận ý tưởng vô hạn.</p>
+      <p><b>Ví dụ</b> (ngành chuột máy tính): Chủ đề "Công nghệ chuột bàn phím" × "Thử thách" → <i>"Cuộc thi ai bấm nhanh nhất 30 giây"</i>. Cùng chủ đề × "Review" → <i>"1 ngày mang chuột đi: sáng lên trường, chiều công ty, tối quán net — lộ USP từng tình huống"</i>.</p>
+      <p><b>Bài nộp:</b> chọn chiến lược + định dạng, 1 chủ đề chính, <b>≥5 cách thể hiện</b>, mỗi cách <b>≥3 ý tưởng cụ thể</b> (tiêu đề rõ, quay được ngay).</p>
+      <p>📚 <a href="coreviral-tri-thuc.html#lotrinh" target="_blank" style="color:var(--ac)">Học bản ĐẦY ĐỦ Module 1 (lý thuyết + ví dụ + rubric gốc) ↗</a> · <a href="coreviral-tri-thuc.html#khainiem" target="_blank" style="color:var(--ac)">Ôn 5 khái niệm gốc ↗</a></p>
+    </details>
+
+    <div class="row" style="margin-top:14px">
+      <div><label>Chiến lược kênh</label>
+        <select id="m1-cl"><option value="">— chọn —</option><option>Thương hiệu</option><option>Ẩn thương hiệu</option><option>Nhân hiệu</option></select></div>
+      <div><label>Định dạng kênh</label>
+        <select id="m1-dd"><option value="">— chọn —</option><option>Kiến thức</option><option>Hình thức</option><option>Kết hợp</option></select></div>
+    </div>
+    <div style="margin:10px 0"><label>Chủ đề chính của kênh</label><input id="m1-chude" placeholder="VD: Khoa học chăm sóc cơ thể cho đàn ông"></div>
+
+    <h3 style="font-size:14px;margin:14px 0 8px">Ma trận: Cách thể hiện × Ý tưởng <span class="pill">≥5 cách · ≥3 ý tưởng/cách</span></h3>
+    <div id="m1-matrix"></div>
+    <button class="btn ghost sm" onclick="addCach()">+ Thêm cách thể hiện</button>
+
+    <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn ghost" id="btn-auto" onclick="autoFill()">🤖 AI tự làm hết (rồi bạn review)</button>
+      <button class="btn ghost" id="btn-coach" onclick="coach()">💬 AI hướng dẫn / gợi ý</button>
+      <button class="btn" id="btn-grade" onclick="grade()">🧠 Nộp bài — AI chấm theo rubric</button>
+      <span class="mut" id="grade-hint"></span>
+    </div>
+    <p class="mut" style="margin:6px 0 0">Mọi thứ AI điền đều sửa được trực tiếp trong form — bạn là người duyệt cuối.</p>
+    <div id="result"></div>
+  </div>
+
+  <!-- TRẠM 2 LOCKED -->
+  <div class="sec" id="m2lock" style="display:none">
+    <div class="lock">🔒 <b>Trạm 2 · Đọc vị Series</b> — mở khi Trạm 1 đạt ≥70đ.<br><span class="mut">Trạm 2 sẽ dùng connector Apify để cào 4 kênh mẫu và bạn tập "soi" series thật.</span></div>
+  </div>
+</div>
+
+<!-- ============ VIEW: LIBRARY (map tri thức gốc) ============ -->
+<div id="v-lib" style="display:none">
+  <div class="sec">
+    <h2>📚 Tri thức COREVIRAL gốc <span class="pill">lý thuyết + bài tập + 13 case study + toolkit</span></h2>
+    <p class="mut">Toàn bộ giáo trình gốc nằm trong file <b>coreviral-tri-thuc.html</b> (cùng thư mục với app). Mỗi trạm trong Dojo map thẳng tới phần tương ứng — học sâu ở đó, quay lại đây nộp bài.</p>
+    <div class="conn">
+      <div class="cc"><h3>🧭 Tổng quan & Khái niệm gốc</h3><p class="mut">COREVIRAL là gì · tư duy 2 lớp · 5 khái niệm phải thuộc (Chiến lược · Định dạng · Keyword Brand · Insight Sale 5 tầng · Bộ từ khóa).</p><a href="coreviral-tri-thuc.html#khainiem" target="_blank"><button class="btn sm">Mở phần này ↗</button></a></div>
+      <div class="cc"><h3>🛤 Lộ trình 6 bước (lý thuyết + bài tập + rubric)</h3><p class="mut">Module 1→6 đầy đủ: mục tiêu, việc cần làm, ví dụ mẫu, rubric 100đ, sản phẩm nộp. Đây là phần Trạm 1–6 của Dojo map tới.</p><a href="coreviral-tri-thuc.html#lotrinh" target="_blank"><button class="btn sm">Mở phần này ↗</button></a></div>
+      <div class="cc"><h3>🎬 13 Case study đã dịch</h3><p class="mut">Video viral nước ngoài đã dịch + phân tích — nguyên liệu mẫu cho Trạm 5–6.</p><a href="coreviral-tri-thuc.html#case" target="_blank"><button class="btn sm">Mở phần này ↗</button></a></div>
+      <div class="cc"><h3>🛠 Bộ công cụ AI + Thư viện link</h3><p class="mut">20+ công cụ & mẫu, thư viện link đầy đủ từ file Lark gốc, và hướng dẫn cách thực hành.</p><a href="coreviral-tri-thuc.html#toolkit" target="_blank"><button class="btn sm">Toolkit ↗</button></a> <a href="coreviral-tri-thuc.html#thuvien" target="_blank"><button class="btn sm ghost">Thư viện ↗</button></a> <a href="coreviral-tri-thuc.html#thuchanh" target="_blank"><button class="btn sm ghost">Cách thực hành ↗</button></a></div>
+    </div>
+    <p class="mut" style="margin-top:10px">💡 File bài tập gốc (Lark/Sheet 13 sheet MẪU + bài làm) vẫn dùng song song — bản full sẽ sync 2 chiều qua connector Google Sheets.</p>
+  </div>
+</div>
+
+<!-- ============ VIEW: CONNECTIONS ============ -->
+<div id="v-conn" style="display:none">
+  <div class="note">🔐 Mọi key lưu <b>trong máy bạn</b> (localStorage) — không gửi đi đâu ngoài API chính chủ. Chuẩn kết nối của Dojo là MCP: mỗi connector là 1 cổng dữ liệu độc lập.</div>
+  <div class="conn">
+    <div class="cc">
+      <h3>🧠 Gemini API <span class="st-dot no" id="st-gemini">● chưa kết nối</span></h3>
+      <p class="mut">Bộ não chấm bài + dịch + generate. Lấy key miễn phí tại aistudio.google.com → API keys.</p>
+      <label>API Key</label><input id="k-gemini" type="password" placeholder="AIza...">
+      <div style="margin-top:8px;display:flex;gap:8px"><button class="btn sm" onclick="saveKey('gemini')">Lưu & test</button></div>
+      <p class="mut" id="msg-gemini"></p>
+    </div>
+    <div class="cc">
+      <h3>🕷 Apify <span class="st-dot no" id="st-apify">● chưa kết nối</span></h3>
+      <p class="mut">Cào TikTok/Douyin/FB cho Trạm 2·3·5 (video theo keyword, comment VoC). Free $5/tháng tại console.apify.com → Integrations.</p>
+      <label>API Token</label><input id="k-apify" type="password" placeholder="apify_api_...">
+      <div style="margin-top:8px"><button class="btn sm" onclick="saveKey('apify')">Lưu & test</button></div>
+      <p class="mut" id="msg-apify"></p>
+    </div>
+    <div class="cc">
+      <h3>📊 TikTok Shop data <span class="st-dot no" id="st-xlsx">● chưa nạp</span></h3>
+      <p class="mut">Upload file export Video List (xlsx/csv) — Dojo dùng GMV/đơn thật để benchmark ý tưởng của bạn (Trạm 6 + Dashboard).</p>
+      <input type="file" id="k-xlsx" accept=".csv,.xlsx">
+      <p class="mut">MVP: nhận CSV. (Bản full parse xlsx + Pipeboard Meta Ads + Google Sheets + Cloudflare deploy.)</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW: DNA ============ -->
+<div id="v-dna" style="display:none">
+  <div class="sec">
+    <h2>🧬 Channel DNA <span class="pill">file sống — lớn dần qua 6 trạm</span></h2>
+    <p class="mut">Đây là toàn bộ "bộ gen" kênh của bạn. Hoàn thành 6 trạm → DNA đầy → cổng GENERATE dùng nó để sản xuất 30-day content pack + landing page.</p>
+    <pre id="dna-view" style="background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:14px;font-size:12.5px;overflow:auto;max-height:420px"></pre>
+    <button class="btn ghost" onclick="exportDNA()">⬇ Tải Channel DNA (JSON)</button>
+  </div>
+</div>
+
+<footer>VIRAL DOJO MVP v0.1 · Giáo trình COREVIRAL 6 module · AI grading by Gemini · Key lưu local · © EcomLegend 2026</footer>
+</div>
+
+<script>
+/* ================= STATE ================= */
+const S = JSON.parse(localStorage.getItem('dojo')||'{}');
+S.dna = S.dna || {onboard:{}, m1:{}, scores:{}};
+S.keys = S.keys || {};
+function save(){ localStorage.setItem('dojo', JSON.stringify(S)); renderDNA(); renderStations(); }
+
+/* ================= NAV ================= */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act')); t.classList.add('act');
+  ['home','lib','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
+});
+
+/* ================= STATIONS BAR ================= */
+const ST_NAMES = ['1 Nền móng','2 Series','3 Insight','4 Keyword','5 Research','6 Nâng cấp','🚀 GENERATE'];
+function renderStations(){
+  const el = document.getElementById('stations'); el.innerHTML='';
+  const passed1 = (S.dna.scores.m1||0) >= 70;
+  ST_NAMES.forEach((n,i)=>{
+    const d = document.createElement('div'); d.className='st';
+    if(i===0 && passed1) d.classList.add('done');
+    else if(i===0 && S.dna.onboard.nganh) d.classList.add('cur');
+    d.innerHTML = n + (i===0 && S.dna.scores.m1 ? `<br><b>${S.dna.scores.m1}đ</b>` : (i>0?'<br>🔒':''));
+    el.appendChild(d);
+  });
+}
+
+/* ================= BRAND VAULT ================= */
+S.dna.brand = S.dna.brand || [];
+function addBrandFiles(files){
+  [...files].forEach(f=>{
+    const r = new FileReader();
+    r.onload = e => {
+      let txt = e.target.result;
+      if(/\.html?$/i.test(f.name)) txt = txt.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+      S.dna.brand.push({name:f.name, size:txt.length, content:txt.slice(0,20000)});
+      save(); renderVault();
+    };
+    r.readAsText(f,'utf-8');
+  });
+}
+function addBrandPaste(){
+  const t = document.getElementById('bv-paste').value.trim();
+  if(!t) return;
+  S.dna.brand.push({name:'paste-'+(S.dna.brand.length+1)+'.txt', size:t.length, content:t.slice(0,20000)});
+  document.getElementById('bv-paste').value=''; save(); renderVault();
+}
+function delBrand(i){ S.dna.brand.splice(i,1); save(); renderVault(); }
+function renderVault(){
+  const el = document.getElementById('bv-list'); if(!el) return;
+  el.innerHTML = S.dna.brand.length
+    ? '🗂 ' + S.dna.brand.map((b,i)=>`<span style="border:1px solid var(--bd);border-radius:14px;padding:2px 9px;margin:2px;display:inline-block">${b.name} <i>(${(b.size/1000).toFixed(1)}k)</i> <a href="#" style="color:var(--red);text-decoration:none" onclick="delBrand(${i});return false">✕</a></span>`).join(' ')
+    : 'Vault trống — nạp ít nhất 1 nguồn để AI hiểu thương hiệu của bạn.';
+}
+function brandContext(maxLen){
+  maxLen = maxLen || 9000;
+  const ob = S.dna.onboard||{};
+  let ctx = `Ngành: ${ob.nganh||'?'} | Kênh: ${ob.kenh||'?'} | Khách: ${ob.khach||'?'}\n`;
+  let budget = maxLen - ctx.length;
+  for(const b of S.dna.brand){
+    if(budget<=200) break;
+    const chunk = b.content.slice(0, Math.min(b.content.length, Math.floor(budget/Math.max(1,S.dna.brand.length))));
+    ctx += `\n--- NGUỒN: ${b.name} ---\n${chunk}\n`; budget -= chunk.length;
+  }
+  return ctx.slice(0, maxLen);
+}
+
+/* ================= AI AUTO-FILL & COACH ================= */
+function setM1(data){
+  if(data.chienluoc) document.getElementById('m1-cl').value = data.chienluoc;
+  if(data.dinhdang) document.getElementById('m1-dd').value = data.dinhdang;
+  if(data.chude) document.getElementById('m1-chude').value = data.chude;
+  if(Array.isArray(data.matrix)){
+    const wrap = document.getElementById('m1-matrix'); wrap.innerHTML='';
+    data.matrix.forEach(x=>{
+      addCach(x.cach);
+      const c = wrap.lastElementChild;
+      c.querySelectorAll('textarea').forEach(t=>t.remove());
+      (x.ytuong||[]).forEach(y=>{ addIdea(c.querySelector('.btn')); const tas=c.querySelectorAll('textarea'); tas[tas.length-1].value=y; });
+    });
+  }
+}
+async function autoFill(){
+  const key = S.keys.gemini, res = document.getElementById('result'), btn = document.getElementById('btn-auto');
+  if(!key){ res.innerHTML='<div class="fb bad">🤖 "AI tự làm hết" cần Gemini key — vào tab ⚡ Kết nối (key miễn phí, 1 phút).</div>'; return; }
+  if(!(S.dna.onboard&&S.dna.onboard.nganh)){ res.innerHTML='<div class="fb bad">⚠️ Điền Bước 0 (ngành hàng) trước đã.</div>'; return; }
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang làm bài...';
+  try{
+    const prompt = `Bạn là chuyên gia COREVIRAL. Dựa trên DỮ LIỆU THƯƠNG HIỆU dưới đây, làm TRỌN bài Trạm 1: chọn chiến lược kênh (Thương hiệu/Ẩn thương hiệu/Nhân hiệu), định dạng (Kiến thức/Hình thức/Kết hợp), 1 chủ đề chính, và ma trận ĐÚNG 6 cách thể hiện × 3 ý tưởng/cách. Mỗi ý tưởng là TIÊU ĐỀ VIDEO cụ thể quay được ngay (ai, làm gì, bối cảnh), bám đúng sản phẩm & khách hàng trong dữ liệu.\n\nDỮ LIỆU THƯƠNG HIỆU:\n${brandContext()}\n\nTrả về DUY NHẤT JSON: {"chienluoc":"...","dinhdang":"...","chude":"...","matrix":[{"cach":"...","ytuong":["...","...","..."]}],"giai_thich":"2-3 câu vì sao chọn chiến lược này"}`;
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.7, responseMimeType:'application/json'}})
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const out = JSON.parse((await r.json()).candidates[0].content.parts[0].text);
+    setM1(out);
+    res.innerHTML = `<div class="fb">🤖 AI đã điền xong toàn bộ bài — <b>${out.giai_thich||''}</b>\n\n👉 Giờ là lượt của bạn: review từng ô, sửa/xoá/thêm thoải mái, rồi bấm "Nộp bài — AI chấm" để lấy điểm. (Bài AI làm cũng phải qua chấm như bài người làm.)</div>`;
+  }catch(e){ res.innerHTML = `<div class="fb bad">❌ AI làm bài lỗi: ${e.message}. Thử lại hoặc kiểm tra key.</div>`; }
+  btn.disabled=false; btn.textContent='🤖 AI tự làm hết (rồi bạn review)';
+}
+async function coach(){
+  const key = S.keys.gemini, res = document.getElementById('result'), btn = document.getElementById('btn-coach');
+  const bai = collectM1();
+  if(!key){ res.innerHTML='<div class="fb bad">💬 AI hướng dẫn cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang xem bài...';
+  try{
+    const prompt = `Bạn là mentor COREVIRAL, KHÔNG chấm điểm — chỉ hướng dẫn ngắn gọn. Học viên đang làm dở Trạm 1.\n\nDỮ LIỆU THƯƠNG HIỆU:\n${brandContext(5000)}\n\nBÀI ĐANG LÀM:\nChiến lược: ${bai.chienluoc||'(chưa chọn)'} | Định dạng: ${bai.dinhdang||'(chưa chọn)'} | Chủ đề: ${bai.chude||'(chưa có)'}\nMa trận:\n${bai.matrix.map((x,i)=>`${i+1}. ${x.cach}: ${x.ytuong.join(' · ')||'(trống)'}`).join('\n')||'(trống)'}\n\nTrả lời tiếng Việt ≤180 từ: (1) đang ổn chỗ nào, (2) đang yếu/thiếu chỗ nào theo rubric, (3) gợi ý CỤ THỂ 2-3 việc làm tiếp ngay (kèm 1-2 ví dụ ý tưởng mẫu bám thương hiệu).`;
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.5}})
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const txt = (await r.json()).candidates[0].content.parts[0].text;
+    res.innerHTML = `<div class="fb">💬 MENTOR:\n${txt}</div>`;
+  }catch(e){ res.innerHTML = `<div class="fb bad">❌ Lỗi: ${e.message}</div>`; }
+  btn.disabled=false; btn.textContent='💬 AI hướng dẫn / gợi ý';
+}
+
+/* ================= ONBOARD ================= */
+function saveOnboard(){
+  S.dna.onboard = {
+    nganh: document.getElementById('ob-nganh').value.trim(),
+    kenh: document.getElementById('ob-kenh').value.trim(),
+    khach: document.getElementById('ob-kh').value.trim()
+  };
+  if(!S.dna.onboard.nganh){ alert('Nhập ngành hàng đã nhé'); return; }
+  save();
+  document.getElementById('m1').style.display=''; document.getElementById('m2lock').style.display='';
+  document.getElementById('m1').scrollIntoView({behavior:'smooth'});
+}
+
+/* ================= MATRIX BUILDER ================= */
+const GOIY = ['Thử thách','Review trải nghiệm','Tips / mẹo','So sánh trước–sau','Tình huống / skit','Reaction','Kể chuyện / drama','Đồng cảm tâm sự','Xếp hạng / chấm điểm','Phỏng vấn đường phố'];
+function addCach(name){
+  const wrap = document.getElementById('m1-matrix');
+  const i = wrap.children.length;
+  const d = document.createElement('div'); d.className='cách';
+  d.innerHTML = `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <input placeholder="Cách thể hiện #${i+1} — VD: ${GOIY[i%GOIY.length]}" class="c-name" value="${name||''}">
+      <button class="del" title="Xoá" onclick="this.closest('.cách').remove()">✕</button></div>
+    <div class="ideas"></div>
+    <button class="btn ghost sm" onclick="addIdea(this)">+ Ý tưởng</button>`;
+  wrap.appendChild(d);
+  for(let k=0;k<3;k++) addIdea(d.querySelector('.btn'));
+}
+function addIdea(btn){
+  const box = btn.parentElement.querySelector('.ideas');
+  const d = document.createElement('div'); d.className='idea';
+  d.innerHTML = `<textarea placeholder="Ý tưởng cụ thể (tiêu đề rõ, quay được ngay)..."></textarea><button class="del" onclick="this.parentElement.remove()">✕</button>`;
+  box.appendChild(d);
+}
+for(let i=0;i<5;i++) addCach();
+
+function collectM1(){
+  return {
+    chienluoc: document.getElementById('m1-cl').value,
+    dinhdang: document.getElementById('m1-dd').value,
+    chude: document.getElementById('m1-chude').value.trim(),
+    matrix: [...document.querySelectorAll('.cách')].map(c=>({
+      cach: c.querySelector('.c-name').value.trim(),
+      ytuong: [...c.querySelectorAll('textarea')].map(t=>t.value.trim()).filter(Boolean)
+    })).filter(x=>x.cach)
+  };
+}
+
+/* ================= GRADER ================= */
+const RUBRIC = `RUBRIC TRẠM 1 (tổng 100đ):
+1. Đầy đủ cấu trúc (20đ): đủ 5 mục chiến lược · định dạng · chủ đề · cách thể hiện · ý tưởng.
+2. Sáng tạo (20đ): ý tưởng mới, khác biệt, không chung chung.
+3. Tính thực tiễn (30đ): khả thi, quay được thành video ngay, phù hợp ngành hàng & khách mục tiêu.
+4. Số lượng (10đ): ≥5 cách thể hiện, ≥3 ý tưởng/cách.
+5. Đa dạng & logic (20đ): các cách thể hiện không lặp, ý tưởng bám chủ đề & chiến lược.`;
+
+async function grade(){
+  const bai = collectM1();
+  const btn = document.getElementById('btn-grade');
+  const res = document.getElementById('result');
+  // validation cứng
+  if(!bai.chienluoc||!bai.dinhdang||!bai.chude){ res.innerHTML='<div class="fb bad">⚠️ Chưa chọn đủ Chiến lược / Định dạng / Chủ đề.</div>'; return; }
+  const nCach = bai.matrix.length, nIdeaOK = bai.matrix.filter(x=>x.ytuong.length>=3).length;
+  if(nCach<2){ res.innerHTML='<div class="fb bad">⚠️ Cần ít nhất vài cách thể hiện có nội dung. Mục tiêu ≥5.</div>'; return; }
+
+  const key = S.keys.gemini;
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Đang chấm...';
+  let out;
+  try{
+    if(key){ out = await gradeGemini(bai, key); }
+    else { out = gradeLocal(bai); }
+  }catch(e){ out = gradeLocal(bai); out.note = '(Gemini lỗi/'+e.message+' → đã chấm offline)'; }
+  btn.disabled = false; btn.textContent = '🧠 Nộp bài — AI chấm theo rubric';
+
+  S.dna.m1 = bai; S.dna.scores.m1 = out.total; save();
+  const pass = out.total>=70;
+  res.innerHTML = `
+    <div class="big" style="color:${pass?'var(--ac)':'var(--red)'}">${out.total}/100 ${pass?'— ĐẠT ✅':'— CHƯA ĐẠT'}</div>
+    <div class="score">
+      ${out.scores.map(s=>`<div class="sc"><b>${s.diem}</b><span>${s.tieuchi} /${s.max}</span></div>`).join('')}
+    </div>
+    <div class="fb ${pass?'':'bad'}">${out.feedback}${out.note?'\n'+out.note:''}</div>
+    ${pass?'<button class="btn" onclick="alert(\'Trạm 2 sẽ có trong bản full — MVP này demo Trạm 1. Channel DNA của bạn đã lưu!\')">Mở Trạm 2 →</button>':'<p class="mut">Sửa theo feedback rồi nộp lại — không giới hạn số lần ở bản MVP.</p>'}`;
+  res.scrollIntoView({behavior:'smooth'});
+}
+
+function gradeLocal(b){
+  // heuristic offline: cấu trúc + số lượng đếm được; sáng tạo/thực tiễn ước lượng theo độ dài & đa dạng
+  let s1 = (b.chienluoc&&b.dinhdang&&b.chude&&b.matrix.length&&b.matrix.some(x=>x.ytuong.length))?20:10;
+  let nC = b.matrix.length, ok3 = b.matrix.filter(x=>x.ytuong.length>=3).length;
+  let s4 = (nC>=5&&ok3>=5)?10:Math.round(10*Math.min(nC/5,ok3/5));
+  let allIdeas = b.matrix.flatMap(x=>x.ytuong);
+  let avgLen = allIdeas.length?allIdeas.join('').length/allIdeas.length:0;
+  let s2 = Math.min(20, Math.round(avgLen/6)); // ý tưởng càng cụ thể càng dài
+  let s3 = Math.min(30, Math.round(avgLen/4));
+  let uniq = new Set(b.matrix.map(x=>x.cach.toLowerCase())).size;
+  let s5 = Math.round(20*uniq/Math.max(nC,1));
+  const total = s1+s2+s3+s4+s5;
+  return { total,
+    scores:[{tieuchi:'Cấu trúc',diem:s1,max:20},{tieuchi:'Sáng tạo',diem:s2,max:20},{tieuchi:'Thực tiễn',diem:s3,max:30},{tieuchi:'Số lượng',diem:s4,max:10},{tieuchi:'Đa dạng',diem:s5,max:20}],
+    feedback:`Chấm OFFLINE (chưa kết nối Gemini — vào tab ⚡ Kết nối để AI chấm sâu).\n• Số cách thể hiện: ${nC}/5 · cách đủ ≥3 ý tưởng: ${ok3}.\n• Mẹo nâng điểm: viết ý tưởng thành TIÊU ĐỀ VIDEO cụ thể (ai, làm gì, bối cảnh nào) thay vì mô tả chung; mỗi cách thể hiện thuộc 1 nhóm khác nhau (thử thách / review / drama / so sánh / xếp hạng).`};
+}
+
+async function gradeGemini(b, key){
+  const prompt = `Bạn là giám khảo khoá COREVIRAL, chấm bài Trạm 1 "Xác định Chiến lược & Định dạng kênh" CHẶT TAY theo rubric.\n${RUBRIC}\n\nBỐI CẢNH HỌC VIÊN (chấm "thực tiễn" phải đối chiếu dữ liệu thương hiệu này):\n${brandContext(4000)}\n\nBÀI NỘP:\nChiến lược: ${b.chienluoc}\nĐịnh dạng: ${b.dinhdang}\nChủ đề: ${b.chude}\nMa trận:\n${b.matrix.map((x,i)=>`${i+1}. ${x.cach}\n${x.ytuong.map(y=>'   - '+y).join('\n')}`).join('\n')}\n\nTrả về DUY NHẤT JSON (không markdown): {"scores":[{"tieuchi":"Cấu trúc","diem":n,"max":20},{"tieuchi":"Sáng tạo","diem":n,"max":20},{"tieuchi":"Thực tiễn","diem":n,"max":30},{"tieuchi":"Số lượng","diem":n,"max":10},{"tieuchi":"Đa dạng","diem":n,"max":20}],"total":n,"feedback":"3-6 câu tiếng Việt: điểm mạnh, điểm trừ cụ thể ở ô nào, và 2 gợi ý nâng điểm hành động được"}`;
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.2, responseMimeType:'application/json'}})
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const j = await r.json();
+  const txt = j.candidates[0].content.parts[0].text;
+  const out = JSON.parse(txt);
+  out.total = out.total ?? out.scores.reduce((a,s)=>a+s.diem,0);
+  return out;
+}
+
+/* ================= CONNECTIONS ================= */
+async function saveKey(name){
+  const v = document.getElementById('k-'+name).value.trim();
+  if(!v) return;
+  S.keys[name]=v; save();
+  const msg = document.getElementById('msg-'+name), st = document.getElementById('st-'+name);
+  msg.textContent='Đang test...';
+  try{
+    if(name==='gemini'){
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${v}`);
+      if(!r.ok) throw 0;
+    } else if(name==='apify'){
+      const r = await fetch(`https://api.apify.com/v2/users/me?token=${v}`);
+      if(!r.ok) throw 0;
+    }
+    st.textContent='● đã kết nối'; st.className='st-dot ok'; msg.textContent='✅ Key hợp lệ — đã lưu local.';
+  }catch(e){ st.textContent='● key lỗi'; st.className='st-dot no'; msg.textContent='❌ Key không hợp lệ hoặc bị chặn CORS — vẫn đã lưu, app sẽ thử khi chấm.'; }
+}
+
+/* ================= DNA ================= */
+function renderDNA(){ document.getElementById('dna-view').textContent = JSON.stringify(S.dna, null, 2); }
+function exportDNA(){
+  const blob = new Blob([JSON.stringify(S.dna,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='channel-dna.json'; a.click();
+}
+
+/* ================= INIT ================= */
+(function init(){
+  if(S.keys.gemini){ document.getElementById('k-gemini').value=S.keys.gemini; document.getElementById('st-gemini').textContent='● đã kết nối'; document.getElementById('st-gemini').className='st-dot ok'; }
+  if(S.keys.apify){ document.getElementById('k-apify').value=S.keys.apify; document.getElementById('st-apify').textContent='● đã kết nối'; document.getElementById('st-apify').className='st-dot ok'; }
+  const ob = S.dna.onboard||{};
+  if(ob.nganh){ document.getElementById('ob-nganh').value=ob.nganh; document.getElementById('ob-kenh').value=ob.kenh||''; document.getElementById('ob-kh').value=ob.khach||'';
+    document.getElementById('m1').style.display=''; document.getElementById('m2lock').style.display=''; }
+  if(S.dna.m1 && S.dna.m1.chude){
+    document.getElementById('m1-cl').value=S.dna.m1.chienluoc||''; document.getElementById('m1-dd').value=S.dna.m1.dinhdang||''; document.getElementById('m1-chude').value=S.dna.m1.chude||'';
+    const wrap=document.getElementById('m1-matrix'); wrap.innerHTML='';
+    (S.dna.m1.matrix||[]).forEach(x=>{ addCach(x.cach); const c=wrap.lastElementChild; const tas=c.querySelectorAll('textarea'); x.ytuong.forEach((y,i)=>{ if(tas[i]) tas[i].value=y; else { addIdea(c.querySelector('.btn')); c.querySelectorAll('textarea')[i].value=y; } }); });
+    if(!wrap.children.length) for(let i=0;i<5;i++) addCach();
+  }
+  renderDNA(); renderStations(); renderVault();
+  document.getElementById('grade-hint').textContent = S.keys.gemini ? 'Gemini đã kết nối — chấm sâu bằng AI.' : 'Chưa có Gemini key → chấm offline cơ bản. Vào tab ⚡ Kết nối để AI chấm thật.';
+})();
+</script>
+</body>
+</html>
