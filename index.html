@@ -586,7 +586,7 @@ function collectM1(){
     chienluoc: document.getElementById('m1-cl').value,
     dinhdang: document.getElementById('m1-dd').value,
     chude: document.getElementById('m1-chude').value.trim(),
-    matrix: [...document.querySelectorAll('.cách')].map(c=>({
+    matrix: [...document.querySelectorAll('#m1-matrix .cách')].map(c=>({
       cach: c.querySelector('.c-name').value.trim(),
       ytuong: [...c.querySelectorAll('textarea')].map(t=>t.value.trim()).filter(Boolean)
     })).filter(x=>x.cach)
