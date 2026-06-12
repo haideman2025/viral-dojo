@@ -19,3 +19,7 @@
 
 ## v0.1
 - Trạm 1 đầy đủ (matrix builder + AI grader/coach/autofill), Brand Vault, Connection Hub (Gemini/Apify/xlsx), Channel DNA export, progress localStorage.
+
+## v0.3 — 2026-06-12
+- Merge bản full (Trạm 1-6 + GENERATE v1 + Trạm 5 smart-hunt v2) với tab 🏭 SKULD (scorecard 1000đ, phân tích chuyên sâu 18 câu, liên kết ý tưởng)
+- Khôi phục index.html full bị ghi đè ở f720020

@@ -34,3 +34,9 @@ Single-file HTML + vanilla JS, không framework/build step. Gemini API (`gemini-
 
 ## Đóng góp
 Quy ước commit: `feat:` / `fix:` / `docs:` + mô tả tiếng Việt ngắn. Nguyên tắc bất biến + Definition of Done: xem `CLAUDE.md`.
+
+## 🏭 SKULD (v0.3)
+- Scorecard 1000đ/19 câu (2 bộ trọng số: Hình thức/Kết hợp & Kiến thức) chấm ý tưởng TRƯỚC khi quay + AI chấm từ mô tả
+- Dashboard xếp hạng ý tưởng (Xuất sắc ≥80% · Tốt · TB · Cần cải thiện)
+- Phân tích chuyên sâu 18 câu (Sản phẩm · Tone · Hình ảnh · Nhân vật) + AI điền từ Channel DNA
+- Liên kết ý tưởng (SKULD B3): viral gốc → 4 hướng biến thể → ý tưởng nâng cấp → đẩy vào Scorecard
