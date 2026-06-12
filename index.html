@@ -324,7 +324,12 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <h2>🧬 Channel DNA <span class="pill">file sống — lớn dần qua 6 trạm</span></h2>
     <p class="mut">Đây là toàn bộ "bộ gen" kênh của bạn. Hoàn thành 6 trạm → DNA đầy → cổng GENERATE dùng nó để sản xuất 30-day content pack + landing page.</p>
     <pre id="dna-view" style="background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:14px;font-size:12.5px;overflow:auto;max-height:420px"></pre>
-    <button class="btn ghost" onclick="exportDNA()">⬇ Tải Channel DNA (JSON)</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn ghost" onclick="exportDNA()">⬇ Tải Channel DNA (JSON)</button>
+      <label class="btn ghost" style="cursor:pointer">⬆ Nhập DNA (đổi máy)<input type="file" accept=".json" style="display:none" onchange="importDNA(this.files[0])"></label>
+      <button class="btn ghost" style="color:var(--red)" onclick="resetDNA()">🗑 Xoá toàn bộ</button>
+    </div>
+    <p class="mut" style="margin-top:8px">Nhập DNA giúp bạn chuyển tiến độ sang máy khác mà không mất bài. Xoá toàn bộ sẽ reset cả 6 trạm.</p>
   </div>
 </div>
 
@@ -682,6 +687,17 @@ function exportDNA(){
   const blob = new Blob([JSON.stringify(S.dna,null,2)],{type:'application/json'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='channel-dna.json'; a.click();
 }
+function importDNA(file){
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{ try{ const d=JSON.parse(e.target.result);
+      if(!d || typeof d!=='object' || !('scores' in d) && !('onboard' in d)) throw new Error('không phải file Channel DNA');
+      S.dna=d; S.dna.scores=S.dna.scores||{}; S.dna.brand=S.dna.brand||[]; save();
+      alert('✅ Đã nhập Channel DNA — tải lại trang để khôi phục toàn bộ form.'); location.reload();
+    }catch(err){ alert('❌ File không hợp lệ: '+err.message); } };
+  r.readAsText(file,'utf-8');
+}
+function resetDNA(){ if(confirm('Xoá TOÀN BỘ tiến độ & Channel DNA? Không hồi lại được. Nên Tải DNA backup trước.')){ localStorage.removeItem('dojo'); location.reload(); } }
 
 /* ================= COACH DÙNG CHUNG (Trạm 2-6) ================= */
 async function coachGeneric(num, baiText, btn, res){
