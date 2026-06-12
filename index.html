@@ -58,6 +58,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
   <div class="tabs">
     <button class="tab act" data-v="home">Dojo</button>
     <button class="tab" data-v="lib">📚 Tri thức</button>
+    <button class="tab" data-v="skuld">🏭 SKULD</button>
     <button class="tab" data-v="conn">⚡ Kết nối</button>
     <button class="tab" data-v="dna">🧬 Channel DNA</button>
   </div>
@@ -66,7 +67,6 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 <!-- ============ VIEW: HOME ============ -->
 <div id="v-home">
   <div class="station" id="stations"></div>
-  <div class="sec" id="overview" style="padding:14px 18px"></div>
 
   <!-- ONBOARD -->
   <div class="sec" id="onboard">
@@ -125,160 +125,9 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div id="result"></div>
   </div>
 
-  <!-- ===== TRẠM 2 · ĐỌC VỊ SERIES ===== -->
+  <!-- TRẠM 2 LOCKED -->
   <div class="sec" id="m2lock" style="display:none">
-    <div class="lock">🔒 <b>Trạm 2 · Đọc vị Series</b> — mở khi Trạm 1 đạt ≥70đ.<br><span class="mut">Trạm 2 dùng connector Apify để cào kênh mẫu và bạn tập "soi" series thật.</span></div>
-  </div>
-  <div class="sec" id="m2" style="display:none">
-    <h2>Trạm 2 · Đọc vị Series <span class="pill">Rubric 100đ · cần ≥70đ để mở Trạm 3</span></h2>
-    <details class="learn" open>
-      <summary style="cursor:pointer;font-weight:800;color:var(--ac);margin-bottom:8px">📖 Học nhanh 10 phút</summary>
-      <p><b>Series là vũ khí.</b> Nội dung viral bền vững đi theo <b>series</b> — chuỗi video <b>cùng một format lặp lại</b>. Khán giả nhớ format → quay lại → kênh lên đều. Việc của bạn ở trạm này: tập "soi" để phân biệt đâu là series thật, đâu chỉ là video lẻ.</p>
-      <p>Mỗi series tách thành <b>Chủ đề</b> (nói về cái gì) + <b>Cách thể hiện</b> (format: phỏng vấn đường phố, chấm điểm, thử thách, nhật ký...) — nối tiếp tư duy 2 lớp ở Trạm 1.</p>
-      <p><b>4 kênh mẫu để luyện:</b>
-        <a href="https://www.tiktok.com/@maxklymenko" target="_blank" style="color:var(--ac)">@maxklymenko</a> ·
-        <a href="https://www.tiktok.com/@tussalty" target="_blank" style="color:var(--ac)">@tussalty</a> ·
-        <a href="https://www.tiktok.com/@bradyyourtutor" target="_blank" style="color:var(--ac)">@bradyyourtutor</a> ·
-        <a href="https://www.tiktok.com/@davidcohen" target="_blank" style="color:var(--ac)">@davidcohen</a></p>
-      <p><b>Ví dụ series đã bóc:</b> @maxklymenko "Phỏng vấn sự nghiệp người lạ" / "Chấm điểm các nước trên 10 hạng mục" · @davidcohen "Chấm điểm món ăn (cuối có điểm)" · @bradyyourtutor "2 người thi đoán tên người nổi tiếng".</p>
-      <p><b>Bài nộp:</b> với mỗi kênh tìm <b>≥3 series</b>, mỗi series ghi: <b>link video đại diện · Chủ đề · Cách thể hiện</b>.</p>
-      <p>📚 <a href="coreviral-tri-thuc.html#lotrinh" target="_blank" style="color:var(--ac)">Học bản ĐẦY ĐỦ Module 2 (lý thuyết + ví dụ + rubric gốc) ↗</a></p>
-    </details>
-
-    <div class="note" id="m2-apify-note" style="display:none">🕷 <b>Apify đã kết nối.</b> Dán username kênh (vd <i>maxklymenko</i>) rồi bấm "Cào kênh" để app lấy ~20 video gần nhất giúp bạn gom series nhanh hơn.</div>
-    <div class="row" style="margin:10px 0">
-      <div><label>Cào nhanh 1 kênh (tùy chọn — cần Apify)</label><input id="m2-scrape-user" placeholder="username không có @ — vd: maxklymenko"></div>
-      <div style="flex:0 0 auto;display:flex;align-items:flex-end"><button class="btn ghost" id="m2-scrape-btn" onclick="scrapeProfile()">🕷 Cào kênh</button></div>
-    </div>
-    <div id="m2-scrape-out" class="mut" style="font-size:13px;margin-bottom:10px"></div>
-
-    <h3 style="font-size:14px;margin:14px 0 8px">Bảng series <span class="pill">≥3 series/kênh · 4 kênh</span></h3>
-    <div id="m2-channels"></div>
-    <button class="btn ghost sm" onclick="addChannel()">+ Thêm kênh</button>
-
-    <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <button class="btn ghost" id="m2-auto" onclick="autoFill2()">🤖 AI tự làm hết</button>
-      <button class="btn ghost" id="m2-coach" onclick="coach2()">💬 AI hướng dẫn</button>
-      <button class="btn" id="m2-grade" onclick="grade2()">🧠 Nộp bài — AI chấm</button>
-    </div>
-    <div id="m2-result"></div>
-  </div>
-
-  <!-- ===== TRẠM 3 · KEYWORD BRAND & INSIGHT SALE ===== -->
-  <div class="sec" id="m3lock" style="display:none"><div class="lock">🔒 <b>Trạm 3 · Keyword Brand & Insight Sale</b> — mở khi Trạm 2 đạt ≥70đ.</div></div>
-  <div class="sec" id="m3" style="display:none">
-    <h2>Trạm 3 · Keyword Brand &amp; Insight Sale <span class="pill">Rubric 100đ · cần ≥70đ để mở Trạm 4</span></h2>
-    <details class="learn" open>
-      <summary style="cursor:pointer;font-weight:800;color:var(--ac);margin-bottom:8px">📖 Học nhanh 10 phút</summary>
-      <p><b>Keyword Brand</b> = thông điệp cốt lõi kênh muốn khán giả NHỚ (≥3 từ ngắn gọn, vd: <i>Nâng tầm · Đáng tiền · Thiết kế</i>). Mỗi thông điệp cần <b>≥5 ý tưởng video chứng minh</b>.</p>
-      <p><b>Insight Sale 5 tầng</b> — bản đồ tâm lý mua hàng: <b>Nỗi đau → Rào cản → Mong đợi → Tự hào → Thúc đẩy</b>. Đây là xương sống mọi hook bán hàng về sau.</p>
-      <p><b>Signature</b> = dấu ấn riêng: phong cách quay, cách nói, màu sắc, nhạc nền, tagline.</p>
-      <p>📚 <a href="coreviral-tri-thuc.html#lotrinh" target="_blank" style="color:var(--ac)">Học ĐẦY ĐỦ Module 3 + rubric gốc ↗</a></p>
-    </details>
-    <div style="margin:10px 0"><label>Keyword Brand <span class="pill">≥3, cách nhau bởi dấu phẩy</span></label><input id="m3-kwbrand" placeholder="VD: Nâng tầm, Đáng tiền, Khoa học, Nam tính"></div>
-    <h3 style="font-size:14px;margin:14px 0 8px">Bản đồ Insight Sale 5 tầng</h3>
-    <div id="m3-insight"></div>
-    <h3 style="font-size:14px;margin:16px 0 8px">Tuyến nội dung chứng minh <span class="pill">≥5 ý tưởng / mỗi keyword brand</span></h3>
-    <div id="m3-proof"></div>
-    <button class="btn ghost sm" onclick="addProof()">+ Thêm thông điệp cần chứng minh</button>
-    <div style="margin:14px 0 0"><label>Dấu ấn riêng (signature)</label><textarea id="m3-sig" placeholder="Phong cách quay / cách nói / màu sắc / nhạc nền / tagline..."></textarea></div>
-    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn ghost" id="m3-auto" onclick="autoFill3()">🤖 AI tự làm hết</button>
-      <button class="btn ghost" id="m3-coach" onclick="coach3()">💬 AI hướng dẫn</button>
-      <button class="btn" id="m3-grade" onclick="grade3()">🧠 Nộp bài — AI chấm</button>
-    </div>
-    <div id="m3-result"></div>
-  </div>
-
-  <!-- ===== TRẠM 4 · BỘ TỪ KHÓA ===== -->
-  <div class="sec" id="m4lock" style="display:none"><div class="lock">🔒 <b>Trạm 4 · Bộ từ khóa</b> — mở khi Trạm 3 đạt ≥70đ.</div></div>
-  <div class="sec" id="m4" style="display:none">
-    <h2>Trạm 4 · Bộ từ khóa <span class="pill">Rubric 100đ · cần ≥70đ để mở Trạm 5</span></h2>
-    <details class="learn" open>
-      <summary style="cursor:pointer;font-weight:800;color:var(--ac);margin-bottom:8px">📖 Học nhanh 10 phút</summary>
-      <p>Tạo "kho đạn" từ khóa đa chiều để Trạm 5 đi tìm video viral. Gom keyword từ <b>8 danh mục</b>, mỗi danh mục <b>≥5 keyword</b>, tổng <b>≥30</b>. Đây chính là các từ bạn sẽ gõ vào ô tìm kiếm TikTok/Douyin.</p>
-      <p>📚 <a href="coreviral-tri-thuc.html#lotrinh" target="_blank" style="color:var(--ac)">Học ĐẦY ĐỦ Module 4 + rubric gốc ↗</a></p>
-    </details>
-    <div id="m4-cats"></div>
-    <div class="note" id="m4-count" style="margin-top:10px"></div>
-    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn ghost" id="m4-auto" onclick="autoFill4()">🤖 AI tự làm hết</button>
-      <button class="btn ghost" id="m4-coach" onclick="coach4()">💬 AI hướng dẫn</button>
-      <button class="btn" id="m4-grade" onclick="grade4()">🧠 Nộp bài — AI chấm</button>
-    </div>
-    <div id="m4-result"></div>
-  </div>
-
-  <!-- ===== TRẠM 5 · RESEARCH VIRAL ===== -->
-  <div class="sec" id="m5lock" style="display:none"><div class="lock">🔒 <b>Trạm 5 · Research nội dung viral</b> — mở khi Trạm 4 đạt ≥70đ.</div></div>
-  <div class="sec" id="m5" style="display:none">
-    <h2>Trạm 5 · Research nội dung viral <span class="pill">Rubric 100đ · trạm "ăn tiền"</span></h2>
-    <details class="learn" open>
-      <summary style="cursor:pointer;font-weight:800;color:var(--ac);margin-bottom:8px">📖 Học nhanh 10 phút</summary>
-      <p>Dùng bộ từ khóa (Trạm 4) đi tìm video <b>ĐÃ viral</b> để học công thức. Ngưỡng: <b>≥500.000 view</b> hoặc <b>≥35.000 tim</b>, mục tiêu <b>≥20 video</b>.</p>
-      <p>⭐ <b>Ưu tiên điểm cao (50/100):</b> dạng <b>series</b> + chủ đề <b>Thử nghiệm / Thử thách / Xếp hạng / Chấm điểm</b>.</p>
-      <p><b>Luật nguồn theo định dạng kênh:</b> Hình thức/Kết hợp → tìm video <b>nước ngoài</b>; Kiến thức → phương Đông/VN.</p>
-      <p>📚 <a href="coreviral-tri-thuc.html#lotrinh" target="_blank" style="color:var(--ac)">Module 5 ↗</a> · <a href="coreviral-tri-thuc.html#case" target="_blank" style="color:var(--ac)">13 case study mẫu ↗</a></p>
-    </details>
-    <div id="m5-rule" class="note" style="display:none"></div>
-    <div class="row" style="margin:10px 0">
-      <div><label>Chọn keyword đi săn (từ kho Trạm 4)</label><select id="m5-kw" multiple size="4" style="height:auto"></select></div>
-      <div style="flex:0 0 auto;display:flex;align-items:flex-end;gap:8px">
-        <button class="btn" id="m5-smart-btn" onclick="huntSmart()">⚡ Tự săn + lọc thông minh</button>
-        <button class="btn ghost" id="m5-scrape-btn" onclick="huntViral()">🕷 Săn (thủ công)</button>
-      </div>
-    </div>
-    <p class="mut" id="m5-smart-hint" style="font-size:12px;margin:-2px 0 8px">⚡ 1-click: chấm lại video sẵn có → tự săn thêm tới ≥20 video đạt chuẩn → loại nhiễu, sắp xếp. Bạn chỉ việc xem lại & nộp. (Cần Gemini; săn thêm cần Apify.)</p>
-    <p class="mut" id="m5-scrape-msg" style="font-size:12.5px"></p>
-    <h3 style="font-size:14px;margin:14px 0 8px">Bảng research <span class="pill">≥20 video · lọc ≥500k view / 35k tim</span></h3>
-    <div id="m5-table"></div>
-    <button class="btn ghost sm" onclick="addVideo()">+ Thêm video (nhập tay)</button>
-    <button class="btn ghost sm" id="m5-del-rej" onclick="deleteRejected()" style="display:none;margin-left:8px">🗑 Xoá hết video bị loại</button>
-    <button class="btn ghost sm" onclick="resetScanM5()" style="margin-left:8px">🔄 Reset quét</button>
-    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn ghost" id="m5-translate" onclick="translateRows()">🌐 Dịch + phân loại bằng AI</button>
-      <button class="btn ghost" id="m5-coach" onclick="coach5()">💬 AI hướng dẫn</button>
-      <button class="btn" id="m5-grade" onclick="grade5()">🧠 Nộp bài — AI chấm</button>
-    </div>
-    <div id="m5-result"></div>
-  </div>
-
-  <!-- ===== TRẠM 6 · PHÂN TÍCH & NÂNG CẤP ===== -->
-  <div class="sec" id="m6lock" style="display:none"><div class="lock">🔒 <b>Trạm 6 · Phân tích &amp; Nâng cấp</b> — mở khi Trạm 5 đạt ≥70đ.</div></div>
-  <div class="sec" id="m6" style="display:none">
-    <h2>Trạm 6 · Phân tích &amp; Liên kết (nâng cấp) <span class="pill">Rubric 100đ · cổng vào GENERATE</span></h2>
-    <details class="learn" open>
-      <summary style="cursor:pointer;font-weight:800;color:var(--ac);margin-bottom:8px">📖 Học nhanh 10 phút</summary>
-      <p>Từ video viral đã tìm (Trạm 5) → bóc <b>ĐÚNG điểm làm nên thành công</b> → <b>nâng cấp thành ý tưởng riêng</b> ghép insight sản phẩm mình. Phân tích <b>≥5 video</b>, nâng lên ≥1 ý tưởng cho doanh nghiệp.</p>
-      <p>📚 <a href="coreviral-tri-thuc.html#lotrinh" target="_blank" style="color:var(--ac)">Module 6 ↗</a></p>
-    </details>
-    <p class="mut">Chọn 5 video tốt nhất từ Trạm 5 để phân tích sâu:</p>
-    <div id="m6-cards"></div>
-    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn ghost" id="m6-coach" onclick="coach6()">💬 AI hướng dẫn</button>
-      <button class="btn" id="m6-grade" onclick="grade6()">🧠 Nộp bài — AI chấm</button>
-    </div>
-    <div id="m6-result"></div>
-  </div>
-
-  <!-- ===== CỔNG GENERATE ===== -->
-  <div class="sec" id="genlock" style="display:none"><div class="lock">🔒 <b>🚀 Cổng GENERATE</b> — mở khi cả 6 trạm đạt ≥70đ.<br><span class="mut">Channel DNA đầy → 1 nút sinh 30-day calendar + script + prompt ảnh/video.</span></div></div>
-  <div class="sec" id="gen" style="display:none">
-    <h2>🚀 Cổng GENERATE <span class="pill">Channel DNA → 30 ngày content</span></h2>
-    <p class="mut">Đọc toàn bộ Channel DNA của 6 trạm → AI sinh gói sản xuất: lịch 30 ngày, script 5-beat, prompt ảnh (EN) & prompt video Veo 3 (EN). Sinh theo từng bước, regenerate từng phần được.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0">
-      <button class="btn" id="gen-all" onclick="generateAll()">✨ Sinh trọn gói</button>
-      <button class="btn ghost sm" onclick="genPart('calendar')">↻ Lịch 30 ngày</button>
-      <button class="btn ghost sm" onclick="genPart('scripts')">↻ 10 script 5-beat</button>
-      <button class="btn ghost sm" onclick="genPart('prompts')">↻ 10 prompt ảnh+video</button>
-    </div>
-    <div id="gen-prog"></div>
-    <div id="gen-out"></div>
-    <div id="gen-actions" style="display:none;margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn ghost" onclick="downloadPack('md')">⬇ Tải .md</button>
-      <button class="btn ghost" onclick="downloadPack('json')">⬇ Tải .json</button>
-      <button class="btn ghost" onclick="openPackTab()">↗ Mở tab xem đẹp</button>
-    </div>
+    <div class="lock">🔒 <b>Trạm 2 · Đọc vị Series</b> — mở khi Trạm 1 đạt ≥70đ.<br><span class="mut">Trạm 2 sẽ dùng connector Apify để cào 4 kênh mẫu và bạn tập "soi" series thật.</span></div>
   </div>
 </div>
 
@@ -294,6 +143,72 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <div class="cc"><h3>🛠 Bộ công cụ AI + Thư viện link</h3><p class="mut">20+ công cụ & mẫu, thư viện link đầy đủ từ file Lark gốc, và hướng dẫn cách thực hành.</p><a href="coreviral-tri-thuc.html#toolkit" target="_blank"><button class="btn sm">Toolkit ↗</button></a> <a href="coreviral-tri-thuc.html#thuvien" target="_blank"><button class="btn sm ghost">Thư viện ↗</button></a> <a href="coreviral-tri-thuc.html#thuchanh" target="_blank"><button class="btn sm ghost">Cách thực hành ↗</button></a></div>
     </div>
     <p class="mut" style="margin-top:10px">💡 File bài tập gốc (Lark/Sheet 13 sheet MẪU + bài làm) vẫn dùng song song — bản full sẽ sync 2 chiều qua connector Google Sheets.</p>
+  </div>
+</div>
+
+<!-- ============ VIEW: SKULD (Nhà máy vận hành 9 bước) ============ -->
+<div id="v-skuld" style="display:none">
+  <div class="note">🏭 <b>SKULD = nhà máy vận hành</b> sau 6 trạm tư duy: Phân tích → Liên kết ý tưởng → Phân cấp → Plan → Kịch bản → Đo lường. MVP này triển khai 3 vũ khí định lượng: <b>Scorecard 1000đ</b> chấm ý tưởng TRƯỚC khi quay · <b>Phân tích chuyên sâu 18 câu</b> · <b>Liên kết ý tưởng</b>. (B5–B9 Plan/Kịch bản sẽ nằm trong cổng GENERATE.)</div>
+
+  <!-- A. SCORECARD 1000đ -->
+  <div class="sec">
+    <h2><span class="tag">SKULD A</span> Chấm ý tưởng video — Scorecard 1000 điểm <span class="pill">19 câu · 2 bộ trọng số theo định dạng</span></h2>
+    <div class="row">
+      <div><label>Định dạng</label><select id="sk-fmt" onchange="renderScorecard()"><option value="htkh">Hình thức / Kết hợp</option><option value="kt">Kiến thức</option></select></div>
+      <div><label>Tiêu đề ý tưởng/video</label><input id="sk-title" placeholder="VD: Thử thách 7 ngày chỉ dùng bọt ONIIZ"></div>
+      <div><label>Link (nếu có)</label><input id="sk-link" placeholder="https://..."></div>
+    </div>
+    <div style="margin:8px 0"><label>Mô tả ý tưởng (để AI chấm)</label><textarea id="sk-desc" placeholder="Mô tả ngắn: ai xuất hiện, làm gì, bối cảnh, âm thanh, kỹ thuật..."></textarea></div>
+    <div id="sk-checklist"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <button class="btn ghost" id="sk-ai" onclick="skAIScore()">🤖 AI chấm từ mô tả</button>
+      <button class="btn" onclick="skSave()">💾 Lưu vào bảng xếp hạng</button>
+      <span class="big" style="margin:0;font-size:26px" id="sk-total">0/1000</span>
+      <span class="pill" id="sk-rank">—</span>
+    </div>
+    <div id="sk-ai-fb"></div>
+  </div>
+
+  <!-- DASHBOARD RANK -->
+  <div class="sec">
+    <h2><span class="tag">SKULD 📊</span> Dashboard xếp hạng ý tưởng <span class="pill">Xuất sắc ≥80% · Tốt 60–79% · TB 40–59% · Cần cải thiện &lt;40%</span></h2>
+    <div id="sk-board" class="mut">Chưa có ý tưởng nào được chấm.</div>
+  </div>
+
+  <!-- B. PHÂN TÍCH CHUYÊN SÂU -->
+  <div class="sec">
+    <h2><span class="tag">SKULD B</span> Phân tích chuyên sâu — 18 câu cho video top <span class="pill">4 nhóm: Sản phẩm · Tone · Hình ảnh · Nhân vật</span></h2>
+    <div class="row"><div><label>Chọn video đã chấm</label><select id="dp-pick" onchange="renderDpForm()"></select></div></div>
+    <div id="dp-form"></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn ghost" onclick="dpAI()">🤖 AI điền từ Channel DNA + mô tả</button>
+      <button class="btn" onclick="dpSave()">💾 Lưu phân tích</button>
+    </div>
+    <div id="dp-fb"></div>
+  </div>
+
+  <!-- C. LIÊN KẾT Ý TƯỞNG -->
+  <div class="sec">
+    <h2><span class="tag">SKULD C</span> Liên kết ý tưởng — nâng cấp thành format của mình</h2>
+    <div class="row">
+      <div><label>Tệp khách hàng</label><input id="lk-tep" placeholder="VD: Nam 18-30 mua trên TikTok Shop"></div>
+      <div><label>Ý tưởng ban đầu (từ video viral)</label><input id="lk-goc" placeholder="VD: Thử thách xin 5 món đồ giá 0 đồng"></div>
+    </div>
+    <div style="margin:8px 0"><label>Điểm làm nên thành công</label><textarea id="lk-diem" placeholder="VD: 3 nhân vật từ chối → tăng độ khó; POV người xem là người thách..."></textarea></div>
+    <div class="row">
+      <div><label>→ Thử thách nào?</label><textarea id="lk-tt"></textarea></div>
+      <div><label>→ Thử nghiệm nào?</label><textarea id="lk-tn"></textarea></div>
+    </div>
+    <div class="row">
+      <div><label>→ Xếp hạng / chấm điểm nào?</label><textarea id="lk-xh"></textarea></div>
+      <div><label>→ Kết hợp tương phản nào?</label><textarea id="lk-tp"></textarea></div>
+    </div>
+    <div style="margin:8px 0"><label>💎 Ý TƯỞNG NÂNG CẤP (chốt)</label><textarea id="lk-up" style="border-color:var(--warn)"></textarea></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn ghost" onclick="lkAI()">🤖 AI đề xuất 4 hướng + ý tưởng nâng cấp</button>
+      <button class="btn" onclick="lkSave()">💾 Lưu → đưa vào kho ý tưởng chấm điểm</button>
+    </div>
+    <div id="lk-fb"></div>
   </div>
 </div>
 
@@ -330,12 +245,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <h2>🧬 Channel DNA <span class="pill">file sống — lớn dần qua 6 trạm</span></h2>
     <p class="mut">Đây là toàn bộ "bộ gen" kênh của bạn. Hoàn thành 6 trạm → DNA đầy → cổng GENERATE dùng nó để sản xuất 30-day content pack + landing page.</p>
     <pre id="dna-view" style="background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:14px;font-size:12.5px;overflow:auto;max-height:420px"></pre>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn ghost" onclick="exportDNA()">⬇ Tải Channel DNA (JSON)</button>
-      <label class="btn ghost" style="cursor:pointer">⬆ Nhập DNA (đổi máy)<input type="file" accept=".json" style="display:none" onchange="importDNA(this.files[0])"></label>
-      <button class="btn ghost" style="color:var(--red)" onclick="resetDNA()">🗑 Xoá toàn bộ</button>
-    </div>
-    <p class="mut" style="margin-top:8px">Nhập DNA giúp bạn chuyển tiến độ sang máy khác mà không mất bài. Xoá toàn bộ sẽ reset cả 6 trạm.</p>
+    <button class="btn ghost" onclick="exportDNA()">⬇ Tải Channel DNA (JSON)</button>
   </div>
 </div>
 
@@ -347,118 +257,27 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 const S = JSON.parse(localStorage.getItem('dojo')||'{}');
 S.dna = S.dna || {onboard:{}, m1:{}, scores:{}};
 S.keys = S.keys || {};
-const PASS = 70; // điểm tối thiểu mở trạm sau
-function save(){ localStorage.setItem('dojo', JSON.stringify(S)); renderDNA(); renderStations(); refreshGates(); renderOverview(); if(typeof ensureDynamic==='function') ensureDynamic(); }
-
-/* ================= GEMINI HELPER (dùng chung mọi trạm) ================= */
-const GEMINI_MODEL = 'gemini-2.5-flash';
-async function geminiCall(prompt, opt){
-  opt = opt || {};
-  const key = S.keys.gemini;
-  if(!key) throw new Error('NO_KEY');
-  const cfg = { temperature: opt.temp==null?0.4:opt.temp };
-  if(opt.json) cfg.responseMimeType = 'application/json';
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,{
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:cfg})
-  });
-  if(!r.ok) throw new Error('HTTP '+r.status);
-  const txt = (((await r.json()).candidates||[])[0]||{}).content?.parts?.[0]?.text || '';
-  if(!txt) throw new Error('Phản hồi rỗng');
-  return opt.json ? JSON.parse(txt) : txt;
-}
+function save(){ localStorage.setItem('dojo', JSON.stringify(S)); renderDNA(); renderStations(); }
 
 /* ================= NAV ================= */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act')); t.classList.add('act');
-  ['home','lib','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
+  ['home','lib','skuld','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
+  if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); }
 });
 
-/* ================= STATIONS BAR + GATES (data-driven) ================= */
+/* ================= STATIONS BAR ================= */
 const ST_NAMES = ['1 Nền móng','2 Series','3 Insight','4 Keyword','5 Research','6 Nâng cấp','🚀 GENERATE'];
-const sc = n => S.dna.scores['m'+n] || 0;
-// điều kiện MỞ KHÓA từng trạm (output trạm trước là input trạm sau)
-const UNLOCK = [
-  () => !!(S.dna.onboard && S.dna.onboard.nganh), // Trạm 1: cần onboard
-  () => sc(1) >= PASS,
-  () => sc(2) >= PASS,
-  () => sc(3) >= PASS,
-  () => sc(4) >= PASS,
-  () => sc(5) >= PASS,
-  () => [1,2,3,4,5,6].every(n => sc(n) >= PASS) // GENERATE: cả 6 trạm đạt
-];
 function renderStations(){
-  const el = document.getElementById('stations'); if(!el) return; el.innerHTML='';
+  const el = document.getElementById('stations'); el.innerHTML='';
+  const passed1 = (S.dna.scores.m1||0) >= 70;
   ST_NAMES.forEach((n,i)=>{
     const d = document.createElement('div'); d.className='st';
-    const unlocked = UNLOCK[i]();
-    if(i<6){
-      const s = S.dna.scores['m'+(i+1)];
-      if(s>=PASS) d.classList.add('done'); else if(unlocked) d.classList.add('cur');
-      d.innerHTML = n + (s!=null ? `<br><b>${s}đ</b>` : (unlocked?'':'<br>🔒'));
-    } else {
-      if(unlocked) d.classList.add('cur');
-      d.innerHTML = n + (unlocked?'<br>✨ sẵn sàng':'<br>🔒');
-    }
+    if(i===0 && passed1) d.classList.add('done');
+    else if(i===0 && S.dna.onboard.nganh) d.classList.add('cur');
+    d.innerHTML = n + (i===0 && S.dna.scores.m1 ? `<br><b>${S.dna.scores.m1}đ</b>` : (i>0?'<br>🔒':''));
     el.appendChild(d);
   });
-}
-// hiện section trạm đã mở, ẩn ô khóa tương ứng
-function refreshGates(){
-  for(let i=1;i<=6;i++){
-    const sec=document.getElementById('m'+i), lock=document.getElementById('m'+i+'lock');
-    const open = UNLOCK[i-1]();
-    if(sec) sec.style.display = open?'':'none';
-    if(lock) lock.style.display = open?'none':'';
-  }
-  const gen=document.getElementById('gen'), genlock=document.getElementById('genlock');
-  const ready = UNLOCK[6]();
-  if(gen) gen.style.display = ready?'':'none';
-  if(genlock) genlock.style.display = ready?'none':'';
-}
-
-/* ================= CHẤM ĐIỂM DÙNG CHUNG ================= */
-function scoreCardHTML(out, pass){
-  return `<div class="big" style="color:${pass?'var(--ac)':'var(--red)'}">${out.total}/100 ${pass?'— ĐẠT ✅':'— CHƯA ĐẠT'}</div>
-    <div class="score">${(out.scores||[]).map(s=>`<div class="sc"><b>${s.diem}</b><span>${s.tieuchi} /${s.max}</span></div>`).join('')}</div>
-    <div class="fb ${pass?'':'bad'}">${out.feedback||''}${out.note?'\n'+out.note:''}</div>`;
-}
-// runner chấm chung cho Trạm 2-6: tự gọi Gemini theo rubric nguyên văn + brandContext, lưu DNA, mở trạm sau
-async function runGrade(o){
-  const btn=o.btn, res=o.res, old=btn.textContent;
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Đang chấm...';
-  let out;
-  try{
-    if(S.keys.gemini){
-      const prompt = `Bạn là giám khảo khóa COREVIRAL, chấm bài Trạm ${o.num} "${o.title}" CHẶT TAY, đúng rubric dưới (giữ NGUYÊN tiêu chí & thang điểm).\n${o.rubric}\n\nBỐI CẢNH THƯƠNG HIỆU (chấm "thực tiễn/bám insight" phải đối chiếu dữ liệu này):\n${brandContext(3500)}\n\nBÀI NỘP:\n${o.baiText}\n\nTrả về DUY NHẤT JSON (không markdown): {"scores":[${o.scoresShape}],"total":n,"feedback":"3-6 câu tiếng Việt: điểm mạnh, điểm trừ cụ thể ở mục nào, 2 gợi ý nâng điểm hành động được"}`;
-      out = await geminiCall(prompt,{json:true,temp:0.2});
-      out.total = out.total!=null ? out.total : (out.scores||[]).reduce((a,s)=>a+(s.diem||0),0);
-    } else { out = o.local(); }
-  }catch(e){ out = o.local(); out.note = '(Gemini lỗi/'+e.message+' → đã chấm offline cơ bản)'; }
-  btn.disabled=false; btn.textContent=old;
-  S.dna['m'+o.num]=o.bai; S.dna.scores['m'+o.num]=out.total; save();
-  const pass = out.total>=PASS;
-  res.innerHTML = scoreCardHTML(out,pass) + (pass
-    ? `<button class="btn" onclick="document.getElementById('${o.nextId}').scrollIntoView({behavior:'smooth'})">${o.nextLabel} →</button>`
-    : '<p class="mut">Sửa theo feedback rồi nộp lại — không giới hạn số lần ở bản MVP.</p>');
-  res.scrollIntoView({behavior:'smooth'});
-}
-
-/* ================= TỔNG QUAN TIẾN ĐỘ ================= */
-function renderOverview(){
-  const el = document.getElementById('overview'); if(!el) return;
-  const done = [1,2,3,4,5,6].filter(n=>sc(n)>=PASS).length;
-  const pct = Math.round(done/6*100);
-  // trạm đang dở = trạm đã mở khóa nhỏ nhất chưa đạt
-  let next=0; for(let i=1;i<=6;i++){ if(UNLOCK[i-1]() && sc(i)<PASS){ next=i; break; } }
-  el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <b>Tiến độ kênh: ${done}/6 trạm đạt chuẩn</b>
-      <span class="mut">${[1,2,3,4,5,6].map(n=>sc(n)?`T${n}:${sc(n)}đ`:`T${n}:—`).join(' · ')}</span>
-    </div>
-    <div class="prog"><i style="width:${pct}%"></i></div>
-    ${next?`<div style="margin-top:8px"><button class="btn sm" onclick="document.getElementById('m${next}').scrollIntoView({behavior:'smooth'})">▶ Tiếp tục Trạm ${next}</button></div>`
-          :(done===6?`<div style="margin-top:8px"><button class="btn sm" onclick="document.getElementById('gen').scrollIntoView({behavior:'smooth'})">🚀 Mở cổng GENERATE</button></div>`:'')}`;
 }
 
 /* ================= BRAND VAULT ================= */
@@ -592,7 +411,7 @@ function collectM1(){
     chienluoc: document.getElementById('m1-cl').value,
     dinhdang: document.getElementById('m1-dd').value,
     chude: document.getElementById('m1-chude').value.trim(),
-    matrix: [...document.querySelectorAll('#m1-matrix .cách')].map(c=>({
+    matrix: [...document.querySelectorAll('.cách')].map(c=>({
       cach: c.querySelector('.c-name').value.trim(),
       ytuong: [...c.querySelectorAll('textarea')].map(t=>t.value.trim()).filter(Boolean)
     })).filter(x=>x.cach)
@@ -633,7 +452,7 @@ async function grade(){
       ${out.scores.map(s=>`<div class="sc"><b>${s.diem}</b><span>${s.tieuchi} /${s.max}</span></div>`).join('')}
     </div>
     <div class="fb ${pass?'':'bad'}">${out.feedback}${out.note?'\n'+out.note:''}</div>
-    ${pass?'<button class="btn" onclick="document.getElementById(\'m2\').scrollIntoView({behavior:\'smooth\'})">Mở Trạm 2 →</button>':'<p class="mut">Sửa theo feedback rồi nộp lại — không giới hạn số lần ở bản MVP.</p>'}`;
+    ${pass?'<button class="btn" onclick="alert(\'Trạm 2 sẽ có trong bản full — MVP này demo Trạm 1. Channel DNA của bạn đã lưu!\')">Mở Trạm 2 →</button>':'<p class="mut">Sửa theo feedback rồi nộp lại — không giới hạn số lần ở bản MVP.</p>'}`;
   res.scrollIntoView({behavior:'smooth'});
 }
 
@@ -668,6 +487,167 @@ async function gradeGemini(b, key){
   return out;
 }
 
+/* ================= SKULD ================= */
+S.dna.skuld = S.dna.skuld || {scored:[], deep:{}, links:[]};
+const SK_Q = [
+ ['CHỦ ĐỀ','Chủ đề mang lại GIÁ TRỊ không?'],
+ ['CHỦ ĐỀ','Chủ đề có tính DRAMA / TREND không?'],
+ ['Nội dung nhiều người quan tâm','Nội dung có yếu tố THỬ NGHIỆM không?'],
+ ['Nội dung nhiều người quan tâm','Nội dung có yếu tố THỬ THÁCH không?'],
+ ['Nội dung nhiều người quan tâm','Nội dung có yếu tố XẾP HẠNG / CHẤM ĐIỂM không?'],
+ ['Kỹ thuật','Có kỹ thuật TƯƠNG PHẢN không?'],
+ ['Kỹ thuật','Có kỹ thuật NGẪU NHIÊN không?'],
+ ['Tự nhiên / Chân thật','Thể hiện sự TỰ NHIÊN / CHÂN THẬT không?'],
+ ['Nhân vật','Nhân vật có CHẤT ĐỜI không? (Bác sĩ, thợ sửa xe, chủ quán ăn...)'],
+ ['Nhân vật','Nhân vật có CÁ TÍNH RÕ RÀNG không? (Phong cách, giọng nói, ngôn ngữ cơ thể)'],
+ ['Góc quay','Góc quay video đang sử dụng có LẠ không?'],
+ ['Góc quay','Góc quay tạo được cảm giác đang Ở TRONG câu chuyện không?'],
+ ['Góc quay','Góc quay thể hiện sự TRỰC QUAN, TỰ NHIÊN không?'],
+ ['Bối cảnh','Bối cảnh này có HIẾM / LẠ với người xem không?'],
+ ['Bối cảnh','Bối cảnh tạo ra CẢM XÚC RÕ RÀNG ngay từ 3 giây đầu không?'],
+ ['Bối cảnh','PHÙ HỢP với bối cảnh nội dung không?'],
+ ['Âm thanh','Âm thanh mở đầu có THU HÚT không?'],
+ ['Âm thanh','Âm thanh TRUYỀN TẢI được cảm xúc mạnh hơn hình ảnh không?'],
+ ['Âm thanh','Âm thanh tạo được DẤU ẤN NHẬN DIỆN cho kênh không?']
+];
+const SK_W = {
+  htkh:[100,33,67,67,33,118,117,67,67,33,33,33,33,33,33,33,33,33,34],
+  kt:  [100,67,33,33,33,67,67,67,100,100,33,33,34,33,67,33,33,34,33]
+};
+function renderScorecard(keep){
+  const fmt = document.getElementById('sk-fmt').value, W = SK_W[fmt];
+  const prev = keep ? [...document.querySelectorAll('.sk-cb')].map(c=>c.checked) : null;
+  const el = document.getElementById('sk-checklist');
+  el.innerHTML = '<table><tr><th style="width:24%">NHÓM</th><th>CÂU HỎI ĐÁNH GIÁ</th><th style="width:70px">ĐIỂM</th><th style="width:60px">ĐẠT?</th></tr>' +
+    SK_Q.map((q,i)=>`<tr><td>${q[0]}</td><td>${q[1]}</td><td><b style="color:var(--warn)">${W[i]}</b></td><td style="text-align:center"><input type="checkbox" class="sk-cb" data-i="${i}" ${prev&&prev[i]?'checked':''} onchange="skCalc()" style="width:18px;height:18px"></td></tr>`).join('') + '</table>';
+  skCalc();
+}
+function skCalc(){
+  const W = SK_W[document.getElementById('sk-fmt').value];
+  let t=0; document.querySelectorAll('.sk-cb').forEach(c=>{ if(c.checked) t+=W[+c.dataset.i]; });
+  const pct = Math.round(t/10);
+  document.getElementById('sk-total').textContent = t+'/1000';
+  const r = pct>=80?['XUẤT SẮC ✅','var(--ac)']:pct>=60?['TỐT','var(--blue)']:pct>=40?['TRUNG BÌNH','var(--warn)']:['CẦN CẢI THIỆN','var(--red)'];
+  const rk = document.getElementById('sk-rank'); rk.textContent = pct+'% — '+r[0]; rk.style.color=r[1];
+  return t;
+}
+function skSave(){
+  const title = document.getElementById('sk-title').value.trim();
+  if(!title){ alert('Nhập tiêu đề ý tưởng đã'); return; }
+  const fmt=document.getElementById('sk-fmt').value;
+  S.dna.skuld.scored.push({title, link:document.getElementById('sk-link').value.trim(), desc:document.getElementById('sk-desc').value.trim(), fmt, score:skCalc(), checks:[...document.querySelectorAll('.sk-cb')].map(c=>c.checked), at:new Date().toISOString().slice(0,10)});
+  save(); renderBoard(); renderDpPick();
+  document.getElementById('sk-title').value=''; document.getElementById('sk-desc').value=''; document.getElementById('sk-link').value='';
+  document.querySelectorAll('.sk-cb').forEach(c=>c.checked=false); skCalc();
+}
+function renderBoard(){
+  const el = document.getElementById('sk-board'), L=[...S.dna.skuld.scored].sort((a,b)=>b.score-a.score);
+  if(!L.length){ el.textContent='Chưa có ý tưởng nào được chấm.'; return; }
+  el.innerHTML = '<table><tr><th>#</th><th>TIÊU ĐỀ</th><th>ĐỊNH DẠNG</th><th>ĐIỂM</th><th>%</th><th>XẾP LOẠI</th><th></th></tr>' +
+    L.map((x,i)=>{const p=Math.round(x.score/10), r=p>=80?'Xuất sắc':p>=60?'Tốt':p>=40?'Trung bình':'Cần cải thiện';
+      return `<tr><td>${i+1}</td><td>${x.title}${x.link?` <a href="${x.link}" target="_blank" style="color:var(--ac)">↗</a>`:''}</td><td>${x.fmt==='htkh'?'HT-KH':'Kiến thức'}</td><td><b>${x.score}</b></td><td>${p}%</td><td>${r}</td><td><a href="#" style="color:var(--red)" onclick="S.dna.skuld.scored.splice(${S.dna.skuld.scored.indexOf(x)},1);save();renderBoard();renderDpPick();return false">✕</a></td></tr>`;}).join('') + '</table>';
+}
+async function skAIScore(){
+  const key=S.keys.gemini, fb=document.getElementById('sk-ai-fb'), btn=document.getElementById('sk-ai');
+  const title=document.getElementById('sk-title').value.trim(), desc=document.getElementById('sk-desc').value.trim();
+  if(!key){ fb.innerHTML='<div class="fb bad">Cần Gemini key (tab ⚡ Kết nối).</div>'; return; }
+  if(!title&&!desc){ fb.innerHTML='<div class="fb bad">Nhập tiêu đề + mô tả ý tưởng để AI chấm.</div>'; return; }
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang chấm...';
+  try{
+    const prompt=`Bạn là giám khảo SKULD/COREVIRAL. Chấm ý tưởng video TikTok theo 19 câu checklist (trả lời ĐẠT=true / KHÔNG ĐẠT=false cho TỪNG câu, chấm chặt — chỉ true khi mô tả có bằng chứng rõ).\nBỐI CẢNH BRAND:\n${brandContext(3000)}\nÝ TƯỞNG: "${title}"\nMÔ TẢ: ${desc}\n19 CÂU:\n${SK_Q.map((q,i)=>`${i+1}. ${q[1]}`).join('\n')}\nTrả về DUY NHẤT JSON: {"checks":[true/false x19],"giai_thich":"3-5 câu: ý tưởng mạnh nhóm nào, rớt điểm nhóm nào, 2 gợi ý nâng điểm cụ thể"}`;
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:'application/json'}})});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const out=JSON.parse((await r.json()).candidates[0].content.parts[0].text);
+    document.querySelectorAll('.sk-cb').forEach((c,i)=>c.checked=!!out.checks[i]); skCalc();
+    fb.innerHTML=`<div class="fb">🤖 ${out.giai_thich}\n\n👉 Review lại từng ô tick — bạn là người duyệt cuối, sửa xong bấm Lưu.</div>`;
+  }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  btn.disabled=false; btn.textContent='🤖 AI chấm từ mô tả';
+}
+/* --- B. Phân tích chuyên sâu 18 câu --- */
+const DP_Q = [
+ ['1. VỀ SẢN PHẨM / DỊCH VỤ','Keyword brand nào xuất hiện trong clip?','Tên brand, hashtag, slogan'],
+ ['1. VỀ SẢN PHẨM / DỊCH VỤ','Vấn đề của người xem trong video này là gì?','Đau / Tốn thời gian / Không biết chọn / Sợ sai / Muốn đẹp hơn / Muốn hiệu quả hơn'],
+ ['1. VỀ SẢN PHẨM / DỊCH VỤ','Sản phẩm / dịch vụ giúp giải quyết vấn đề nào?',''],
+ ['1. VỀ SẢN PHẨM / DỊCH VỤ','Sản phẩm nên xuất hiện ở đoạn nào là hợp lý nhất?','Đầu video / Giữa video / Cuối video'],
+ ['1. VỀ SẢN PHẨM / DỊCH VỤ','Sản phẩm xuất hiện bằng cách nào?','Người thật đang dùng / Được nhắc tên / Nằm trong bối cảnh / Là kết quả cuối cùng / Là lời khuyên'],
+ ['2. VỀ TONE & NGÔN NGỮ','Nếu mình nói ngoài đời, mình có dùng câu này không?','Có / Không'],
+ ['2. VỀ TONE & NGÔN NGỮ','Có từ nào khách hàng hay dùng mà mình nên đưa vào không?','Liệt kê từ ngữ cụ thể'],
+ ['2. VỀ TONE & NGÔN NGỮ','Mình muốn người xem cảm nhận mình là người như thế nào?','Chuyên gia / Gần gũi / Vui vẻ / Thẳng thắn / Cao cấp / Thực tế / Truyền cảm hứng'],
+ ['2. VỀ TONE & NGÔN NGỮ','Giọng nói trong video nên là:','Dễ hiểu / Sâu sắc / Hài hước / Nhẹ nhàng / Dứt khoát / Chuyên môn / Đời thường'],
+ ['3. VỀ HÌNH ẢNH & CẢM GIÁC','Video nên quay ở đâu để đúng với doanh nghiệp mình?','Văn phòng / Cửa hàng / Xưởng / Lớp học / Nhà khách hàng / Studio / Ngoài đời thật'],
+ ['3. VỀ HÌNH ẢNH & CẢM GIÁC','Màu sắc nên tạo cảm giác gì?','Sạch sẽ / Cao cấp / Trẻ trung / Ấm áp / Chuyên nghiệp / Gần gũi / Mạnh mẽ'],
+ ['3. VỀ HÌNH ẢNH & CẢM GIÁC','Trong khung hình nên có những gì?','Sản phẩm / Nhân sự / Khách hàng / Máy móc / Quy trình / Không gian / Kết quả thực tế'],
+ ['3. VỀ HÌNH ẢNH & CẢM GIÁC','Có thứ gì không nên xuất hiện vì làm giảm cảm giác thương hiệu không?','Bối cảnh lộn xộn / Ánh sáng xấu / Trang phục không phù hợp / Đạo cụ không liên quan'],
+ ['4. VỀ NHÂN VẬT','Ai nói nội dung này thì người xem sẽ tin nhất?','Founder / Chuyên gia / Nhân viên / Khách hàng / Người dùng thật / KOC / Người dẫn chuyện'],
+ ['4. VỀ NHÂN VẬT','Người này có hiểu vấn đề đang nói không?','Có / Không'],
+ ['4. VỀ NHÂN VẬT','Người này có liên quan trực tiếp đến sản phẩm / dịch vụ không?','Có / Không'],
+ ['4. VỀ NHÂN VẬT','Người này xuất hiện để làm gì?','Giải thích / Chứng minh / Chia sẻ trải nghiệm / Hướng dẫn / Tạo cảm xúc / Đại diện cho khách hàng'],
+ ['4. VỀ NHÂN VẬT','Nếu đổi người khác nói, nội dung có còn đáng tin không?','Có / Không']
+];
+function renderDpPick(){
+  const sel=document.getElementById('dp-pick'); if(!sel) return;
+  const L=[...S.dna.skuld.scored].sort((a,b)=>b.score-a.score);
+  sel.innerHTML = L.length? L.map((x,i)=>`<option value="${x.title}">${i+1}. ${x.title} (${x.score}đ)</option>`).join('') : '<option value="">— chấm ý tưởng ở mục A trước —</option>';
+  renderDpForm();
+}
+function renderDpForm(){
+  const el=document.getElementById('dp-form');
+  const t=document.getElementById('dp-pick').value;
+  const saved=(S.dna.skuld.deep[t]||[]);
+  let cur='';
+  el.innerHTML = DP_Q.map((q,i)=>{
+    let head = q[0]!==cur ? `<h3 style="font-size:13px;color:var(--warn);margin:12px 0 6px">${q[0]}</h3>` : '';
+    cur=q[0];
+    return head+`<div class="f"><label>Q${i+1}. ${q[1]} ${q[2]?`<i style="font-weight:400">· gợi ý: ${q[2]}</i>`:''}</label><textarea class="dp-a" data-i="${i}" style="min-height:34px">${saved[i]||''}</textarea></div>`;
+  }).join('');
+}
+function dpSave(){
+  const t=document.getElementById('dp-pick').value; if(!t) return;
+  S.dna.skuld.deep[t]=[...document.querySelectorAll('.dp-a')].map(x=>x.value.trim());
+  save(); document.getElementById('dp-fb').innerHTML='<div class="fb">💾 Đã lưu phân tích chuyên sâu cho: '+t+'</div>';
+}
+async function dpAI(){
+  const key=S.keys.gemini, fb=document.getElementById('dp-fb'); const t=document.getElementById('dp-pick').value;
+  if(!key||!t){ fb.innerHTML='<div class="fb bad">Cần Gemini key + 1 ý tưởng đã chấm.</div>'; return; }
+  const v=S.dna.skuld.scored.find(x=>x.title===t);
+  fb.innerHTML='<div class="fb">🤖 AI đang phân tích...</div>';
+  try{
+    const prompt=`Bạn là chuyên gia SKULD. Điền 18 câu phân tích chuyên sâu cho ý tưởng video, bám DỮ LIỆU BRAND. Trả lời NGẮN mỗi câu (chọn từ gợi ý nếu có + 1 câu lý do).\nBRAND:\n${brandContext(4000)}\nÝ TƯỞNG: "${t}" — ${v?v.desc:''}\n18 CÂU:\n${DP_Q.map((q,i)=>`${i+1}. ${q[1]} (gợi ý: ${q[2]||'tự do'})`).join('\n')}\nTrả về DUY NHẤT JSON: {"answers":["..." x18]}`;
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.5,responseMimeType:'application/json'}})});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const out=JSON.parse((await r.json()).candidates[0].content.parts[0].text);
+    document.querySelectorAll('.dp-a').forEach((x,i)=>x.value=out.answers[i]||'');
+    fb.innerHTML='<div class="fb">🤖 Đã điền 18 câu — review, sửa rồi bấm Lưu.</div>';
+  }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+}
+/* --- C. Liên kết ý tưởng --- */
+async function lkAI(){
+  const key=S.keys.gemini, fb=document.getElementById('lk-fb');
+  const tep=document.getElementById('lk-tep').value.trim(), goc=document.getElementById('lk-goc').value.trim(), diem=document.getElementById('lk-diem').value.trim();
+  if(!key){ fb.innerHTML='<div class="fb bad">Cần Gemini key.</div>'; return; }
+  if(!goc){ fb.innerHTML='<div class="fb bad">Nhập ý tưởng ban đầu (từ video viral).</div>'; return; }
+  fb.innerHTML='<div class="fb">🤖 AI đang liên kết...</div>';
+  try{
+    const prompt=`Bạn là chuyên gia SKULD bước 3 "Liên kết ý tưởng". Từ ý tưởng viral gốc + điểm thành công, đề xuất biến thể theo 4 hướng (mỗi hướng 2-3 ý cụ thể, bám brand) rồi chốt 1 Ý TƯỞNG NÂNG CẤP tốt nhất.\nBRAND:\n${brandContext(3000)}\nTỆP KHÁCH: ${tep}\nÝ TƯỞNG GỐC: ${goc}\nĐIỂM THÀNH CÔNG: ${diem}\nTrả về DUY NHẤT JSON: {"thuthach":"...","thunghiem":"...","xephang":"...","tuongphan":"...","nangcap":"1 ý tưởng chốt — tiêu đề video cụ thể + 1 câu vì sao win"}`;
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.8,responseMimeType:'application/json'}})});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const o=JSON.parse((await r.json()).candidates[0].content.parts[0].text);
+    document.getElementById('lk-tt').value=o.thuthach||''; document.getElementById('lk-tn').value=o.thunghiem||'';
+    document.getElementById('lk-xh').value=o.xephang||''; document.getElementById('lk-tp').value=o.tuongphan||'';
+    document.getElementById('lk-up').value=o.nangcap||'';
+    fb.innerHTML='<div class="fb">🤖 Xong — review 4 hướng + ý tưởng chốt, sửa thoải mái rồi Lưu.</div>';
+  }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+}
+function lkSave(){
+  const row={tep:document.getElementById('lk-tep').value.trim(), goc:document.getElementById('lk-goc').value.trim(), diem:document.getElementById('lk-diem').value.trim(), tt:document.getElementById('lk-tt').value.trim(), tn:document.getElementById('lk-tn').value.trim(), xh:document.getElementById('lk-xh').value.trim(), tp:document.getElementById('lk-tp').value.trim(), up:document.getElementById('lk-up').value.trim()};
+  if(!row.up){ alert('Chưa có ý tưởng nâng cấp'); return; }
+  S.dna.skuld.links.push(row); save();
+  document.getElementById('sk-title').value=row.up.slice(0,120);
+  document.getElementById('sk-desc').value=`Nâng cấp từ: ${row.goc}. Điểm thành công gốc: ${row.diem}`;
+  document.getElementById('lk-fb').innerHTML='<div class="fb">💾 Đã lưu + tự điền vào Scorecard mục A — kéo lên chấm 1000đ cho ý tưởng này!</div>';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 /* ================= CONNECTIONS ================= */
 async function saveKey(name){
   const v = document.getElementById('k-'+name).value.trim();
@@ -693,537 +673,6 @@ function exportDNA(){
   const blob = new Blob([JSON.stringify(S.dna,null,2)],{type:'application/json'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='channel-dna.json'; a.click();
 }
-function importDNA(file){
-  if(!file) return;
-  const r=new FileReader();
-  r.onload=e=>{ try{ const d=JSON.parse(e.target.result);
-      if(!d || typeof d!=='object' || !('scores' in d) && !('onboard' in d)) throw new Error('không phải file Channel DNA');
-      S.dna=d; S.dna.scores=S.dna.scores||{}; S.dna.brand=S.dna.brand||[]; save();
-      alert('✅ Đã nhập Channel DNA — tải lại trang để khôi phục toàn bộ form.'); location.reload();
-    }catch(err){ alert('❌ File không hợp lệ: '+err.message); } };
-  r.readAsText(file,'utf-8');
-}
-function resetDNA(){ if(confirm('Xoá TOÀN BỘ tiến độ & Channel DNA? Không hồi lại được. Nên Tải DNA backup trước.')){ localStorage.removeItem('dojo'); location.reload(); } }
-
-/* ================= COACH DÙNG CHUNG (Trạm 2-6) ================= */
-async function coachGeneric(num, baiText, btn, res){
-  if(!S.keys.gemini){ res.innerHTML='<div class="fb bad">💬 AI hướng dẫn cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
-  const old=btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang xem bài...';
-  try{
-    const txt=await geminiCall(`Bạn là mentor COREVIRAL, KHÔNG chấm điểm — chỉ hướng dẫn ngắn gọn. Học viên đang làm Trạm ${num}.\nDỮ LIỆU THƯƠNG HIỆU:\n${brandContext(3000)}\nBÀI ĐANG LÀM:\n${baiText}\n\nTrả lời tiếng Việt ≤180 từ: (1) đang ổn chỗ nào, (2) yếu/thiếu chỗ nào theo rubric, (3) gợi ý CỤ THỂ 2-3 việc làm tiếp ngay kèm 1-2 ví dụ bám thương hiệu.`,{temp:0.5});
-    res.innerHTML=`<div class="fb">💬 MENTOR:\n${txt}</div>`;
-  }catch(e){ res.innerHTML=`<div class="fb bad">❌ Lỗi: ${e.message}</div>`; }
-  btn.disabled=false; btn.textContent=old;
-}
-
-/* ===================== TRẠM 2 — SERIES ===================== */
-function addChannel(name){
-  const wrap=document.getElementById('m2-channels');
-  const d=document.createElement('div'); d.className='cách';
-  d.innerHTML=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-      <input placeholder="Kênh (username/link)" class="ch-name" value="${(name||'').replace(/"/g,'&quot;')}">
-      <button class="del" onclick="this.closest('.cách').remove()">✕</button></div>
-    <div class="series-list"></div>
-    <button class="btn ghost sm" onclick="addSeries(this)">+ Series</button>`;
-  wrap.appendChild(d);
-  for(let i=0;i<3;i++) addSeries(d.querySelector('.btn'));
-}
-function addSeries(btn){
-  const box=btn.parentElement.querySelector('.series-list');
-  const d=document.createElement('div'); d.className='idea'; d.style.flexWrap='wrap';
-  d.innerHTML=`<input class="s-link" placeholder="Link video đại diện" style="flex:2;min-width:150px">
-    <input class="s-chude" placeholder="Chủ đề" style="flex:1;min-width:100px">
-    <input class="s-cach" placeholder="Cách thể hiện (format)" style="flex:1;min-width:120px">
-    <button class="del" onclick="this.parentElement.remove()">✕</button>`;
-  box.appendChild(d);
-}
-function collectM2(){
-  return { channels:[...document.querySelectorAll('#m2-channels .cách')].map(c=>({
-    name:c.querySelector('.ch-name').value.trim(),
-    series:[...c.querySelectorAll('.series-list .idea')].map(s=>({
-      link:s.querySelector('.s-link').value.trim(), chude:s.querySelector('.s-chude').value.trim(), cach:s.querySelector('.s-cach').value.trim()
-    })).filter(x=>x.chude||x.cach||x.link)
-  })).filter(c=>c.name||c.series.length) };
-}
-function setM2(data){
-  const wrap=document.getElementById('m2-channels'); wrap.innerHTML='';
-  (data.channels||[]).forEach(c=>{
-    addChannel(c.name); const box=wrap.lastElementChild;
-    box.querySelectorAll('.series-list .idea').forEach(x=>x.remove());
-    (c.series||[]).forEach(s=>{ addSeries(box.querySelector('.btn')); const r=box.querySelectorAll('.series-list .idea'), last=r[r.length-1];
-      last.querySelector('.s-link').value=s.link||''; last.querySelector('.s-chude').value=s.chude||''; last.querySelector('.s-cach').value=s.cach||''; });
-    if(!box.querySelectorAll('.series-list .idea').length) for(let i=0;i<3;i++) addSeries(box.querySelector('.btn'));
-  });
-  if(!wrap.children.length) addChannel();
-}
-async function scrapeProfile(){
-  const u=document.getElementById('m2-scrape-user').value.trim().replace(/^@/,'');
-  const out=document.getElementById('m2-scrape-out'), token=S.keys.apify;
-  if(!token){ out.innerHTML='<span style="color:var(--warn)">⚠️ Chưa có Apify token — vào ⚡ Kết nối. Bạn vẫn gom series bằng tay được.</span>'; return; }
-  if(!u){ out.textContent='Nhập username kênh đã (vd maxklymenko).'; return; }
-  const btn=document.getElementById('m2-scrape-btn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span>Đang cào...';
-  try{
-    const r=await fetch(`https://api.apify.com/v2/acts/clockworks~tiktok-profile-scraper/run-sync-get-dataset-items?token=${token}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({profiles:[u],resultsPerPage:20,shouldDownloadVideos:false,shouldDownloadCovers:false})
-    });
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const items=await r.json();
-    const vids=(items||[]).slice(0,20).map(x=>({title:(x.text||'').slice(0,90),view:x.playCount||x.diggCount||0,link:x.webVideoUrl||('https://tiktok.com/@'+u)}));
-    S._scrape2=S._scrape2||{}; S._scrape2['@'+u]=vids;
-    out.innerHTML=`<b style="color:var(--ac)">✅ Cào ${vids.length} video @${u}</b> — dùng để gom series:<br>`+
-      vids.map(v=>`• <a href="${v.link}" target="_blank" style="color:var(--blue)">${(v.view/1000).toFixed(0)}k</a> ${v.title||'(no caption)'}`).join('<br>');
-    addChannel('@'+u);
-  }catch(e){ out.innerHTML=`<span style="color:var(--red)">❌ Cào lỗi: ${e.message}. Có thể do CORS/timeout/quota Apify — nhập tay vẫn ok.</span>`; }
-  btn.disabled=false; btn.textContent='🕷 Cào kênh';
-}
-async function autoFill2(){
-  const res=document.getElementById('m2-result'),btn=document.getElementById('m2-auto');
-  if(!S.keys.gemini){ res.innerHTML='<div class="fb bad">🤖 Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang làm bài...';
-  try{
-    const scraped=S._scrape2?JSON.stringify(S._scrape2).slice(0,3000):'(chưa cào kênh nào)';
-    const out=await geminiCall(`Bạn là chuyên gia COREVIRAL. Trạm 2: "đọc vị series" của 4 kênh TikTok mẫu (@maxklymenko, @tussalty, @bradyyourtutor, @davidcohen). Mỗi kênh tìm ĐÚNG 3 series (chuỗi video CÙNG format lặp lại). Nếu có DỮ LIỆU CÀO thì bám vào.\nDỮ LIỆU CÀO:\n${scraped}\n\nTrả về DUY NHẤT JSON: {"channels":[{"name":"@...","series":[{"link":"link đại diện","chude":"chủ đề","cach":"cách thể hiện/format"}]}]}`,{json:true,temp:0.6});
-    setM2(out); res.innerHTML='<div class="fb">🤖 AI đã điền 4 kênh × 3 series — đây là NHẬN ĐỊNH, hãy mở link kiểm chứng, sửa rồi "Nộp bài".</div>';
-  }catch(e){ res.innerHTML=`<div class="fb bad">❌ Lỗi: ${e.message}</div>`; }
-  btn.disabled=false; btn.textContent='🤖 AI tự làm hết';
-}
-function coach2(){ const b=collectM2(); coachGeneric(2, b.channels.map(c=>`${c.name}: ${c.series.map(s=>s.chude+'/'+s.cach).join(' · ')||'(trống)'}`).join('\n')||'(trống)', document.getElementById('m2-coach'), document.getElementById('m2-result')); }
-function gradeLocal2(b){
-  const chans=b.channels.length, totSeries=b.channels.reduce((a,c)=>a+c.series.filter(s=>s.chude&&s.cach).length,0);
-  const ok3=b.channels.filter(c=>c.series.filter(s=>s.chude&&s.cach).length>=3).length;
-  const full=b.channels.reduce((a,c)=>a+c.series.filter(s=>s.link&&s.chude&&s.cach).length,0);
-  let s1=totSeries?Math.min(20,Math.round(20*full/Math.max(totSeries,1))):0;
-  let s2=Math.min(50,Math.round(50*totSeries/Math.max(chans*3,1)));
-  let s3=Math.min(30,Math.round(30*ok3/Math.max(chans,1)));
-  return {total:s1+s2+s3,scores:[{tieuchi:'Cấu trúc',diem:s1,max:20},{tieuchi:'Đúng series',diem:s2,max:50},{tieuchi:'Số lượng',diem:s3,max:30}],
-    feedback:`Chấm OFFLINE (chưa kết nối Gemini). ${chans} kênh · ${totSeries} series · ${ok3} kênh đủ ≥3. Mẹo: mỗi series là FORMAT lặp lại (vd "chấm điểm món ăn"), không phải video lẻ.`};
-}
-function grade2(){
-  const bai=collectM2();
-  if(!bai.channels.length||bai.channels.every(c=>c.series.length===0)){ document.getElementById('m2-result').innerHTML='<div class="fb bad">⚠️ Nhập ít nhất vài series có Chủ đề + Cách thể hiện.</div>'; return; }
-  runGrade({num:2,title:'Phân biệt Series',
-    rubric:`RUBRIC TRẠM 2 (100đ):\n- Đầy đủ cấu trúc (20đ): đủ Link · Chủ đề · Cách thể hiện.\n- Đúng series (50đ): tìm đúng nội dung THẬT SỰ là series (chuỗi video cùng format lặp lại), không phải video lẻ.\n- Số lượng (30đ): đủ ≥3 series/kênh.`,
-    scoresShape:`{"tieuchi":"Cấu trúc","diem":n,"max":20},{"tieuchi":"Đúng series","diem":n,"max":50},{"tieuchi":"Số lượng","diem":n,"max":30}`,
-    baiText:bai.channels.map(c=>`KÊNH ${c.name}:\n`+c.series.map(s=>`  - [${s.cach}] ${s.chude} (${s.link})`).join('\n')).join('\n'),
-    bai, local:()=>gradeLocal2(bai), btn:document.getElementById('m2-grade'), res:document.getElementById('m2-result'), nextId:'m3', nextLabel:'Mở Trạm 3'});
-}
-
-/* ===================== TRẠM 3 — KEYWORD BRAND & INSIGHT SALE ===================== */
-const INSIGHT_LAYERS=[['Nỗi đau','Khách đang khổ vì điều gì?'],['Rào cản','Điều gì khiến họ chần chừ?'],['Mong đợi','Họ thật sự muốn đạt được gì?'],['Tự hào','Mua xong họ tự hào/được khen gì?'],['Thúc đẩy','Yếu tố nào khiến họ quyết định NGAY?']];
-function buildInsight(){
-  const wrap=document.getElementById('m3-insight'); if(!wrap||wrap.children.length) return;
-  INSIGHT_LAYERS.forEach(([t,q],i)=>{ const d=document.createElement('div'); d.style.margin='0 0 8px';
-    d.innerHTML=`<label>${i+1}. ${t} <span class="mut" style="font-weight:400">— ${q}</span></label><textarea class="ins" data-t="${t}"></textarea>`; wrap.appendChild(d); });
-}
-function addProof(kw,ideas){
-  const wrap=document.getElementById('m3-proof');
-  const d=document.createElement('div'); d.className='cách';
-  d.innerHTML=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-      <input class="pf-kw" placeholder="Thông điệp/keyword (vd: Đáng tiền)" value="${(kw||'').replace(/"/g,'&quot;')}">
-      <button class="del" onclick="this.closest('.cách').remove()">✕</button></div>
-    <div class="pf-ideas"></div><button class="btn ghost sm" onclick="addProofIdea(this)">+ Ý tưởng</button>`;
-  wrap.appendChild(d);
-  const n=ideas&&ideas.length?ideas.length:5;
-  for(let i=0;i<n;i++){ addProofIdea(d.querySelector('.btn')); if(ideas&&ideas[i]) d.querySelectorAll('.pf-ideas textarea')[i].value=ideas[i]; }
-}
-function addProofIdea(btn){
-  const box=btn.parentElement.querySelector('.pf-ideas');
-  const d=document.createElement('div'); d.className='idea';
-  d.innerHTML=`<textarea placeholder="Ý tưởng video chứng minh thông điệp..."></textarea><button class="del" onclick="this.parentElement.remove()">✕</button>`;
-  box.appendChild(d);
-}
-function collectM3(){
-  return {
-    kwbrand:document.getElementById('m3-kwbrand').value.split(',').map(s=>s.trim()).filter(Boolean),
-    insight:[...document.querySelectorAll('#m3-insight .ins')].map(t=>({tang:t.dataset.t,noidung:t.value.trim()})),
-    proof:[...document.querySelectorAll('#m3-proof .cách')].map(c=>({kw:c.querySelector('.pf-kw').value.trim(),ytuong:[...c.querySelectorAll('textarea')].map(t=>t.value.trim()).filter(Boolean)})).filter(x=>x.kw),
-    signature:document.getElementById('m3-sig').value.trim()
-  };
-}
-function setM3(d){
-  document.getElementById('m3-kwbrand').value=(d.kwbrand||[]).join(', ');
-  (d.insight||[]).forEach(x=>{ const t=[...document.querySelectorAll('#m3-insight .ins')].find(e=>e.dataset.t===x.tang); if(t) t.value=x.noidung||''; });
-  const pw=document.getElementById('m3-proof'); pw.innerHTML=''; (d.proof||[]).forEach(p=>addProof(p.kw,p.ytuong)); if(!pw.children.length) addProof();
-  document.getElementById('m3-sig').value=d.signature||'';
-}
-async function autoFill3(){
-  const res=document.getElementById('m3-result'),btn=document.getElementById('m3-auto');
-  if(!S.keys.gemini){ res.innerHTML='<div class="fb bad">🤖 Cần Gemini key.</div>'; return; }
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang làm...';
-  try{
-    const out=await geminiCall(`Chuyên gia COREVIRAL. Làm trọn Trạm 3 dựa trên dữ liệu thương hiệu:\n${brandContext()}\nTrả DUY NHẤT JSON: {"kwbrand":["≥3 keyword brand ngắn dễ nhớ"],"insight":[{"tang":"Nỗi đau","noidung":"..."},{"tang":"Rào cản","noidung":"..."},{"tang":"Mong đợi","noidung":"..."},{"tang":"Tự hào","noidung":"..."},{"tang":"Thúc đẩy","noidung":"..."}],"proof":[{"kw":"keyword brand","ytuong":["≥5 ý tưởng video chứng minh cụ thể"]}],"signature":"dấu ấn riêng"}`,{json:true,temp:0.6});
-    setM3(out); res.innerHTML='<div class="fb">🤖 AI đã điền — review/sửa rồi "Nộp bài".</div>';
-  }catch(e){ res.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
-  btn.disabled=false; btn.textContent='🤖 AI tự làm hết';
-}
-function coach3(){ const b=collectM3(); coachGeneric(3,`KW brand: ${b.kwbrand.join(', ')||'(trống)'}\nInsight đầy: ${b.insight.filter(x=>x.noidung).length}/5\nThông điệp có ý tưởng: ${b.proof.length}\nSignature: ${b.signature?'có':'trống'}`,document.getElementById('m3-coach'),document.getElementById('m3-result')); }
-function gradeLocal3(b){
-  let s1=Math.min(40,(b.kwbrand.length>=3?20:b.kwbrand.length*6)+(b.insight.filter(x=>x.noidung).length>=3?20:b.insight.filter(x=>x.noidung).length*6));
-  let s2=Math.min(25,Math.round(25*b.proof.filter(p=>p.ytuong.length>=5).length/Math.max(b.proof.length,1)));
-  let s3=b.signature.length>10?5:0;
-  let s4=Math.min(30,Math.round(30*b.insight.filter(x=>x.noidung).length/5));
-  return {total:s1+s2+s3+s4,scores:[{tieuchi:'Thông điệp cốt lõi',diem:s1,max:40},{tieuchi:'Ý tưởng chứng minh',diem:s2,max:25},{tieuchi:'Dấu ấn riêng',diem:s3,max:5},{tieuchi:'Logic & bám chiến lược',diem:s4,max:30}],
-    feedback:`Chấm OFFLINE. ${b.kwbrand.length} keyword brand · ${b.insight.filter(x=>x.noidung).length}/5 tầng insight · ${b.proof.length} thông điệp có ý tưởng. Mỗi keyword brand cần ≥5 ý tưởng chứng minh CỤ THỂ.`};
-}
-function grade3(){
-  const bai=collectM3();
-  if(bai.kwbrand.length<1){ document.getElementById('m3-result').innerHTML='<div class="fb bad">⚠️ Nhập ≥1 keyword brand.</div>'; return; }
-  runGrade({num:3,title:'Keyword Brand & Insight Sale',
-    rubric:`RUBRIC TRẠM 3 (100đ):\n- Thông điệp cốt lõi (40đ): ≥3 keyword brand + ≥3 keyword insight sale.\n- Ý tưởng chứng minh (25đ): ≥5 ý tưởng cụ thể cho mỗi insight.\n- Dấu ấn riêng (5đ): đề xuất điểm khác biệt làm signature.\n- Logic & bám chiến lược (30đ): thông điệp–ý tưởng–dấu ấn thống nhất, hợp ngành.`,
-    scoresShape:`{"tieuchi":"Thông điệp cốt lõi","diem":n,"max":40},{"tieuchi":"Ý tưởng chứng minh","diem":n,"max":25},{"tieuchi":"Dấu ấn riêng","diem":n,"max":5},{"tieuchi":"Logic & bám chiến lược","diem":n,"max":30}`,
-    baiText:`Keyword Brand: ${bai.kwbrand.join(', ')}\nInsight Sale 5 tầng:\n${bai.insight.map(x=>`  ${x.tang}: ${x.noidung||'(trống)'}`).join('\n')}\nTuyến chứng minh:\n${bai.proof.map(p=>`  [${p.kw}] ${p.ytuong.join(' · ')}`).join('\n')}\nSignature: ${bai.signature||'(trống)'}`,
-    bai, local:()=>gradeLocal3(bai), btn:document.getElementById('m3-grade'), res:document.getElementById('m3-result'), nextId:'m4', nextLabel:'Mở Trạm 4'});
-}
-
-/* ===================== TRẠM 4 — BỘ TỪ KHÓA ===================== */
-const CATS=[['Sản phẩm / Dịch vụ','Chính sản phẩm bạn bán'],['Phân khúc giá','Bình dân · Trung cấp · Cao cấp'],['Nhóm sở thích','Sở thích khách tiềm năng'],['Ngành hàng','Ngành của bạn + ngành liên quan'],['Nghề nghiệp','SV · dân VP · nội trợ...'],['Nhóm nhu cầu','Đẹp · tiết kiệm · thoải mái · an toàn'],['Mục đích sử dụng cuối','Mặc · tặng · chăm sóc · giải trí'],['Hình thức thể hiện','Tip · so sánh · review · thử thách · phỏng vấn']];
-function buildCats(){
-  const wrap=document.getElementById('m4-cats'); if(!wrap||wrap.children.length) return;
-  CATS.forEach(([t,h],i)=>{ const d=document.createElement('div'); d.style.margin='0 0 8px';
-    d.innerHTML=`<label>${i+1}. ${t} <span class="mut" style="font-weight:400">— ${h} (≥5, cách nhau dấu phẩy)</span></label><textarea class="cat" data-t="${t}" oninput="countKw()"></textarea>`; wrap.appendChild(d); });
-  countKw();
-}
-function collectM4(){ return { cats:[...document.querySelectorAll('#m4-cats .cat')].map(t=>({danhmuc:t.dataset.t,keywords:t.value.split(',').map(s=>s.trim()).filter(Boolean)})) }; }
-function countKw(){
-  const b=collectM4(), all=[...new Set(b.cats.flatMap(c=>c.keywords))], full=b.cats.filter(c=>c.keywords.length>=5).length;
-  const el=document.getElementById('m4-count'); if(el) el.innerHTML=`📊 Tổng <b>${all.length}</b>/30 keyword · <b>${full}</b>/8 danh mục đủ ≥5. ${all.length>=30&&full>=8?'✅ Đạt mục tiêu số lượng':'Tiếp tục bổ sung...'}`;
-}
-async function autoFill4(){
-  const res=document.getElementById('m4-result'),btn=document.getElementById('m4-auto');
-  if(!S.keys.gemini){ res.innerHTML='<div class="fb bad">🤖 Cần Gemini key.</div>'; return; }
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang làm...';
-  try{
-    const dna=`Chủ đề:${(S.dna.m1&&S.dna.m1.chude)||''} | Keyword brand:${((S.dna.m3&&S.dna.m3.kwbrand)||[]).join(',')}`;
-    const out=await geminiCall(`Chuyên gia COREVIRAL. Sinh bộ từ khóa Trạm 4: 8 danh mục, mỗi danh mục ≥5 keyword, bám thương hiệu.\nThương hiệu:\n${brandContext(4000)}\nĐịnh hướng: ${dna}\nDanh mục: Sản phẩm / Dịch vụ; Phân khúc giá; Nhóm sở thích; Ngành hàng; Nghề nghiệp; Nhóm nhu cầu; Mục đích sử dụng cuối; Hình thức thể hiện.\nTrả DUY NHẤT JSON: {"cats":[{"danhmuc":"Sản phẩm / Dịch vụ","keywords":["k1","k2","k3","k4","k5"]}, ... đủ 8 danh mục]}`,{json:true,temp:0.6});
-    (out.cats||[]).forEach(c=>{ const t=[...document.querySelectorAll('#m4-cats .cat')].find(e=>e.dataset.t===c.danhmuc); if(t) t.value=(c.keywords||[]).join(', '); }); countKw();
-    res.innerHTML='<div class="fb">🤖 AI đã sinh keyword — review/bổ sung rồi "Nộp bài".</div>';
-  }catch(e){ res.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
-  btn.disabled=false; btn.textContent='🤖 AI tự làm hết';
-}
-function coach4(){ const b=collectM4(); coachGeneric(4, b.cats.map(c=>`${c.danhmuc}: ${c.keywords.length} kw`).join(' · '), document.getElementById('m4-coach'), document.getElementById('m4-result')); }
-function gradeLocal4(b){
-  const total=[...new Set(b.cats.flatMap(c=>c.keywords))].length, full=b.cats.filter(c=>c.keywords.length>=5).length, filled=b.cats.filter(c=>c.keywords.length).length;
-  let s1=Math.round(20*filled/8), s2=(total>=30&&full>=8)?20:Math.round(20*Math.min(total/30,full/8)), s3=Math.min(30,total), s4=Math.min(30,Math.round(total*0.9));
-  return {total:s1+s2+s3+s4,scores:[{tieuchi:'Đủ danh mục',diem:s1,max:20},{tieuchi:'Đủ số lượng',diem:s2,max:20},{tieuchi:'Sát insight',diem:s3,max:30},{tieuchi:'Khả năng triển khai',diem:s4,max:30}],
-    feedback:`Chấm OFFLINE. Tổng ${total} keyword · ${full}/8 danh mục đủ ≥5. Kết nối Gemini để chấm "sát insight khách" sâu hơn.`};
-}
-function grade4(){
-  const bai=collectM4(); const total=[...new Set(bai.cats.flatMap(c=>c.keywords))].length;
-  if(total<8){ document.getElementById('m4-result').innerHTML='<div class="fb bad">⚠️ Quá ít keyword. Mục tiêu ≥30 / 8 danh mục.</div>'; return; }
-  runGrade({num:4,title:'Bộ từ khóa',
-    rubric:`RUBRIC TRẠM 4 (100đ):\n- Đủ danh mục (20đ): điền đủ 8–9 danh mục, không bỏ trống.\n- Đủ số lượng (20đ): mỗi danh mục ≥5 · tổng ≥30 keyword.\n- Sát insight khách (30đ): keyword phản ánh đúng nhu cầu/hành vi/tâm lý.\n- Khả năng triển khai (30đ): dễ chuyển thành chủ đề/bài/video cụ thể.`,
-    scoresShape:`{"tieuchi":"Đủ danh mục","diem":n,"max":20},{"tieuchi":"Đủ số lượng","diem":n,"max":20},{"tieuchi":"Sát insight khách","diem":n,"max":30},{"tieuchi":"Khả năng triển khai","diem":n,"max":30}`,
-    baiText:bai.cats.map(c=>`${c.danhmuc} (${c.keywords.length}): ${c.keywords.join(', ')}`).join('\n')+`\nTỔNG: ${total} keyword`,
-    bai, local:()=>gradeLocal4(bai), btn:document.getElementById('m4-grade'), res:document.getElementById('m4-result'), nextId:'m5', nextLabel:'Mở Trạm 5'});
-}
-
-/* ===================== TRẠM 5 — RESEARCH VIRAL ===================== */
-function fillM5(){
-  const sel=document.getElementById('m5-kw'); if(!sel) return;
-  const kws=[...new Set(((S.dna.m4&&S.dna.m4.cats)||[]).flatMap(c=>c.keywords))];
-  const sig=kws.join('|'); if(sel.dataset.sig===sig) return; sel.dataset.sig=sig;
-  sel.innerHTML=kws.length?kws.map(k=>`<option>${k}</option>`).join(''):'<option disabled>(làm Trạm 4 trước để có keyword)</option>';
-  const dd=(S.dna.m1&&S.dna.m1.dinhdang)||'', rule=document.getElementById('m5-rule');
-  if(rule&&dd){ rule.style.display=''; rule.innerHTML=dd==='Kiến thức'
-    ?'📐 Định dạng kênh = <b>Kiến thức</b> → ưu tiên video <b>phương Đông / Việt Nam</b>.'
-    :`📐 Định dạng kênh = <b>${dd}</b> → tìm video <b>NƯỚC NGOÀI</b> (tránh trùng, dễ "nhân bản").`; }
-}
-function addVideo(v){
-  v=v||{}; const wrap=document.getElementById('m5-table');
-  const esc=s=>(s||'').toString().replace(/"/g,'&quot;');
-  const d=document.createElement('div'); d.className='idea'; d.style.flexWrap='wrap'; d.style.alignItems='flex-start';
-  d.innerHTML=`<input class="v-kw" placeholder="keyword" value="${esc(v.keyword)}" style="flex:1;min-width:90px">
-    <input class="v-link" placeholder="link video" value="${esc(v.link)}" style="flex:2;min-width:150px">
-    <input class="v-view" placeholder="view" value="${v.view||''}" style="flex:0 0 80px">
-    <input class="v-like" placeholder="tim" value="${v.like||''}" style="flex:0 0 70px">
-    <input class="v-cap" placeholder="caption gốc" value="${esc(v.caption)}" style="flex:2;min-width:140px">
-    <input class="v-trans" placeholder="bản dịch + nhãn format" value="${esc(v.trans)}" style="flex:2;min-width:150px">
-    <button class="del" onclick="this.parentElement.remove()">✕</button>`;
-  wrap.appendChild(d);
-  return d;
-}
-function collectM5(){
-  return { videos:[...document.querySelectorAll('#m5-table .idea')].map(d=>({
-    keyword:d.querySelector('.v-kw').value.trim(), link:d.querySelector('.v-link').value.trim(),
-    view:+d.querySelector('.v-view').value||0, like:+d.querySelector('.v-like').value||0,
-    caption:d.querySelector('.v-cap').value.trim(), trans:d.querySelector('.v-trans').value.trim()
-  })).filter(v=>v.link||v.caption||v.keyword) };
-}
-async function huntViral(){
-  const sel=document.getElementById('m5-kw'), kws=[...sel.selectedOptions].map(o=>o.value).filter(v=>v);
-  const msg=document.getElementById('m5-scrape-msg'), token=S.keys.apify;
-  if(!kws.length){ msg.textContent='Chọn ít nhất 1 keyword (giữ Ctrl để chọn nhiều).'; return; }
-  if(!token){ msg.innerHTML='<span style="color:var(--warn)">⚠️ Chưa có Apify token — nhập tay vẫn được.</span>'; return; }
-  const btn=document.getElementById('m5-scrape-btn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span>Đang săn...';
-  let added=0;
-  try{
-    for(const kw of kws.slice(0,3)){
-      const r=await fetch(`https://api.apify.com/v2/acts/clockworks~tiktok-scraper/run-sync-get-dataset-items?token=${token}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({searchQueries:[kw],resultsPerPage:20,shouldDownloadVideos:false,shouldDownloadCovers:false})
-      });
-      if(!r.ok) throw new Error('HTTP '+r.status+' ('+kw+')');
-      const items=await r.json();
-      (items||[]).forEach(x=>{ const view=x.playCount||0, like=x.diggCount||0;
-        if(view>=500000||like>=35000){ addVideo({keyword:kw,link:x.webVideoUrl||'',view,like,caption:(x.text||'').slice(0,140)}); added++; } });
-    }
-    msg.innerHTML=`<span style="color:var(--ac)">✅ Thêm ${added} video đạt ngưỡng viral (≥500k view / 35k tim). Bấm "🌐 Dịch + phân loại".</span>`;
-  }catch(e){ msg.innerHTML=`<span style="color:var(--red)">❌ Săn lỗi: ${e.message}. CORS/quota? Nhập tay vẫn được.</span>`; }
-  btn.disabled=false; btn.textContent='🕷 Săn video viral';
-}
-async function translateRows(){
-  const rows=[...document.querySelectorAll('#m5-table .idea')], btn=document.getElementById('m5-translate'), res=document.getElementById('m5-result');
-  if(!S.keys.gemini){ res.innerHTML='<div class="fb bad">🌐 Cần Gemini key.</div>'; return; }
-  const todo=rows.filter(r=>r.querySelector('.v-cap').value.trim()&&!r.querySelector('.v-trans').value.trim());
-  if(!todo.length){ res.innerHTML='<div class="fb">Không có dòng cần dịch (cần caption gốc, chưa có bản dịch).</div>'; return; }
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Đang dịch...';
-  try{
-    const caps=todo.map((r,i)=>`${i+1}. ${r.querySelector('.v-cap').value.trim()}`).join('\n');
-    const out=await geminiCall(`Dịch sang tiếng Việt và gắn NHÃN FORMAT cho từng caption video TikTok. Nhãn chọn trong: [series, thử thách, xếp hạng, chấm điểm, review, kể chuyện, khác]. Trả JSON: {"rows":[{"i":1,"dich":"...","nhan":"..."}]}\n\n${caps}`,{json:true,temp:0.2});
-    (out.rows||[]).forEach(o=>{ const r=todo[o.i-1]; if(r) r.querySelector('.v-trans').value=`${o.dich} [${o.nhan}]`; });
-    res.innerHTML=`<div class="fb">🌐 Đã dịch + gắn nhãn ${(out.rows||[]).length} dòng. Nhãn series/thử thách/xếp hạng/chấm điểm = ưu tiên 50đ.</div>`;
-  }catch(e){ res.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
-  btn.disabled=false; btn.textContent='🌐 Dịch + phân loại bằng AI';
-}
-function coach5(){ const b=collectM5(); coachGeneric(5,`${b.videos.length} video · đạt ngưỡng:${b.videos.filter(v=>v.view>=500000||v.like>=35000).length} · có nhãn:${b.videos.filter(v=>v.trans).length}`,document.getElementById('m5-coach'),document.getElementById('m5-result')); }
-function gradeLocal5(b){
-  const n=b.videos.length, viral=b.videos.filter(v=>v.view>=500000||v.like>=35000).length, labeled=b.videos.filter(v=>/series|thử thách|xếp hạng|chấm điểm/i.test(v.trans)).length;
-  let s1=Math.min(10,Math.round(10*n/20)), s2=Math.min(50,Math.round(50*labeled/Math.max(n,1))), s3=Math.min(10,Math.round(10*b.videos.filter(v=>v.link&&v.keyword).length/Math.max(n,1))), s4=5, s5=Math.min(20,Math.round(20*viral/Math.max(n,1)));
-  return {total:s1+s2+s3+s4+s5,scores:[{tieuchi:'Đúng & đủ',diem:s1,max:10},{tieuchi:'Tỷ lệ thành công cao',diem:s2,max:50},{tieuchi:'Đầy đủ thông tin',diem:s3,max:10},{tieuchi:'Bám insight DN',diem:s4,max:10},{tieuchi:'Khả năng ứng dụng',diem:s5,max:20}],
-    feedback:`Chấm OFFLINE. ${n} video · ${viral} đạt ngưỡng · ${labeled} có nhãn ưu tiên. Dùng "🌐 Dịch + phân loại" để gắn nhãn → tăng tiêu chí 50đ.`};
-}
-function grade5(){
-  const bai=collectM5();
-  if(bai.videos.length<3){ document.getElementById('m5-result').innerHTML='<div class="fb bad">⚠️ Cần ít nhất vài video. Mục tiêu ≥20.</div>'; return; }
-  runGrade({num:5,title:'Research nội dung viral',
-    rubric:`RUBRIC TRẠM 5 (100đ):\n- Đúng & đủ số lượng (10đ): đúng nguồn (nước ngoài/phương Đông theo định dạng) · ≥500k view/35k tim · ≥20 video.\n- Tỷ lệ thành công cao (50đ): dạng series + chủ đề Thử nghiệm/Thử thách/Xếp hạng/Chấm điểm.\n- Đầy đủ thông tin (10đ): có keyword, link, view/Top, bản dịch nếu có thoại.\n- Bám insight doanh nghiệp (10đ): liên quan ngành hàng.\n- Khả năng ứng dụng (20đ): triển khai được cho doanh nghiệp.`,
-    scoresShape:`{"tieuchi":"Đúng & đủ","diem":n,"max":10},{"tieuchi":"Tỷ lệ thành công cao","diem":n,"max":50},{"tieuchi":"Đầy đủ thông tin","diem":n,"max":10},{"tieuchi":"Bám insight DN","diem":n,"max":10},{"tieuchi":"Khả năng ứng dụng","diem":n,"max":20}`,
-    baiText:`Định dạng kênh: ${(S.dna.m1&&S.dna.m1.dinhdang)||'?'} | Số video: ${bai.videos.length}\n`+bai.videos.map((v,i)=>`${i+1}. [${v.keyword}] ${v.view}view/${v.like}tim — ${v.trans||v.caption} (${v.link})`).join('\n'),
-    bai, local:()=>gradeLocal5(bai), btn:document.getElementById('m5-grade'), res:document.getElementById('m5-result'), nextId:'m6', nextLabel:'Mở Trạm 6'});
-}
-
-/* ----- Trạm 5: Tự săn + lọc thông minh (1 click) ----- */
-const M5_TARGET=20, M5_PASS=55, M5_SV='v2', M5_FMT_OK=/series|thử nghiệm|thử thách|xếp hạng|chấm điểm/i, M5_FMT_KW=/thử thách|thử nghiệm|xếp hạng|chấm điểm|so sánh|review|đánh giá|reaction|top ?\d/i;
-function countKept(){ return [...document.querySelectorAll('#m5-table .idea')].filter(r=>r.dataset.keep==='1').length; }
-function setRowStatus(row,st){
-  row.dataset.keep=st.keep?'1':'0'; row.dataset.score=st.score||0;
-  let bar=row.querySelector('.v-status');
-  if(!bar){ bar=document.createElement('div'); bar.className='v-status'; bar.style.cssText='flex:1 0 100%;font-size:12px;margin-bottom:4px;order:-1'; row.insertBefore(bar,row.firstChild); }
-  row.style.borderLeft=st.keep?'3px solid var(--ac)':'3px solid var(--red)'; row.style.opacity=st.keep?'1':'0.55';
-  bar.innerHTML=st.keep
-    ? `<span style="color:var(--ac)">✓ ĐẠT CHUẨN</span> · ${st.score}đ · format <b>${st.format||'?'}</b> · clone ${st.clone}/3 · liên quan ${st.relevance}/3`
-    : `<span style="color:var(--red)">✗ LOẠI</span> · ${st.reason||'không đạt chuẩn'}`;
-}
-function applyFilterSort(){
-  const wrap=document.getElementById('m5-table'); const rows=[...wrap.querySelectorAll('.idea')];
-  rows.sort((a,b)=>{ const ka=+a.dataset.keep||0, kb=+b.dataset.keep||0; if(ka!==kb) return kb-ka; return (+b.dataset.score||0)-(+a.dataset.score||0); });
-  rows.forEach(r=>wrap.appendChild(r));
-  const rej=rows.filter(r=>r.dataset.keep==='0').length, btn=document.getElementById('m5-del-rej');
-  if(btn){ btn.style.display=rej?'':'none'; btn.textContent=`🗑 Xoá hết video bị loại (${rej})`; }
-}
-function deleteRejected(){ [...document.querySelectorAll('#m5-table .idea')].forEach(r=>{ if(r.dataset.keep==='0') r.remove(); }); applyFilterSort(); }
-function resetScanM5(){
-  if(!confirm('Xoá lịch sử keyword đã quét để săn lại từ đầu (sẽ cào tiếng Anh nếu định dạng Hình thức/Kết hợp)? Video trong bảng KHÔNG bị xoá, chỉ được chấm lại.')) return;
-  S.dna._m5kwDone=[]; save();
-  document.querySelectorAll('#m5-table .idea').forEach(r=>{ delete r.dataset.sv; });
-  document.getElementById('m5-scrape-msg').innerHTML='<span style="color:var(--ac)">🔄 Đã reset lịch sử quét. Bấm "⚡ Tự săn + lọc thông minh" để chấm lại + săn mới.</span>';
-}
-async function scoreRowsAI(rows){
-  const todo=(rows||[]).filter(r=>r&&r.dataset.sv!==M5_SV&&(r.querySelector('.v-cap').value.trim()||r.querySelector('.v-trans').value.trim()));
-  const dd=(S.dna.m1&&S.dna.m1.dinhdang)||'?';
-  for(let s=0;s<todo.length;s+=40){
-    const chunk=todo.slice(s,s+40);
-    const items=chunk.map((r,i)=>`${i+1}. view=${+r.querySelector('.v-view').value||0} like=${+r.querySelector('.v-like').value||0} | ${(r.querySelector('.v-cap').value.trim()||r.querySelector('.v-trans').value.trim()).replace(/\n/g,' ')}`).join('\n');
-    const out=await geminiCall(`Bạn lọc video TikTok cho học viên làm Trạm 5 COREVIRAL — tìm video ĐÃ viral DỄ NHÂN BẢN bằng AI để học & clone công thức.
-NGÀNH & THƯƠNG HIỆU HỌC VIÊN:
-${brandContext(2500)}
-Định dạng kênh: ${dd}.
-Với MỖI video, trả các trường:
-- dich: bản dịch tiếng Việt ngắn của caption.
-- nhan: nhãn format, chọn [series, thử nghiệm, thử thách, xếp hạng, chấm điểm, review, reaction, so sánh, kể chuyện, khác].
-- lienquan: 0-3 độ liên quan ngành hàng HOẶC ngành có thể liên kết (0=lạc đề hẳn: chuyện ma/tâm linh/drama cá nhân/không liên quan; 3=đúng ngành).
-- clone: 0-3 mức DỄ TÁI TẠO BẰNG AI (3=talking-head/voice-over/list-xếp hạng/thử thách/chữ+ảnh, lặp vô hạn; 0=cần quay thực tế phức tạp/nhân vật độc nhất/sự kiện không lặp lại).
-- ungdung: 0-3 khả năng triển khai cho kênh doanh nghiệp.
-Trả JSON: {"rows":[{"i":1,"dich":"...","nhan":"...","lienquan":2,"clone":3,"ungdung":2}]}.
-
-${items}`,{json:true,temp:0.2});
-    (out.rows||[]).forEach(o=>{
-      const r=chunk[o.i-1]; if(!r) return;
-      const view=+r.querySelector('.v-view').value||0, like=+r.querySelector('.v-like').value||0;
-      const viral=view>=500000||like>=35000;
-      const rel=Math.max(0,Math.min(3,+o.lienquan||0)), clone=Math.max(0,Math.min(3,+o.clone||0)), app=Math.max(0,Math.min(3,+o.ungdung||0));
-      const fmtPts=M5_FMT_OK.test(o.nhan||'')?30:/review|reaction|so sánh|kể chuyện|tips|hướng dẫn|đánh giá/i.test(o.nhan||'')?18:6;
-      const total=(viral?10:0)+fmtPts+Math.round(clone/3*25)+Math.round(rel/3*15)+Math.round(app/3*20);
-      const keep=viral&&rel>=1&&total>=M5_PASS;
-      r.querySelector('.v-trans').value=`${o.dich||''} [${o.nhan||'khác'}]`; r.dataset.sv=M5_SV;
-      let reason='';
-      if(!viral) reason='dưới ngưỡng viral';
-      else if(rel<1) reason='lạc đề ngành';
-      else reason=`chất lượng ${total}đ < ${M5_PASS}`+(clone<=1?' · khó clone':'')+(app<=1?' · khó ứng dụng':'');
-      setRowStatus(r,{keep,score:total,relevance:rel,clone,format:o.nhan,reason});
-    });
-  }
-}
-async function huntSmart(){
-  const msg=document.getElementById('m5-scrape-msg'), btn=document.getElementById('m5-smart-btn'), oldb=btn.innerHTML;
-  if(!S.keys.gemini){ msg.innerHTML='<span style="color:var(--warn)">⚠️ Cần Gemini key — tab ⚡ Kết nối.</span>'; return; }
-  btn.disabled=true; const setp=t=>{ btn.innerHTML='<span class="spin"></span>'+t.slice(0,18); msg.innerHTML=`<span style="color:var(--ac)">${t}</span>`; };
-  try{
-    setp('Đang chấm lại bảng hiện có...');
-    await scoreRowsAI([...document.querySelectorAll('#m5-table .idea')]);
-    applyFilterSort(); let kept=countKept();
-    const token=S.keys.apify;
-    if(kept<M5_TARGET && token){
-      const allKw=[...new Set(((S.dna.m4&&S.dna.m4.cats)||[]).flatMap(c=>c.keywords))];
-      S.dna._m5kwDone=S.dna._m5kwDone||[]; const done=new Set(S.dna._m5kwDone);
-      const sel=[...document.getElementById('m5-kw').selectedOptions].map(o=>o.value).filter(v=>v);
-      let queue=[...new Set([...sel,...allKw])].filter(kw=>!done.has(kw)); // quét lần lượt CẢ kho, bỏ keyword đã quét
-      queue=[...queue.filter(k=>M5_FMT_KW.test(k)),...queue.filter(k=>!M5_FMT_KW.test(k))]; // ưu tiên keyword dạng "hình thức" → ra video clone-able sớm
-      const dd=(S.dna.m1&&S.dna.m1.dinhdang)||'', foreign=/hình thức|kết hợp/i.test(dd), enMap={};
-      if(foreign && queue.length){ // định dạng Hình thức/Kết hợp → dịch keyword sang tiếng Anh để cào video NƯỚC NGOÀI dễ nhân bản
-        setp(`Dịch keyword sang tiếng Anh (${dd} → video nước ngoài)...`);
-        try{
-          const list=queue.map((k,i)=>`${i+1}. ${k}`).join('\n');
-          const o=await geminiCall(`Học viên định dạng kênh "${dd}" → cần tìm video TikTok NƯỚC NGOÀI dễ nhân bản (clone bằng AI). Dịch MỖI keyword tiếng Việt thành 1 cụm TÌM KIẾM TikTok tiếng Anh, ưu tiên hướng tới format viral dễ clone: challenge / ranking / top list / review / experiment / rating / vs. Ngắn, tự nhiên như người bản xứ gõ tìm kiếm.\nNGÀNH: ${brandContext(800)}\nTrả JSON {"rows":[{"i":1,"en":"..."}]}.\n\n${list}`,{json:true,temp:0.3});
-          (o.rows||[]).forEach(rr=>{ const k=queue[rr.i-1]; if(k&&rr.en) enMap[k]=String(rr.en).trim(); });
-        }catch(e){ /* dịch lỗi → fallback dùng keyword tiếng Việt */ }
-      }
-      const usedLinks=new Set([...document.querySelectorAll('#m5-table .v-link')].map(i=>i.value.trim()).filter(Boolean));
-      let kwTried=0, fails=0, stopQuota=false;
-      for(const kw of queue){
-        if(kept>=M5_TARGET) break; kwTried++;
-        const q=enMap[kw]||kw;
-        setp(`Săn ${kwTried}/${queue.length}: "${q}" · ${kept}/${M5_TARGET} đạt...`);
-        const newRows=[];
-        try{
-          const r=await fetch(`https://api.apify.com/v2/acts/clockworks~tiktok-scraper/run-sync-get-dataset-items?token=${token}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({searchQueries:[q],resultsPerPage:20,shouldDownloadVideos:false,shouldDownloadCovers:false})});
-          if(!r.ok) throw new Error('HTTP '+r.status);
-          const items=await r.json(); fails=0;
-          (items||[]).forEach(x=>{ const view=x.playCount||0, like=x.diggCount||0, link=x.webVideoUrl||'';
-            if((view>=500000||like>=35000)&&link&&!usedLinks.has(link)){ usedLinks.add(link); newRows.push(addVideo({keyword:q,link,view,like,caption:(x.text||'').slice(0,140)})); } });
-        }catch(e){ fails++; if(fails>=2){ msg.innerHTML=`<span style="color:var(--red)">❌ Apify lỗi liên tiếp (${e.message}) — có thể hết quota. Dừng săn ở ${kept}/${M5_TARGET} đạt chuẩn. Thêm quota rồi bấm "⚡" lại để săn tiếp.</span>`; stopQuota=true; break; } continue; }
-        S.dna._m5kwDone.push(kw); save(); // đánh dấu đã quét (lần bấm sau không lặp lại)
-        if(newRows.length){ await scoreRowsAI(newRows); applyFilterSort(); kept=countKept(); }
-      }
-      if(!stopQuota){
-        const total=document.querySelectorAll('#m5-table .idea').length, remain=queue.length-kwTried;
-        const tip=kept>=M5_TARGET?'Bấm "🧠 Nộp bài".':(remain>0?'Bấm "⚡" lần nữa để săn tiếp các keyword còn lại.':'Đã quét hết kho keyword — thêm keyword ở Trạm 4 nếu vẫn thiếu.');
-        msg.innerHTML=`<span style="color:${kept>=M5_TARGET?'var(--ac)':'var(--warn)'}">${kept>=M5_TARGET?'🎉 Đủ rồi!':'⚠️ Mới'} ${kept}/${M5_TARGET} đạt chuẩn · đã quét ${kwTried} keyword (còn ${remain}) · ${total-kept} bị loại. ${tip}</span>`;
-      }
-    } else {
-      const total=document.querySelectorAll('#m5-table .idea').length;
-      const tail=token?'':' (chưa có Apify token → chỉ lọc bảng sẵn có; thêm token để tự săn).';
-      msg.innerHTML=`<span style="color:${kept>=M5_TARGET?'var(--ac)':'var(--warn)'}">${kept>=M5_TARGET?'🎉':'ℹ️'} ${kept}/${M5_TARGET} đạt chuẩn · ${total-kept} bị loại (đẩy xuống cuối).${tail}</span>`;
-    }
-  }catch(e){ msg.innerHTML=`<span style="color:var(--red)">❌ Lỗi: ${e.message}</span>`; }
-  btn.disabled=false; btn.innerHTML=oldb;
-}
-
-/* ===================== TRẠM 6 — PHÂN TÍCH & NÂNG CẤP ===================== */
-function buildM6Cards(){
-  const wrap=document.getElementById('m6-cards'); if(!wrap) return; wrap.innerHTML='';
-  const vids=(((S.dna.m5&&S.dna.m5.videos)||[]).slice()).sort((a,b)=>(b.view||0)-(a.view||0));
-  if(!vids.length){ wrap.innerHTML='<p class="mut">Chưa có video ở Trạm 5. Quay lại Trạm 5 thu thập trước.</p>'; return; }
-  const saved=(S.dna.m6&&S.dna.m6.analyses)||[];
-  vids.slice(0,8).forEach(v=>{ const prev=saved.find(s=>s.link===v.link)||{};
-    const d=document.createElement('div'); d.className='cách'; d.dataset.link=v.link; d.dataset.cap=v.caption||''; d.dataset.trans=v.trans||'';
-    d.innerHTML=`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" class="m6-pick" style="width:auto" ${prev.picked?'checked':''}> <b>${((v.view||0)/1000).toFixed(0)}k view</b> · ${v.keyword||''} · <a href="${v.link}" target="_blank" style="color:var(--blue)">link</a> <span class="mut">${(v.trans||v.caption||'').slice(0,60)}</span></label>
-      <textarea class="m6-ts" placeholder="Phân tích theo timestamp (0:00 hook...)">${prev.timestamp||''}</textarea>
-      <textarea class="m6-win" placeholder="Đâu là điểm làm nên thành công?">${prev.win||''}</textarea>
-      <textarea class="m6-apply" placeholder="Mình sẽ áp dụng điểm nào cho kênh? (ghép insight sản phẩm)">${prev.apply||''}</textarea>
-      <textarea class="m6-up" placeholder="Ý tưởng NÂNG CẤP cho kênh mình">${prev.upgrade||''}</textarea>
-      <button class="btn ghost sm" onclick="aiBoc(this)">🧠 AI bóc video này</button>`;
-    wrap.appendChild(d); });
-}
-function collectM6(){
-  return { analyses:[...document.querySelectorAll('#m6-cards .cách')].map(c=>({
-    link:c.dataset.link, picked:c.querySelector('.m6-pick').checked,
-    timestamp:c.querySelector('.m6-ts').value.trim(), win:c.querySelector('.m6-win').value.trim(),
-    apply:c.querySelector('.m6-apply').value.trim(), upgrade:c.querySelector('.m6-up').value.trim()
-  })).filter(a=>a.picked||a.win||a.timestamp) };
-}
-async function aiBoc(btn){
-  const c=btn.closest('.cách'); if(!S.keys.gemini){ alert('Cần Gemini key — tab ⚡ Kết nối'); return; }
-  const old=btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spin"></span>...';
-  try{
-    const out=await geminiCall(`Phân tích 1 video TikTok viral để học công thức. Caption/bản dịch: "${(c.dataset.trans||c.dataset.cap).replace(/"/g,"'")}".\nBối cảnh thương hiệu học viên:\n${brandContext(2000)}\nTrả JSON: {"timestamp":"phác timestamp hook→thân→CTA","win":"điểm làm nên thành công, cụ thể","apply":"điểm nên áp dụng cho kênh học viên","upgrade":"1 ý tưởng video nâng cấp ghép sản phẩm học viên"}`,{json:true,temp:0.5});
-    c.querySelector('.m6-ts').value=out.timestamp||''; c.querySelector('.m6-win').value=out.win||''; c.querySelector('.m6-apply').value=out.apply||''; c.querySelector('.m6-up').value=out.upgrade||''; c.querySelector('.m6-pick').checked=true;
-  }catch(e){ alert('Lỗi: '+e.message); }
-  btn.disabled=false; btn.textContent=old;
-}
-function coach6(){ const b=collectM6(); coachGeneric(6,`${b.analyses.filter(a=>a.picked).length} video chọn phân tích · có điểm thành công:${b.analyses.filter(a=>a.win).length}`,document.getElementById('m6-coach'),document.getElementById('m6-result')); }
-function gradeLocal6(b,picked){
-  const win=picked.filter(a=>a.win.length>15).length, up=picked.filter(a=>a.upgrade.length>10).length, ap=picked.filter(a=>a.apply.length>10).length;
-  let s1=Math.min(20,picked.length*10), s2=Math.min(30,Math.round(30*win/Math.max(picked.length,1))), s3=up?20:0, s4=Math.min(30,Math.round(30*ap/Math.max(picked.length,1)));
-  return {total:s1+s2+s3+s4,scores:[{tieuchi:'Đủ số lượng',diem:s1,max:20},{tieuchi:'Đúng điểm thành công',diem:s2,max:30},{tieuchi:'Nâng cấp ý tưởng',diem:s3,max:20},{tieuchi:'Áp dụng vào DN',diem:s4,max:30}],
-    feedback:`Chấm OFFLINE. ${picked.length} video phân tích · ${win} có điểm thành công rõ · ${up} có ý tưởng nâng cấp. Kết nối Gemini để chấm sâu.`};
-}
-function grade6(){
-  const bai=collectM6(), picked=bai.analyses.filter(a=>a.picked||a.win);
-  if(picked.length<2){ document.getElementById('m6-result').innerHTML='<div class="fb bad">⚠️ Chọn & phân tích ít nhất 2 video (mục tiêu 5).</div>'; return; }
-  runGrade({num:6,title:'Phân tích & Nâng cấp',
-    rubric:`RUBRIC TRẠM 6 (100đ):\n- Đủ số lượng (20đ): ≥2 video viral được phân tích.\n- Đúng điểm thành công (30đ): chỉ ra yếu tố viral chính xác, không chung chung.\n- Nâng cấp ý tưởng (20đ): nâng lên ≥1 ý tưởng cho doanh nghiệp.\n- Áp dụng vào DN (30đ): chọn điểm học hỏi phù hợp kênh.`,
-    scoresShape:`{"tieuchi":"Đủ số lượng","diem":n,"max":20},{"tieuchi":"Đúng điểm thành công","diem":n,"max":30},{"tieuchi":"Nâng cấp ý tưởng","diem":n,"max":20},{"tieuchi":"Áp dụng vào DN","diem":n,"max":30}`,
-    baiText:picked.map((a,i)=>`VIDEO ${i+1} (${a.link}):\n  Timestamp: ${a.timestamp}\n  Điểm thành công: ${a.win}\n  Áp dụng: ${a.apply}\n  Nâng cấp: ${a.upgrade}`).join('\n'),
-    bai, local:()=>gradeLocal6(bai,picked), btn:document.getElementById('m6-grade'), res:document.getElementById('m6-result'), nextId:'gen', nextLabel:'Mở cổng GENERATE'});
-}
-
-/* ===================== CỔNG GENERATE ===================== */
-function dnaSummary(){ const c={onboard:S.dna.onboard,m1:S.dna.m1,m2:S.dna.m2,m3:S.dna.m3,m4:S.dna.m4,m5:(S.dna.m5&&S.dna.m5.videos||[]).slice(0,12),m6:S.dna.m6}; return JSON.stringify(c).slice(0,12000); }
-async function genPart(part){
-  const out=document.getElementById('gen-out'), prog=document.getElementById('gen-prog');
-  if(!S.keys.gemini){ out.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
-  const labels={calendar:'Lịch 30 ngày',scripts:'10 script 5-beat',prompts:'10 prompt ảnh + video'};
-  prog.innerHTML=`<div class="fb"><span class="spin"></span>Đang sinh ${labels[part]}...</div>`;
-  S._pack=S._pack||{};
-  try{
-    const base=`Bạn là execution engine COREVIRAL. Dựa trên CHANNEL DNA (JSON) của học viên:\n${dnaSummary()}\n\n`;
-    if(part==='calendar'){ const o=await geminiCall(base+`Sinh LỊCH 30 NGÀY content TikTok bám series & insight trong DNA. Trả JSON {"calendar":[{"ngay":1,"series":"...","hook":"hook 3s đầu","format":"...","cta":"..."}]} đúng 30 phần tử.`,{json:true,temp:0.6}); S._pack.calendar=o.calendar; }
-    else if(part==='scripts'){ const o=await geminiCall(base+`Viết 10 SCRIPT 5-BEAT (Hook · Vấn đề · Giải pháp · Bằng chứng · CTA) cho 10 video đầu. Trả JSON {"scripts":[{"tieu_de":"...","beats":{"hook":"...","van_de":"...","giai_phap":"...","bang_chung":"...","cta":"..."}}]}.`,{json:true,temp:0.7}); S._pack.scripts=o.scripts; }
-    else { const o=await geminiCall(base+`Sinh 10 PROMPT ẢNH (English, cho Nano Banana) + 10 PROMPT VIDEO (English, cho Veo 3 dạng chuỗi cảnh). Trả JSON {"prompts":[{"tieu_de":"...","image_prompt_en":"...","video_prompt_en":"..."}]} đúng 10 phần tử.`,{json:true,temp:0.7}); S._pack.prompts=o.prompts; }
-    prog.innerHTML=`<div class="fb">✅ Xong ${labels[part]}.</div>`; renderPack();
-  }catch(e){ prog.innerHTML=`<div class="fb bad">❌ ${labels[part]} lỗi: ${e.message}</div>`; }
-}
-async function generateAll(){
-  document.getElementById('gen-out').innerHTML=''; S._pack={};
-  const btn=document.getElementById('gen-all'); btn.disabled=true;
-  await genPart('calendar'); await genPart('scripts'); await genPart('prompts');
-  document.getElementById('gen-prog').innerHTML='<div class="fb">🎉 Hoàn tất gói 30 ngày! Tải về hoặc mở tab xem đẹp.</div>';
-  btn.disabled=false;
-}
-function renderPack(){
-  const p=S._pack||{}, out=document.getElementById('gen-out'); let h='';
-  if(p.calendar){ h+=`<h3 style="color:var(--warn)">📅 Lịch 30 ngày</h3><div style="overflow:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">`+
-    p.calendar.map(d=>`<tr style="border-bottom:1px solid var(--bd)"><td style="padding:4px"><b>N${d.ngay}</b></td><td style="padding:4px">${d.series||''}</td><td style="padding:4px">${d.hook||''}</td><td style="padding:4px">${d.format||''}</td><td style="padding:4px">${d.cta||''}</td></tr>`).join('')+`</table></div>`; }
-  if(p.scripts){ h+=`<h3 style="color:var(--warn);margin-top:14px">🎬 Script 5-beat</h3>`+p.scripts.map((s,i)=>`<div class="cách"><b>${i+1}. ${s.tieu_de||''}</b><div class="mut" style="white-space:pre-wrap">🪝 ${(s.beats&&s.beats.hook)||''}\n❗ ${(s.beats&&s.beats.van_de)||''}\n✅ ${(s.beats&&s.beats.giai_phap)||''}\n📊 ${(s.beats&&s.beats.bang_chung)||''}\n👉 ${(s.beats&&s.beats.cta)||''}</div></div>`).join(''); }
-  if(p.prompts){ h+=`<h3 style="color:var(--warn);margin-top:14px">🖼 Prompt ảnh + video (EN)</h3>`+p.prompts.map((s,i)=>`<div class="cách"><b>${i+1}. ${s.tieu_de||''}</b><div class="mut" style="white-space:pre-wrap"><b>IMG:</b> ${s.image_prompt_en||''}\n<b>VID:</b> ${s.video_prompt_en||''}</div></div>`).join(''); }
-  out.innerHTML=h; document.getElementById('gen-actions').style.display=h?'flex':'none';
-}
-function packMarkdown(){
-  const p=S._pack||{}; let m=`# 30-Day Content Pack — ${(S.dna.onboard&&S.dna.onboard.kenh)||'Kênh'}\n\n`;
-  if(p.calendar){ m+=`## 📅 Lịch 30 ngày\n\n| Ngày | Series | Hook | Format | CTA |\n|---|---|---|---|---|\n`+p.calendar.map(d=>`| ${d.ngay} | ${d.series||''} | ${d.hook||''} | ${d.format||''} | ${d.cta||''} |`).join('\n')+`\n\n`; }
-  if(p.scripts){ m+=`## 🎬 Script 5-beat\n\n`+p.scripts.map((s,i)=>`### ${i+1}. ${s.tieu_de||''}\n- **Hook:** ${(s.beats&&s.beats.hook)||''}\n- **Vấn đề:** ${(s.beats&&s.beats.van_de)||''}\n- **Giải pháp:** ${(s.beats&&s.beats.giai_phap)||''}\n- **Bằng chứng:** ${(s.beats&&s.beats.bang_chung)||''}\n- **CTA:** ${(s.beats&&s.beats.cta)||''}\n`).join('\n')+`\n`; }
-  if(p.prompts){ m+=`## 🖼 Prompts (EN)\n\n`+p.prompts.map((s,i)=>`### ${i+1}. ${s.tieu_de||''}\n- **Image:** ${s.image_prompt_en||''}\n- **Video:** ${s.video_prompt_en||''}\n`).join('\n'); }
-  return m;
-}
-function downloadPack(fmt){
-  const data=fmt==='md'?packMarkdown():JSON.stringify(S._pack||{},null,2);
-  const blob=new Blob([data],{type:fmt==='md'?'text/markdown':'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='30day-content-pack.'+fmt; a.click();
-}
-function openPackTab(){
-  const w=window.open('','_blank'); if(!w) return;
-  w.document.write(`<title>30-Day Pack</title><pre style="font:14px/1.6 -apple-system,Segoe UI,monospace;white-space:pre-wrap;padding:24px;max-width:820px;margin:auto;background:#0c0f14;color:#e9eef4">${packMarkdown().replace(/&/g,'&amp;').replace(/</g,'&lt;')}</pre>`);
-  w.document.close();
-}
-
-/* ===================== POPULATE ĐỘNG (gọi khi mở trạm) ===================== */
-function ensureDynamic(){
-  const an=document.getElementById('m2-apify-note'); if(an) an.style.display=S.keys.apify?'':'none';
-  if(UNLOCK[4]()) fillM5();
-  const m6w=document.getElementById('m6-cards'); if(UNLOCK[5]()&&m6w&&!m6w.children.length) buildM6Cards();
-}
 
 /* ================= INIT ================= */
 (function init(){
@@ -1238,26 +687,7 @@ function ensureDynamic(){
     (S.dna.m1.matrix||[]).forEach(x=>{ addCach(x.cach); const c=wrap.lastElementChild; const tas=c.querySelectorAll('textarea'); x.ytuong.forEach((y,i)=>{ if(tas[i]) tas[i].value=y; else { addIdea(c.querySelector('.btn')); c.querySelectorAll('textarea')[i].value=y; } }); });
     if(!wrap.children.length) for(let i=0;i<5;i++) addCach();
   }
-
-  /* --- Khôi phục Trạm 2 --- */
-  if(S.dna.m2 && S.dna.m2.channels && S.dna.m2.channels.length) setM2(S.dna.m2);
-  else ['@maxklymenko','@tussalty','@bradyyourtutor','@davidcohen'].forEach(n=>addChannel(n));
-  /* --- Trạm 3 --- */
-  buildInsight();
-  if(S.dna.m3){
-    document.getElementById('m3-kwbrand').value=(S.dna.m3.kwbrand||[]).join(', ');
-    (S.dna.m3.insight||[]).forEach(x=>{ const t=[...document.querySelectorAll('#m3-insight .ins')].find(e=>e.dataset.t===x.tang); if(t) t.value=x.noidung||''; });
-    (S.dna.m3.proof||[]).forEach(p=>addProof(p.kw,p.ytuong));
-    document.getElementById('m3-sig').value=S.dna.m3.signature||'';
-  }
-  if(!document.querySelector('#m3-proof .cách')) for(let i=0;i<3;i++) addProof();
-  /* --- Trạm 4 --- */
-  buildCats();
-  if(S.dna.m4){ (S.dna.m4.cats||[]).forEach(c=>{ const t=[...document.querySelectorAll('#m4-cats .cat')].find(e=>e.dataset.t===c.danhmuc); if(t) t.value=(c.keywords||[]).join(', '); }); countKw(); }
-  /* --- Trạm 5 --- */
-  if(S.dna.m5 && S.dna.m5.videos) S.dna.m5.videos.forEach(v=>addVideo(v));
-
-  renderDNA(); renderStations(); renderVault(); refreshGates(); renderOverview(); ensureDynamic();
+  renderDNA(); renderStations(); renderVault();
   document.getElementById('grade-hint').textContent = S.keys.gemini ? 'Gemini đã kết nối — chấm sâu bằng AI.' : 'Chưa có Gemini key → chấm offline cơ bản. Vào tab ⚡ Kết nối để AI chấm thật.';
 })();
 </script>
