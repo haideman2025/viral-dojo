@@ -11,7 +11,7 @@ Một nút **"⚡ Tự săn + lọc thông minh"** làm trọn: chấm lại vid
 ## Quyết định đã chốt
 - **Chuẩn giữ (khớp rubric):** `(view≥500k HOẶC like≥35k)` VÀ `format ∈ {series, thử nghiệm, thử thách, xếp hạng, chấm điểm}` VÀ `liên quan ngành ≥ 2/3`.
 - **Video trượt:** đánh dấu ✗ + đẩy xuống cuối (mờ + lý do), KHÔNG tự xoá; có nút "🗑 Xoá hết video bị loại (N)" để dọn hàng loạt.
-- **Auto-loop:** mục tiêu ≥20 đạt chuẩn, trần 8 keyword (chặn cháy quota Apify). Chấm AI **sau mỗi keyword** để dừng sớm khi đủ.
+- **Auto-loop (mục tiêu-driven):** quét **lần lượt CẢ kho keyword Trạm 4**, không lặp lại keyword đã quét (lưu `S.dna._m5kwDone`, persist qua `save()` → lần bấm sau quét tiếp). Dừng khi `kept≥20` HOẶC hết keyword HOẶC Apify lỗi 2 lần liên tiếp (chốt an toàn quota). Chấm AI **sau mỗi keyword** để dừng sớm khi đủ.
 - **Tận dụng data cũ:** Bước 1 chấm lại toàn bộ bảng hiện có (0 quota Apify) trước khi săn thêm.
 
 ## Luồng (huntSmart)

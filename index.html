@@ -1003,7 +1003,7 @@ function grade5(){
 }
 
 /* ----- Trạm 5: Tự săn + lọc thông minh (1 click) ----- */
-const M5_TARGET=20, M5_MAX_KW=8, M5_FMT_OK=/series|thử nghiệm|thử thách|xếp hạng|chấm điểm/i;
+const M5_TARGET=20, M5_FMT_OK=/series|thử nghiệm|thử thách|xếp hạng|chấm điểm/i;
 function countKept(){ return [...document.querySelectorAll('#m5-table .idea')].filter(r=>r.dataset.keep==='1').length; }
 function setRowStatus(row,st){
   row.dataset.keep=st.keep?'1':'0'; row.dataset.score=st.score||0;
@@ -1058,25 +1058,30 @@ async function huntSmart(){
     const token=S.keys.apify;
     if(kept<M5_TARGET && token){
       const allKw=[...new Set(((S.dna.m4&&S.dna.m4.cats)||[]).flatMap(c=>c.keywords))];
+      S.dna._m5kwDone=S.dna._m5kwDone||[]; const done=new Set(S.dna._m5kwDone);
       const sel=[...document.getElementById('m5-kw').selectedOptions].map(o=>o.value).filter(v=>v);
-      const order=[...new Set([...sel,...allKw])];
+      const queue=[...new Set([...sel,...allKw])].filter(kw=>!done.has(kw)); // quét lần lượt CẢ kho, bỏ keyword đã quét
       const usedLinks=new Set([...document.querySelectorAll('#m5-table .v-link')].map(i=>i.value.trim()).filter(Boolean));
-      let kwTried=0;
-      for(const kw of order){
-        if(kept>=M5_TARGET||kwTried>=M5_MAX_KW) break; kwTried++;
-        setp(`Săn ${kwTried}/${M5_MAX_KW}: "${kw}" · ${kept}/${M5_TARGET} đạt...`);
+      let kwTried=0, fails=0, stopQuota=false;
+      for(const kw of queue){
+        if(kept>=M5_TARGET) break; kwTried++;
+        setp(`Săn ${kwTried}/${queue.length}: "${kw}" · ${kept}/${M5_TARGET} đạt...`);
         const newRows=[];
         try{
           const r=await fetch(`https://api.apify.com/v2/acts/clockworks~tiktok-scraper/run-sync-get-dataset-items?token=${token}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({searchQueries:[kw],resultsPerPage:20,shouldDownloadVideos:false,shouldDownloadCovers:false})});
           if(!r.ok) throw new Error('HTTP '+r.status);
-          const items=await r.json();
+          const items=await r.json(); fails=0;
           (items||[]).forEach(x=>{ const view=x.playCount||0, like=x.diggCount||0, link=x.webVideoUrl||'';
             if((view>=500000||like>=35000)&&link&&!usedLinks.has(link)){ usedLinks.add(link); newRows.push(addVideo({keyword:kw,link,view,like,caption:(x.text||'').slice(0,140)})); } });
-        }catch(e){ msg.innerHTML=`<span style="color:var(--warn)">⚠️ "${kw}" lỗi cào (${e.message}) — thử keyword khác.</span>`; continue; }
+        }catch(e){ fails++; if(fails>=2){ msg.innerHTML=`<span style="color:var(--red)">❌ Apify lỗi liên tiếp (${e.message}) — có thể hết quota. Dừng săn ở ${kept}/${M5_TARGET} đạt chuẩn. Thêm quota rồi bấm "⚡" lại để săn tiếp.</span>`; stopQuota=true; break; } continue; }
+        S.dna._m5kwDone.push(kw); save(); // đánh dấu đã quét (lần bấm sau không lặp lại)
         if(newRows.length){ await scoreRowsAI(newRows); applyFilterSort(); kept=countKept(); }
       }
-      const total=document.querySelectorAll('#m5-table .idea').length;
-      msg.innerHTML=`<span style="color:${kept>=M5_TARGET?'var(--ac)':'var(--warn)'}">${kept>=M5_TARGET?'🎉 Đủ rồi!':'⚠️ Mới'} ${kept}/${M5_TARGET} đạt chuẩn sau ${kwTried} keyword · ${total-kept} bị loại (đẩy xuống cuối). Xem lại rồi bấm "🧠 Nộp bài".</span>`;
+      if(!stopQuota){
+        const total=document.querySelectorAll('#m5-table .idea').length, remain=queue.length-kwTried;
+        const tip=kept>=M5_TARGET?'Bấm "🧠 Nộp bài".':(remain>0?'Bấm "⚡" lần nữa để săn tiếp các keyword còn lại.':'Đã quét hết kho keyword — thêm keyword ở Trạm 4 nếu vẫn thiếu.');
+        msg.innerHTML=`<span style="color:${kept>=M5_TARGET?'var(--ac)':'var(--warn)'}">${kept>=M5_TARGET?'🎉 Đủ rồi!':'⚠️ Mới'} ${kept}/${M5_TARGET} đạt chuẩn · đã quét ${kwTried} keyword (còn ${remain}) · ${total-kept} bị loại. ${tip}</span>`;
+      }
     } else {
       const total=document.querySelectorAll('#m5-table .idea').length;
       const tail=token?'':' (chưa có Apify token → chỉ lọc bảng sẵn có; thêm token để tự săn).';
