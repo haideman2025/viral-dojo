@@ -8,7 +8,16 @@ Người dùng cào rất nhiều video qua Apify nhưng chấm điểm Trạm 5
 ## Mục tiêu
 Một nút **"⚡ Tự săn + lọc thông minh"** làm trọn: chấm lại video sẵn có → tự săn thêm nếu thiếu → loại nhiễu, sắp xếp → người dùng chỉ xem lại & nộp.
 
-## v2 (2026-06-12, sau khi 65 keyword chỉ ra 7/20)
+## v3 (2026-06-12) — KHỚP bộ lọc với thước đo chấm điểm
+Lỗi v2: nới format quá tay (chấp nhận review/kể chuyện ở 18đ) → giữ 59 video nhưng đa số là "kể chuyện" → grade5 cho **Tỷ lệ thành công 0/50** → tổng 43/100 TRƯỢT. Bài học: **bộ lọc phải khớp đầu ra chấm điểm**, và phải sửa cách SĂN (search keyword sản phẩm chỉ ra video bán hàng, không có series/thử thách).
+
+**1. ĐẠT CHUẨN khớp grade5:** `viral · format ∈ {series,thử nghiệm,thử thách,xếp hạng,chấm điểm} (ăn 50đ) · liên quan≥1`. Composite 0-100 (gồm clone) chỉ để XẾP HẠNG, không để keep. Review/kể chuyện/so sánh → LOẠI (đẩy xuống, lý do "chưa ăn điểm").
+
+**2. 🆕 Cơ chế săn theo FORMAT (mấu chốt):** `huntSmart` tự sinh ~18 query `[ngành × format ăn điểm]` (1 call Gemini, tiếng Anh nếu Kết hợp/Hình thức) — vd "deodorant experiment", "men body wash ranking top 5", "30 day hygiene challenge". Lưu `S.dna._m5queries`. Đây mới là cách tìm ra video series/thử thách mà rubric cần. Query format quét trước, keyword M4 dự phòng. Thay luôn bước dịch keyword của v2.
+
+**3. Reset** xoá thêm `_m5queries` để sinh bộ query mới.
+
+## v2 (2026-06-12, sau khi 65 keyword chỉ ra 7/20) — superseded một phần bởi v3
 Lỗi v1: biến rubric "có trọng số" thành **cổng AND cứng** (bắt buộc đúng 5 format + liên quan≥2) → loại oan video viral tốt. Kiến thức lõi (Module 5) xác nhận "Tỷ lệ thành công cao" là **50đ ưu tiên cộng điểm**, và "Bám insight" là *"liên quan ngành HOẶC ngành có thể liên kết"* (lỏng).
 
 **Chấm theo ĐIỂM CHẤT LƯỢNG 0–100 (bỏ cổng cứng):**

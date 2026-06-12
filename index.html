@@ -1256,7 +1256,7 @@ function applyFilterSort(){
 function deleteRejected(){ [...document.querySelectorAll('#m5-table .idea')].forEach(r=>{ if(r.dataset.keep==='0') r.remove(); }); applyFilterSort(); }
 function resetScanM5(){
   if(!confirm('Xoá lịch sử keyword đã quét để săn lại từ đầu (sẽ cào tiếng Anh nếu định dạng Hình thức/Kết hợp)? Video trong bảng KHÔNG bị xoá, chỉ được chấm lại.')) return;
-  S.dna._m5kwDone=[]; save();
+  S.dna._m5kwDone=[]; S.dna._m5queries=[]; save();
   document.querySelectorAll('#m5-table .idea').forEach(r=>{ delete r.dataset.sv; });
   document.getElementById('m5-scrape-msg').innerHTML='<span style="color:var(--ac)">🔄 Đã reset lịch sử quét. Bấm "⚡ Tự săn + lọc thông minh" để chấm lại + săn mới.</span>';
 }
@@ -1286,12 +1286,13 @@ ${items}`,{json:true,temp:0.2});
       const rel=Math.max(0,Math.min(3,+o.lienquan||0)), clone=Math.max(0,Math.min(3,+o.clone||0)), app=Math.max(0,Math.min(3,+o.ungdung||0));
       const fmtPts=M5_FMT_OK.test(o.nhan||'')?30:/review|reaction|so sánh|kể chuyện|tips|hướng dẫn|đánh giá/i.test(o.nhan||'')?18:6;
       const total=(viral?10:0)+fmtPts+Math.round(clone/3*25)+Math.round(rel/3*15)+Math.round(app/3*20);
-      const keep=viral&&rel>=1&&total>=M5_PASS;
+      const isPrio=M5_FMT_OK.test(o.nhan||''); // format ĂN 50đ của rubric Trạm 5
+      const keep=viral&&isPrio&&rel>=1;
       r.querySelector('.v-trans').value=`${o.dich||''} [${o.nhan||'khác'}]`; r.dataset.sv=M5_SV;
       let reason='';
       if(!viral) reason='dưới ngưỡng viral';
+      else if(!isPrio) reason=`format "${o.nhan||'?'}" chưa ăn điểm (cần series/thử nghiệm/thử thách/xếp hạng/chấm điểm)`;
       else if(rel<1) reason='lạc đề ngành';
-      else reason=`chất lượng ${total}đ < ${M5_PASS}`+(clone<=1?' · khó clone':'')+(app<=1?' · khó ứng dụng':'');
       setRowStatus(r,{keep,score:total,relevance:rel,clone,format:o.nhan,reason});
     });
   }
@@ -1306,25 +1307,29 @@ async function huntSmart(){
     applyFilterSort(); let kept=countKept();
     const token=S.keys.apify;
     if(kept<M5_TARGET && token){
-      const allKw=[...new Set(((S.dna.m4&&S.dna.m4.cats)||[]).flatMap(c=>c.keywords))];
       S.dna._m5kwDone=S.dna._m5kwDone||[]; const done=new Set(S.dna._m5kwDone);
-      const sel=[...document.getElementById('m5-kw').selectedOptions].map(o=>o.value).filter(v=>v);
-      let queue=[...new Set([...sel,...allKw])].filter(kw=>!done.has(kw)); // quét lần lượt CẢ kho, bỏ keyword đã quét
-      queue=[...queue.filter(k=>M5_FMT_KW.test(k)),...queue.filter(k=>!M5_FMT_KW.test(k))]; // ưu tiên keyword dạng "hình thức" → ra video clone-able sớm
-      const dd=(S.dna.m1&&S.dna.m1.dinhdang)||'', foreign=/hình thức|kết hợp/i.test(dd), enMap={};
-      if(foreign && queue.length){ // định dạng Hình thức/Kết hợp → dịch keyword sang tiếng Anh để cào video NƯỚC NGOÀI dễ nhân bản
-        setp(`Dịch keyword sang tiếng Anh (${dd} → video nước ngoài)...`);
+      const dd=(S.dna.m1&&S.dna.m1.dinhdang)||'', foreign=/hình thức|kết hợp/i.test(dd);
+      // Cơ chế săn theo FORMAT ăn điểm: tự sinh query [ngành × series/thử nghiệm/thử thách/xếp hạng/chấm điểm]
+      if(!(S.dna._m5queries&&S.dna._m5queries.length)){
+        setp('Tạo bộ query săn video theo FORMAT chuẩn...');
         try{
-          const list=queue.map((k,i)=>`${i+1}. ${k}`).join('\n');
-          const o=await geminiCall(`Học viên định dạng kênh "${dd}" → cần tìm video TikTok NƯỚC NGOÀI dễ nhân bản (clone bằng AI). Dịch MỖI keyword tiếng Việt thành 1 cụm TÌM KIẾM TikTok tiếng Anh, ưu tiên hướng tới format viral dễ clone: challenge / ranking / top list / review / experiment / rating / vs. Ngắn, tự nhiên như người bản xứ gõ tìm kiếm.\nNGÀNH: ${brandContext(800)}\nTrả JSON {"rows":[{"i":1,"en":"..."}]}.\n\n${list}`,{json:true,temp:0.3});
-          (o.rows||[]).forEach(rr=>{ const k=queue[rr.i-1]; if(k&&rr.en) enMap[k]=String(rr.en).trim(); });
-        }catch(e){ /* dịch lỗi → fallback dùng keyword tiếng Việt */ }
+          const o=await geminiCall(`Tạo bộ TỪ KHÓA TÌM KIẾM TikTok cho học viên COREVIRAL Trạm 5. MỤC TIÊU: tìm video viral DẠNG SERIES thuộc chủ đề "an toàn để viral" — Thử nghiệm / Thử thách / Xếp hạng (ranking/top list) / Chấm điểm (rating) — vì đây là tiêu chí ĂN 50/100đ của Trạm 5 và dễ NHÂN BẢN bằng AI.
+NGÀNH & THƯƠNG HIỆU:
+${brandContext(1500)}
+Định dạng kênh: ${dd}.
+${foreign?'Kênh Hình thức/Kết hợp → tạo query TIẾNG ANH tìm video NƯỚC NGOÀI (tránh trùng, dễ nhân bản).':'Tạo query tiếng Việt hoặc phương Đông.'}
+Tạo 18 query, MỖI query GHÉP chủ đề ngành (hoặc ngành có thể liên kết: grooming, skincare, hygiene, men care, daily routine...) VỚI 1 format ưu tiên. Ví dụ phong cách (ĐỔI sang ngành học viên): "deodorant experiment test", "men body wash ranking top 5", "30 day hygiene challenge", "rating men grooming products", "which deodorant lasts longest", "skincare routine tier list".
+Trả JSON {"queries":["...","..."]}.`,{json:true,temp:0.4});
+          S.dna._m5queries=(o.queries||[]).map(s=>String(s).trim()).filter(Boolean); save();
+        }catch(e){ S.dna._m5queries=[]; }
       }
+      const m4kw=[...new Set(((S.dna.m4&&S.dna.m4.cats)||[]).flatMap(c=>c.keywords))];
+      const queue=[...new Set([...(S.dna._m5queries||[]), ...m4kw])].filter(q=>!done.has(q)); // query format trước, keyword M4 dự phòng
       const usedLinks=new Set([...document.querySelectorAll('#m5-table .v-link')].map(i=>i.value.trim()).filter(Boolean));
       let kwTried=0, fails=0, stopQuota=false;
       for(const kw of queue){
         if(kept>=M5_TARGET) break; kwTried++;
-        const q=enMap[kw]||kw;
+        const q=kw;
         setp(`Săn ${kwTried}/${queue.length}: "${q}" · ${kept}/${M5_TARGET} đạt...`);
         const newRows=[];
         try{
