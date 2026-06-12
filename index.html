@@ -234,6 +234,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div id="m5-table"></div>
     <button class="btn ghost sm" onclick="addVideo()">+ Thêm video (nhập tay)</button>
     <button class="btn ghost sm" id="m5-del-rej" onclick="deleteRejected()" style="display:none;margin-left:8px">🗑 Xoá hết video bị loại</button>
+    <button class="btn ghost sm" onclick="resetScanM5()" style="margin-left:8px">🔄 Reset quét</button>
     <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn ghost" id="m5-translate" onclick="translateRows()">🌐 Dịch + phân loại bằng AI</button>
       <button class="btn ghost" id="m5-coach" onclick="coach5()">💬 AI hướng dẫn</button>
@@ -1003,7 +1004,7 @@ function grade5(){
 }
 
 /* ----- Trạm 5: Tự săn + lọc thông minh (1 click) ----- */
-const M5_TARGET=20, M5_PASS=55, M5_FMT_OK=/series|thử nghiệm|thử thách|xếp hạng|chấm điểm/i, M5_FMT_KW=/thử thách|thử nghiệm|xếp hạng|chấm điểm|so sánh|review|đánh giá|reaction|top ?\d/i;
+const M5_TARGET=20, M5_PASS=55, M5_SV='v2', M5_FMT_OK=/series|thử nghiệm|thử thách|xếp hạng|chấm điểm/i, M5_FMT_KW=/thử thách|thử nghiệm|xếp hạng|chấm điểm|so sánh|review|đánh giá|reaction|top ?\d/i;
 function countKept(){ return [...document.querySelectorAll('#m5-table .idea')].filter(r=>r.dataset.keep==='1').length; }
 function setRowStatus(row,st){
   row.dataset.keep=st.keep?'1':'0'; row.dataset.score=st.score||0;
@@ -1022,8 +1023,14 @@ function applyFilterSort(){
   if(btn){ btn.style.display=rej?'':'none'; btn.textContent=`🗑 Xoá hết video bị loại (${rej})`; }
 }
 function deleteRejected(){ [...document.querySelectorAll('#m5-table .idea')].forEach(r=>{ if(r.dataset.keep==='0') r.remove(); }); applyFilterSort(); }
+function resetScanM5(){
+  if(!confirm('Xoá lịch sử keyword đã quét để săn lại từ đầu (sẽ cào tiếng Anh nếu định dạng Hình thức/Kết hợp)? Video trong bảng KHÔNG bị xoá, chỉ được chấm lại.')) return;
+  S.dna._m5kwDone=[]; save();
+  document.querySelectorAll('#m5-table .idea').forEach(r=>{ delete r.dataset.sv; });
+  document.getElementById('m5-scrape-msg').innerHTML='<span style="color:var(--ac)">🔄 Đã reset lịch sử quét. Bấm "⚡ Tự săn + lọc thông minh" để chấm lại + săn mới.</span>';
+}
 async function scoreRowsAI(rows){
-  const todo=(rows||[]).filter(r=>r&&r.dataset.scored!=='1'&&(r.querySelector('.v-cap').value.trim()||r.querySelector('.v-trans').value.trim()));
+  const todo=(rows||[]).filter(r=>r&&r.dataset.sv!==M5_SV&&(r.querySelector('.v-cap').value.trim()||r.querySelector('.v-trans').value.trim()));
   const dd=(S.dna.m1&&S.dna.m1.dinhdang)||'?';
   for(let s=0;s<todo.length;s+=40){
     const chunk=todo.slice(s,s+40);
@@ -1049,7 +1056,7 @@ ${items}`,{json:true,temp:0.2});
       const fmtPts=M5_FMT_OK.test(o.nhan||'')?30:/review|reaction|so sánh|kể chuyện|tips|hướng dẫn|đánh giá/i.test(o.nhan||'')?18:6;
       const total=(viral?10:0)+fmtPts+Math.round(clone/3*25)+Math.round(rel/3*15)+Math.round(app/3*20);
       const keep=viral&&rel>=1&&total>=M5_PASS;
-      r.querySelector('.v-trans').value=`${o.dich||''} [${o.nhan||'khác'}]`; r.dataset.scored='1';
+      r.querySelector('.v-trans').value=`${o.dich||''} [${o.nhan||'khác'}]`; r.dataset.sv=M5_SV;
       let reason='';
       if(!viral) reason='dưới ngưỡng viral';
       else if(rel<1) reason='lạc đề ngành';
