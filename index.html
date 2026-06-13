@@ -1142,7 +1142,7 @@ function exportScripts(fmt){
   const kenh=(S.dna.onboard&&S.dna.onboard.kenh)||'Kênh'; let data;
   if(fmt==='csv'){ data='Ý tưởng,Phần,Nội dung,Hình ảnh,TRÁM,Note\n'+keys.flatMap(t=>(sc[t].scenes||[]).map(c=>[t,c.phan,c.noidung,c.hinhanh,c.tram,c.note].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
   else { data=`# Kịch bản chi tiết — ${kenh}\n\n`+keys.map(t=>`## ${t}\n\n| Phần | Nội dung | Hình ảnh | TRÁM | Note |\n|---|---|---|---|---|\n`+(sc[t].scenes||[]).map(c=>`| ${c.phan||''} | ${(c.noidung||'').replace(/\|/g,'/')} | ${(c.hinhanh||'').replace(/\|/g,'/')} | ${(c.tram||'').replace(/\|/g,'/')} | ${(c.note||'').replace(/\|/g,'/')} |`).join('\n')).join('\n\n'); }
-  const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='kich-ban-chi-tiet.'+fmt; a.click();
+  const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='kich-ban-chi-tiet.'+fmt; document.body.appendChild(a); a.click(); a.remove();
 }
 /* --- 🎥 Bộ prompt video Omni (Google Flow) — chuỗi 10s/script --- */
 function vref(){ S.dna.skuld.vref=S.dna.skuld.vref||{character:'',product:'',style:''}; return S.dna.skuld.vref; }
@@ -1164,18 +1164,24 @@ async function ensureVRef(){ if(!(vref().character||'').trim()) await genVRef();
 async function genVPrompts(title){
   const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
-  const o=await geminiCall(`Bạn là đạo diễn AI. Cắt KỊCH BẢN sau thành chuỗi SHOT 10 GIÂY để tạo video bằng Omni/Veo trên Google Flow. Mỗi shot = 1 prompt video + lời voice-over.
-NHẤT QUÁN (nhắc lại trong MỌI shot):
-- NHÂN VẬT: ${v.character||'(theo brand)'}
-- SẢN PHẨM: ${v.product||'(theo brand)'}
+  const o=await geminiCall(`Bạn là ĐẠO DIỄN đã học toàn bộ COREVIRAL — hiểu chuẩn video viral (hook 3 giây đầu, nhịp nhanh, format an toàn, sản phẩm xuất hiện tự nhiên). Nhiệm vụ: chuyển KỊCH BẢN text thành chuỗi SHOT 10 GIÂY để tạo bằng Omni/Veo trên Google Flow; khi ghép các shot 10s lại phải thành 1 video HOÀN CHỈNH, MƯỢT, LIỀN MẠCH, đúng nhịp độ/bối cảnh/trang phục/nhân vật/sản phẩm của kịch bản.
+
+KHOÁ NHẤT QUÁN — nhắc lại NGUYÊN VĂN trong MỌI shot prompt:
+- CHARACTER (giữ y hệt mọi shot, dùng ảnh tham chiếu): ${v.character||'(theo brand)'}
+- PRODUCT (giữ y hệt, dùng ảnh tham chiếu): ${v.product||'(theo brand)'}
+- WARDROBE/SETTING: trang phục + bối cảnh phải GIỐNG NHAU xuyên suốt 1 video (trừ khi kịch bản đổi cảnh rõ ràng).
 - STYLE: ${v.style||'cinematic, hợp TikTok'}
-Mỗi shot có 3 trường:
-- prompt (TIẾNG ANH): 9:16 dọc, 10 giây; hành động·bối cảnh·góc quay·ánh sáng·âm thanh; PHẢI ghi rõ câu "Use the uploaded character reference image for the person and the product reference image for the item; keep them identical across all shots."; LIỀN MẠCH (nối shot trước, cùng nhân vật/bối cảnh).
-- voiceover (TIẾNG VIỆT): lời thoại/voice-over CHÍNH XÁC cho shot, LẤY ĐÚNG từ phần Nội dung kịch bản (chia theo 10s, KHÔNG bịa thêm). Nếu shot không có thoại để trống.
-- onscreen (TIẾNG VIỆT): chữ overlay ngắn.
+
+Bám CHÍNH XÁC field của kịch bản: "Nội dung"→hành động & lời thoại · "Hình ảnh"→bối cảnh/góc quay/nhân vật/sản phẩm · "TRÁM"→overlay/âm thanh. KHÔNG bịa khác kịch bản.
+
+Mỗi shot 10s, trả 3 trường:
+- prompt (TIẾNG ANH, chuẩn Veo/Omni): 1 đoạn liền mạch gồm — [shot size + camera move + angle] (vd medium tracking shot, slow push-in, eye-level) · [subject = CHARACTER y hệt + wardrobe] · [action cụ thể từ kịch bản] · [PRODUCT cầm/đặt thế nào] · [setting/bối cảnh + props] · [lighting + mood + color] · [lens/DOF] · [audio: nhạc/SFX] · [on-screen text nếu có] · và CÂU BẮT BUỘC: "Use the uploaded character reference image for the person and the product reference image for the item; keep them identical across all shots." · CONTINUITY: shot ≥2 mở đầu bằng "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;" để match-cut mượt khi ghép.
+- voiceover (TIẾNG VIỆT): lời thoại CHÍNH XÁC cho shot, lấy ĐÚNG từ "Nội dung" (chia vừa 10s, không bịa). Không có thì để trống.
+- onscreen (TIẾNG VIỆT): chữ overlay ngắn (từ TRÁM).
+
 KỊCH BẢN ("${title}"):
 ${body}
-Trả JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]}.`,{json:true,temp:0.6});
+Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]} — số shot vừa đủ kể trọn kịch bản (mỗi shot 10s).`,{json:true,temp:0.55});
   S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
   S.dna.skuld.vprompts[title]={shots:(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',voiceover:s.voiceover||'',onscreen:s.onscreen||''})), at:new Date().toISOString().slice(0,10)};
 }
@@ -1221,7 +1227,7 @@ function exportVPrompts(fmt){
   const v=vref(), kenh=(S.dna.onboard&&S.dna.onboard.kenh)||'Kênh'; let data;
   if(fmt==='csv'){ data='Kịch bản,Shot,Thời lượng,Prompt (Omni EN),Voice-over VN,Overlay VN\n'+keys.flatMap(t=>(vp[t].shots||[]).map(s=>[t,s.seq,s.dur+'s',s.prompt,s.voiceover,s.onscreen].map(x=>`"${(x||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
   else { data=`# Bộ prompt video Omni — ${kenh}\n\n> **HƯỚNG DẪN:** Vào Google Flow → upload **1 ảnh nhân vật** + **1 ảnh sản phẩm** vào phần ingredients/reference, GIỮ NGUYÊN cho TẤT CẢ shot của mọi video để nhân vật & sản phẩm đồng nhất. Dán prompt từng shot theo thứ tự; ghép các shot 10s thành 1 video.\n\n**🎭 Nhân vật (ảnh tham chiếu):** ${v.character||''}\n\n**📦 Sản phẩm (ảnh tham chiếu):** ${v.product||''}\n\n**🎨 Style:** ${v.style||''}\n\n`+keys.map(t=>`## ${t}\n\n`+(vp[t].shots||[]).map(s=>`### Shot ${s.seq} · ${s.dur}s\n${s.voiceover?`**🎙 Voice-over (VN):** ${s.voiceover}\n\n`:''}${s.onscreen?`*▦ Overlay (VN):* ${s.onscreen}\n\n`:''}\`\`\`\n${s.prompt||''}\n\`\`\`\n`).join('\n')).join('\n'); }
-  const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt-video-omni.'+fmt; a.click();
+  const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt-video-omni.'+fmt; document.body.appendChild(a); a.click(); a.remove();
 }
 /* --- B. Phân tích chuyên sâu 18 câu --- */
 const DP_Q = [
@@ -1333,7 +1339,7 @@ async function saveKey(name){
 function renderDNA(){ document.getElementById('dna-view').textContent = JSON.stringify(S.dna, null, 2); }
 function exportDNA(){
   const blob = new Blob([JSON.stringify(S.dna,null,2)],{type:'application/json'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='channel-dna.json'; a.click();
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='channel-dna.json'; document.body.appendChild(a); a.click(); a.remove();
 }
 function importDNA(file){
   if(!file) return;
@@ -1889,7 +1895,7 @@ function packMarkdown(){
 function downloadPack(fmt){
   const data=fmt==='md'?packMarkdown():JSON.stringify(S._pack||{},null,2);
   const blob=new Blob([data],{type:fmt==='md'?'text/markdown':'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='30day-content-pack.'+fmt; a.click();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='30day-content-pack.'+fmt; document.body.appendChild(a); a.click(); a.remove();
 }
 function openPackTab(){
   const w=window.open('','_blank'); if(!w) return;
