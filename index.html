@@ -64,6 +64,9 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 .xptoast.show{transform:translateY(0);opacity:1}
 .kbar{height:9px;background:var(--card2);border:1px solid var(--bd);border-radius:6px;overflow:hidden;margin:4px 0}
 .kbar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--blue))}
+.sec.collapsed>*:not(h2){display:none}
+.col-btn{float:right;background:var(--card2);border:1px solid var(--bd);color:var(--mut);border-radius:7px;padding:2px 9px;font-size:11px;font-weight:700;cursor:pointer}
+.col-btn:hover{color:var(--tx);border-color:var(--ac)}
 </style>
 </head>
 <body>
@@ -561,13 +564,24 @@ function renderStations(){
     el.appendChild(d);
   });
 }
-// hiện section trạm đã mở, ẩn ô khóa tương ứng
+// thu gọn / mở 1 trạm
+function toggleSec(id,btn){ const sec=document.getElementById(id); if(!sec) return; sec.classList.toggle('collapsed'); if(btn) btn.textContent=sec.classList.contains('collapsed')?'▸ Mở':'▾ Thu gọn'; }
+// hiện section trạm đã mở, ẩn ô khóa tương ứng + cho thu gọn trạm đã đạt
 function refreshGates(){
   for(let i=1;i<=6;i++){
     const sec=document.getElementById('m'+i), lock=document.getElementById('m'+i+'lock');
     const open = UNLOCK[i-1]();
     if(sec) sec.style.display = open?'':'none';
     if(lock) lock.style.display = open?'none':'';
+    if(sec && open){
+      const h=sec.querySelector('h2'); const passed=sc(i)>=PASS;
+      if(h && !h.querySelector('.col-btn')){ const b=document.createElement('button'); b.className='col-btn'; b.type='button'; b.onclick=()=>toggleSec('m'+i,b); h.appendChild(b); }
+      const b=h&&h.querySelector('.col-btn');
+      if(b) b.style.display=passed?'':'none'; // chỉ cho thu gọn khi đã đạt ≥70
+      if(passed && !sec.dataset.autocol){ sec.classList.add('collapsed'); sec.dataset.autocol='1'; } // tự thu gọn lần đầu khi đạt
+      if(!passed) sec.classList.remove('collapsed');
+      if(b) b.textContent=sec.classList.contains('collapsed')?'▸ Mở':'▾ Thu gọn';
+    }
   }
   const gen=document.getElementById('gen'), genlock=document.getElementById('genlock');
   const ready = UNLOCK[6]();
