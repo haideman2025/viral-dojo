@@ -352,7 +352,9 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <button class="btn ghost" id="vref-gen" onclick="genVRef()">✨ Sinh bộ tham chiếu (AI)</button>
       <button class="btn" id="vp-gen" onclick="genVPromptsAll()">🎥 Sinh prompt video (cả loạt)</button>
+      <button class="btn ghost" onclick="regenVPromptsAll()">🔄 Tạo lại tất cả</button>
     </div>
+    <p class="mut" style="font-size:12px;margin:-2px 0 8px">💡 Tạo thử 1 video: bấm nút 🎥 trên từng dòng ở bảng Dây chuyền. Mỗi shot kèm <b>voice-over</b> lấy đúng từ kịch bản + chỉ dẫn dùng ảnh tham chiếu.</p>
     <div id="vp-fb"></div>
     <div id="vp-out" class="mut">Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".</div>
     <div id="vp-export" style="display:none;gap:10px;margin-top:10px">
@@ -1154,18 +1156,22 @@ async function ensureVRef(){ if(!(vref().character||'').trim()) await genVRef();
 async function genVPrompts(title){
   const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
-  const o=await geminiCall(`Bạn là đạo diễn AI. Cắt KỊCH BẢN sau thành chuỗi SHOT 10 GIÂY để tạo video bằng Omni/Veo trên Google Flow. Mỗi shot = 1 prompt video hoàn chỉnh.
-NHẤT QUÁN (bám sát, nhắc lại trong MỌI shot):
+  const o=await geminiCall(`Bạn là đạo diễn AI. Cắt KỊCH BẢN sau thành chuỗi SHOT 10 GIÂY để tạo video bằng Omni/Veo trên Google Flow. Mỗi shot = 1 prompt video + lời voice-over.
+NHẤT QUÁN (nhắc lại trong MỌI shot):
 - NHÂN VẬT: ${v.character||'(theo brand)'}
 - SẢN PHẨM: ${v.product||'(theo brand)'}
 - STYLE: ${v.style||'cinematic, hợp TikTok'}
-Mỗi shot: 9:16 dọc, 10 giây; mô tả hành động·bối cảnh·góc quay·ánh sáng·âm thanh; nhắc DÙNG ẢNH THAM CHIẾU nhân vật & sản phẩm; LIỀN MẠCH (shot sau nối shot trước, cùng nhân vật/bối cảnh). prompt viết TIẾNG ANH. onscreen = chữ overlay TIẾNG VIỆT của shot.
+Mỗi shot có 3 trường:
+- prompt (TIẾNG ANH): 9:16 dọc, 10 giây; hành động·bối cảnh·góc quay·ánh sáng·âm thanh; PHẢI ghi rõ câu "Use the uploaded character reference image for the person and the product reference image for the item; keep them identical across all shots."; LIỀN MẠCH (nối shot trước, cùng nhân vật/bối cảnh).
+- voiceover (TIẾNG VIỆT): lời thoại/voice-over CHÍNH XÁC cho shot, LẤY ĐÚNG từ phần Nội dung kịch bản (chia theo 10s, KHÔNG bịa thêm). Nếu shot không có thoại để trống.
+- onscreen (TIẾNG VIỆT): chữ overlay ngắn.
 KỊCH BẢN ("${title}"):
 ${body}
-Trả JSON: {"shots":[{"seq":1,"prompt":"...English, 10s, 9:16, ref character+product, continuity...","onscreen":"chữ overlay tiếng Việt"}]}.`,{json:true,temp:0.6});
+Trả JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]}.`,{json:true,temp:0.6});
   S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
-  S.dna.skuld.vprompts[title]={shots:(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',onscreen:s.onscreen||''})), at:new Date().toISOString().slice(0,10)};
+  S.dna.skuld.vprompts[title]={shots:(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',voiceover:s.voiceover||'',onscreen:s.onscreen||''})), at:new Date().toISOString().slice(0,10)};
 }
+function regenVPromptsAll(){ if(!confirm('Tạo lại TẤT CẢ prompt video (xoá bản hiện có)?')) return; S.dna.skuld.vprompts={}; save(); renderVPrompts(); genVPromptsAll(); }
 async function genVPromptsAll(){
   const btn=document.getElementById('vp-gen'), fb=document.getElementById('vp-fb');
   if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
@@ -1200,13 +1206,13 @@ function renderVPrompts(){
   el.innerHTML='<h3 style="color:var(--warn);margin-top:12px">🎥 Prompt video Omni ('+keys.length+' kịch bản · 10s/shot)</h3>'+
     keys.map(t=>{const s=vp[t];
       return `<div class="cách"><b>${t}</b> <span class="mut">· ${(s.shots||[]).length} shot × 10s</span>`+
-        (s.shots||[]).map(sh=>`<div style="border-top:1px solid var(--bd);margin-top:6px;padding-top:6px"><b style="color:var(--ac)">Shot ${sh.seq} · 10s</b>${sh.onscreen?` <span class="mut">· overlay: ${sh.onscreen}</span>`:''}<div class="mut" style="white-space:pre-wrap;font-size:12px;margin-top:3px">${sh.prompt||''}</div></div>`).join('')+`</div>`;}).join('');
+        (s.shots||[]).map(sh=>`<div style="border-top:1px solid var(--bd);margin-top:6px;padding-top:6px"><b style="color:var(--ac)">Shot ${sh.seq} · 10s</b><div class="mut" style="white-space:pre-wrap;font-size:12px;margin-top:3px">${sh.prompt||''}</div>${sh.voiceover?`<div style="font-size:12px;margin-top:3px"><b style="color:var(--warn)">🎙 VO:</b> ${sh.voiceover}</div>`:''}${sh.onscreen?`<div class="mut" style="font-size:11px;margin-top:2px">▦ overlay: ${sh.onscreen}</div>`:''}</div>`).join('')+`</div>`;}).join('');
 }
 function exportVPrompts(fmt){
   const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp); if(!keys.length) return;
   const v=vref(), kenh=(S.dna.onboard&&S.dna.onboard.kenh)||'Kênh'; let data;
-  if(fmt==='csv'){ data='Kịch bản,Shot,Thời lượng,Prompt (Omni EN),Overlay VN\n'+keys.flatMap(t=>(vp[t].shots||[]).map(s=>[t,s.seq,s.dur+'s',s.prompt,s.onscreen].map(x=>`"${(x||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
-  else { data=`# Bộ prompt video Omni — ${kenh}\n\n> Upload vào Google Flow (ingredients): **1 ảnh nhân vật** + **1 ảnh sản phẩm** để liền mạch cả loạt.\n\n**🎭 Nhân vật:** ${v.character||''}\n\n**📦 Sản phẩm:** ${v.product||''}\n\n**🎨 Style:** ${v.style||''}\n\n`+keys.map(t=>`## ${t}\n\n`+(vp[t].shots||[]).map(s=>`### Shot ${s.seq} · ${s.dur}s\n${s.onscreen?`*Overlay (VN):* ${s.onscreen}\n\n`:''}\`\`\`\n${s.prompt||''}\n\`\`\`\n`).join('\n')).join('\n'); }
+  if(fmt==='csv'){ data='Kịch bản,Shot,Thời lượng,Prompt (Omni EN),Voice-over VN,Overlay VN\n'+keys.flatMap(t=>(vp[t].shots||[]).map(s=>[t,s.seq,s.dur+'s',s.prompt,s.voiceover,s.onscreen].map(x=>`"${(x||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
+  else { data=`# Bộ prompt video Omni — ${kenh}\n\n> **HƯỚNG DẪN:** Vào Google Flow → upload **1 ảnh nhân vật** + **1 ảnh sản phẩm** vào phần ingredients/reference, GIỮ NGUYÊN cho TẤT CẢ shot của mọi video để nhân vật & sản phẩm đồng nhất. Dán prompt từng shot theo thứ tự; ghép các shot 10s thành 1 video.\n\n**🎭 Nhân vật (ảnh tham chiếu):** ${v.character||''}\n\n**📦 Sản phẩm (ảnh tham chiếu):** ${v.product||''}\n\n**🎨 Style:** ${v.style||''}\n\n`+keys.map(t=>`## ${t}\n\n`+(vp[t].shots||[]).map(s=>`### Shot ${s.seq} · ${s.dur}s\n${s.voiceover?`**🎙 Voice-over (VN):** ${s.voiceover}\n\n`:''}${s.onscreen?`*▦ Overlay (VN):* ${s.onscreen}\n\n`:''}\`\`\`\n${s.prompt||''}\n\`\`\`\n`).join('\n')).join('\n'); }
   const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt-video-omni.'+fmt; a.click();
 }
 /* --- B. Phân tích chuyên sâu 18 câu --- */
