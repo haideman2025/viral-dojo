@@ -49,6 +49,21 @@ label{font-size:12.5px;color:var(--mut);font-weight:700;display:block;margin:0 0
 footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid #0c0f14;border-top-color:transparent;border-radius:50%;animation:r .7s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes r{to{transform:rotate(360deg)}}
+/* --- gamification + vận hành layer --- */
+.xpw{display:flex;align-items:center;gap:7px;font-size:12px}
+.belt{font-weight:800;white-space:nowrap}
+.xpbar{width:90px;height:8px;background:var(--card2);border:1px solid var(--bd);border-radius:6px;overflow:hidden}
+.xpbar.b2{width:100%;height:10px;margin:8px 0}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#ffc23c,var(--ac));transition:width .5s}
+.xpnum{font-weight:800;color:#ffc23c}
+#journey{padding:14px 18px}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.badge{font-size:18px;filter:grayscale(1);opacity:.32;border:1px solid var(--bd);border-radius:10px;padding:4px 9px;background:var(--card2)}
+.badge.on{filter:none;opacity:1;border-color:#ffc23c;box-shadow:0 0 8px rgba(255,194,60,.3)}
+.xptoast{position:fixed;right:18px;bottom:18px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#08110d;font-weight:900;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.45);transform:translateY(20px);opacity:0;transition:.35s;z-index:9999;text-align:center;font-size:15px}
+.xptoast.show{transform:translateY(0);opacity:1}
+.kbar{height:9px;background:var(--card2);border:1px solid var(--bd);border-radius:6px;overflow:hidden;margin:4px 0}
+.kbar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--blue))}
 </style>
 </head>
 <body>
@@ -59,14 +74,17 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <button class="tab act" data-v="home">Dojo</button>
     <button class="tab" data-v="lib">📚 Tri thức</button>
     <button class="tab" data-v="skuld">🥋 LÒ LUYỆN</button>
+    <button class="tab" data-v="ops">📊 Vận hành</button>
     <button class="tab" data-v="conn">⚡ Kết nối</button>
     <button class="tab" data-v="dna">🧬 Channel DNA</button>
   </div>
+  <div id="xp-head"></div>
 </header>
 
 <!-- ============ VIEW: HOME ============ -->
 <div id="v-home">
   <div class="station" id="stations"></div>
+  <div class="sec" id="journey"></div>
   <div class="sec" id="overview" style="padding:14px 18px"></div>
 
   <!-- ONBOARD -->
@@ -381,6 +399,27 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 </div>
 
 
+<!-- ============ VIEW: VẬN HÀNH (Gói E — lịch đăng B8 + dashboard đo lường) ============ -->
+<div id="v-ops" style="display:none">
+  <div class="note">📊 <b>VẬN HÀNH</b> = bước cuối: biến 30 ngày kịch bản (Lò Luyện) thành <b>lịch đăng</b>, ghi số liệu sau đăng, đo <b>%KPI tháng</b>. Đăng đều + đo = retention engine.</div>
+  <div class="sec">
+    <h2><span class="tag">📊 KPI</span> Mục tiêu tháng <span class="pill">sửa được</span></h2>
+    <div id="ops-kpi" class="row"></div>
+  </div>
+  <div class="sec">
+    <h2><span class="tag">📈 Dashboard</span> Đo lường thực tế vs KPI</h2>
+    <div id="ops-dash" class="mut">Chưa có số liệu. Nhập view/follow... ở Lịch đăng bên dưới.</div>
+  </div>
+  <div class="sec">
+    <h2><span class="tag">🗓 Lịch đăng B8</span> 30 ngày <span class="pill">nạp từ Lò Luyện · nhập số sau đăng</span></h2>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn" onclick="opsImportPlan()">🔄 Nạp/làm mới lịch từ Lò Luyện</button>
+    </div>
+    <div id="ops-fb"></div>
+    <div id="ops-table" class="mut">Chưa có lịch. Bấm "Nạp lịch từ Lò Luyện" (cần đã sinh gói 30 ngày ở 🚀 GENERATE).</div>
+  </div>
+</div>
+
 <!-- ============ VIEW: CONNECTIONS ============ -->
 <div id="v-conn" style="display:none">
   <div class="note">🔐 Mọi key lưu <b>trong máy bạn</b> (localStorage) — không gửi đi đâu ngoài API chính chủ. Chuẩn kết nối của Dojo là MCP: mỗi connector là 1 cổng dữ liệu độc lập.</div>
@@ -432,7 +471,7 @@ const S = JSON.parse(localStorage.getItem('dojo')||'{}');
 S.dna = S.dna || {onboard:{}, m1:{}, scores:{}};
 S.keys = S.keys || {};
 const PASS = 70; // điểm tối thiểu mở trạm sau
-function save(){ localStorage.setItem('dojo', JSON.stringify(S)); renderDNA(); renderStations(); refreshGates(); renderOverview(); if(typeof ensureDynamic==='function') ensureDynamic(); }
+function save(){ localStorage.setItem('dojo', JSON.stringify(S)); renderDNA(); renderStations(); refreshGates(); renderOverview(); if(typeof xpTick==='function') xpTick(); if(typeof ensureDynamic==='function') ensureDynamic(); }
 
 /* ================= GEMINI HELPER (dùng chung mọi trạm) ================= */
 const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -455,8 +494,9 @@ async function geminiCall(prompt, opt){
 /* ================= NAV ================= */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act')); t.classList.add('act');
-  ['home','lib','skuld','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
+  ['home','lib','skuld','ops','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
   if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); }
+  if(t.dataset.v==='ops'){ renderOps(); }
 });
 
 /* ================= STATIONS BAR + GATES (data-driven) ================= */
@@ -544,6 +584,121 @@ function renderOverview(){
     <div class="prog"><i style="width:${pct}%"></i></div>
     ${next?`<div style="margin-top:8px"><button class="btn sm" onclick="document.getElementById('m${next}').scrollIntoView({behavior:'smooth'})">▶ Tiếp tục Trạm ${next}</button></div>`
           :(done===6?`<div style="margin-top:8px"><button class="btn sm" onclick="document.getElementById('gen').scrollIntoView({behavior:'smooth'})">🚀 Mở cổng GENERATE</button></div>`:'')}`;
+}
+
+/* ===================== 🎮 GAMIFICATION (điểm derived từ S.dna) ===================== */
+const BELTS=[['🤍 Đai Trắng',0,'#e9eef4'],['🟡 Đai Vàng',250,'#ffcf6b'],['🟠 Đai Cam',550,'#ff9f43'],['🟢 Đai Lục',950,'#1fd1a8'],['🔵 Đai Lam',1450,'#6db3ff'],['🟤 Đai Nâu',2100,'#b07a4a'],['⚫ Đai Đen',3000,'#c7d0db']];
+const BADGES=[
+  ['nhapmon','🥋 Nhập môn', d=>!!(d.onboard&&d.onboard.nganh)],
+  ['tuduy','🧠 Tư duy gia', d=>[1,2,3,4,5,6].every(n=>(d.scores['m'+n]||0)>=PASS)],
+  ['caothu','🔥 Cao thủ', d=>[1,2,3,4,5,6].some(n=>(d.scores['m'+n]||0)>=90)],
+  ['thosan','🎯 Thợ săn viral', d=>(((d.m5&&d.m5.videos)||[]).length)>=20],
+  ['nhamay','🏭 Nhà máy', d=>(((d.skuld&&d.skuld.scored)||[]).some(x=>x.from==='gen'))],
+  ['bienkich','🎬 Biên kịch', d=>Object.keys((d.skuld&&d.skuld.scripts)||{}).length>=1],
+  ['vanhanh','📈 Người vận hành', d=>(((d.ops&&d.ops.posts)||[]).some(p=>(+p.view||0)>0))],
+  ['hacdai','⚫ Hắc đai', d=>calcXP()>=3000]
+];
+function calcXP(){
+  const d=S.dna, sk=d.skuld||{}, ops=d.ops||{};
+  let xp=0;
+  if(d.onboard&&d.onboard.nganh) xp+=50;
+  for(let n=1;n<=6;n++){ const s=d.scores['m'+n]||0; if(s>0){ xp+=s; if(s>=PASS) xp+=50; } }
+  xp+=Math.min((d.brand||[]).length,8)*15;
+  xp+=Math.min(((d.m5&&d.m5.videos)||[]).length,20)*3;
+  xp+=Math.min(((sk.scored)||[]).length,40)*3;
+  xp+=Object.keys(sk.scripts||{}).length*25;
+  xp+=Object.keys(sk.deep||{}).length*30;
+  if(((sk.scored)||[]).some(x=>x.from==='gen')) xp+=150;
+  xp+=((ops.posts)||[]).filter(p=>p.status==='Đã đăng'&&(+p.view||0)>0).length*15;
+  return xp;
+}
+function beltOf(xp){ let b=BELTS[0],idx=0; for(let i=0;i<BELTS.length;i++){ if(xp>=BELTS[i][1]){ b=BELTS[i]; idx=i; } } return {belt:b,next:BELTS[idx+1]||null,idx}; }
+function calcBadges(){ return BADGES.filter(b=>{ try{return b[2](S.dna);}catch(e){return false;} }); }
+function renderXP(){
+  const xp=calcXP(), bi=beltOf(xp), got=new Set(calcBadges().map(b=>b[0]));
+  const seg=bi.next?Math.round((xp-bi.belt[1])/(bi.next[1]-bi.belt[1])*100):100;
+  const toNext=bi.next?bi.next[1]-xp:0;
+  const h=document.getElementById('xp-head');
+  if(h) h.innerHTML=`<div class="xpw"><span class="belt" style="color:${bi.belt[2]}">${bi.belt[0]}</span><div class="xpbar"><i style="width:${seg}%"></i></div><span class="xpnum">${xp}đ</span></div>`;
+  const j=document.getElementById('journey');
+  if(j) j.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b style="color:${bi.belt[2]};font-size:15px">${bi.belt[0]} · ${xp} điểm</b><span class="mut">${bi.next?`Còn ${toNext}đ → ${bi.next[0]}`:'🏆 Đai cao nhất!'}</span></div><div class="xpbar b2"><i style="width:${seg}%"></i></div><div class="badges">${BADGES.map(b=>`<span class="badge ${got.has(b[0])?'on':''}" title="${b[1]}">${b[1].split(' ')[0]}</span>`).join('')}</div>`;
+}
+function xpToast(delta,beltUp){
+  const t=document.createElement('div'); t.className='xptoast';
+  t.innerHTML=`+${delta} điểm`+(beltUp?`<br><b>🎉 Lên ${beltUp[0]}!</b>`:'');
+  document.body.appendChild(t); setTimeout(()=>t.classList.add('show'),20);
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),400); }, beltUp?3200:1900);
+}
+function xpTick(){
+  const xp=calcXP(), prev=S.dna.xpSeen==null?xp:S.dna.xpSeen;
+  if(xp>prev){ const up=beltOf(xp).idx>beltOf(prev).idx; xpToast(xp-prev, up?beltOf(xp).belt:null); }
+  S.dna.xpSeen=xp; localStorage.setItem('dojo',JSON.stringify(S));
+  renderXP();
+}
+
+/* ===================== 📊 VẬN HÀNH (Gói E — lịch đăng B8 + dashboard) ===================== */
+const OPS_KPI=[['video','Video/tháng',30],['view','View TB/tháng',100000],['follow','Follow+ /tháng',8000],['lead','Lead/tháng',50],['dt','Doanh thu/tháng',30000000],['chiphi','Hạn mức chi phí',21000000]];
+function opsInit(){ S.dna.ops=S.dna.ops||{}; S.dna.ops.kpi=S.dna.ops.kpi||{}; OPS_KPI.forEach(k=>{ if(S.dna.ops.kpi[k[0]]==null) S.dna.ops.kpi[k[0]]=k[2]; }); S.dna.ops.posts=S.dna.ops.posts||[]; }
+function opsImportPlan(){
+  opsInit();
+  const plan=((S.dna.skuld&&S.dna.skuld.scored)||[]).filter(x=>x.from==='gen').sort((a,b)=>(a.day||0)-(b.day||0));
+  const fb=document.getElementById('ops-fb');
+  if(!plan.length){ if(fb) fb.innerHTML='<div class="fb bad">Chưa có kế hoạch 30 ngày. Sang 🚀 GENERATE sinh gói trước (sẽ tự nạp sang Lò), rồi quay lại.</div>'; return; }
+  const old={}; (S.dna.ops.posts||[]).forEach(p=>old[p.day]=p);
+  S.dna.ops.posts=plan.map(x=>{ const o=old[x.day]||{}; return {day:x.day,title:x.title,status:o.status||'Chưa quay',link:o.link||'',view:o.view||'',follow:o.follow||'',lead:o.lead||'',dt:o.dt||'',chiphi:o.chiphi||''}; });
+  save(); renderOps();
+  if(fb) fb.innerHTML=`<div class="fb">✅ Đã nạp ${plan.length} video vào lịch đăng. Sau khi đăng, điền số liệu để đo KPI.</div>`;
+}
+function opsCollect(){
+  const rows=[...document.querySelectorAll('#ops-table .ops-row')];
+  S.dna.ops.posts=rows.map(r=>({ day:+r.dataset.day, title:r.dataset.title,
+    status:r.querySelector('.ops-st').value, link:r.querySelector('.ops-link').value.trim(),
+    view:+r.querySelector('.ops-view').value||'', follow:+r.querySelector('.ops-fl').value||'',
+    lead:+r.querySelector('.ops-lead').value||'', dt:+r.querySelector('.ops-dt').value||'', chiphi:+r.querySelector('.ops-cp').value||'' }));
+}
+function opsSave(){ opsCollect(); save(); renderOpsDashboard(); }
+function setKpi(k,v){ opsInit(); S.dna.ops.kpi[k]=+v||0; save(); renderOpsDashboard(); }
+function renderOps(){ opsInit(); renderOpsKpi(); renderOpsTable(); renderOpsDashboard(); }
+function renderOpsKpi(){
+  const el=document.getElementById('ops-kpi'); if(!el) return;
+  el.innerHTML=OPS_KPI.map(k=>`<div><label>${k[1]}</label><input type="number" value="${S.dna.ops.kpi[k[0]]}" onchange="setKpi('${k[0]}',this.value)"></div>`).join('');
+}
+function renderOpsTable(){
+  const el=document.getElementById('ops-table'); if(!el) return;
+  const P=S.dna.ops.posts||[];
+  if(!P.length){ el.className='mut'; el.innerHTML='Chưa có lịch. Bấm "Nạp lịch từ Lò Luyện" (cần đã sinh gói 30 ngày ở 🚀 GENERATE).'; return; }
+  el.className='';
+  el.innerHTML='<div style="overflow:auto"><table style="font-size:12px"><tr><th>Ngày</th><th>Video</th><th>Trạng thái</th><th>Link</th><th>View</th><th>Follow+</th><th>Lead</th><th>DT</th><th>Chi phí</th></tr>'+
+    P.map(p=>{const st=['Chưa quay','Đã quay','Đã đăng'].map(s=>`<option ${p.status===s?'selected':''}>${s}</option>`).join('');
+    return `<tr class="ops-row" data-day="${p.day}" data-title="${(p.title||'').replace(/"/g,'&quot;')}"><td><b>N${p.day}</b></td><td style="max-width:160px">${p.title||''}</td>`+
+      `<td><select class="ops-st" onchange="opsSave()" style="padding:4px">${st}</select></td>`+
+      `<td><input class="ops-link" value="${p.link||''}" onchange="opsSave()" style="padding:4px;width:90px" placeholder="link"></td>`+
+      `<td><input class="ops-view" type="number" value="${p.view||''}" onchange="opsSave()" style="padding:4px;width:70px"></td>`+
+      `<td><input class="ops-fl" type="number" value="${p.follow||''}" onchange="opsSave()" style="padding:4px;width:60px"></td>`+
+      `<td><input class="ops-lead" type="number" value="${p.lead||''}" onchange="opsSave()" style="padding:4px;width:50px"></td>`+
+      `<td><input class="ops-dt" type="number" value="${p.dt||''}" onchange="opsSave()" style="padding:4px;width:80px"></td>`+
+      `<td><input class="ops-cp" type="number" value="${p.chiphi||''}" onchange="opsSave()" style="padding:4px;width:80px"></td></tr>`;}).join('')+'</table></div>';
+}
+function renderOpsDashboard(){
+  const el=document.getElementById('ops-dash'); if(!el) return;
+  const P=S.dna.ops.posts||[], K=S.dna.ops.kpi||{};
+  const posted=P.filter(p=>p.status==='Đã đăng');
+  const sum=f=>P.reduce((t,p)=>t+(+p[f]||0),0);
+  const tView=sum('view'),tFl=sum('follow'),tLead=sum('lead'),tDt=sum('dt'),tCp=sum('chiphi');
+  const roi=tCp>0?(tDt/tCp).toFixed(2)+'x':'—';
+  const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':n;
+  const bar=(label,val,target,disp)=>{const pct=target>0?Math.min(100,Math.round(val/target*100)):0;return `<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:12.5px"><b>${label}</b><span class="mut">${disp||val} / ${disp?fmt(target):target} · ${pct}%</span></div><div class="kbar"><i style="width:${pct}%"></i></div></div>`;}
+  el.className='';
+  el.innerHTML=
+    `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">`+
+    `<div class="sc"><b>${posted.length}/${K.video||30}</b><span>video đã đăng</span></div>`+
+    `<div class="sc"><b>${roi}</b><span>ROI (DT/chi phí)</span></div>`+
+    `<div class="sc"><b style="color:var(--ac)">${fmt(tDt)}</b><span>doanh thu</span></div></div>`+
+    bar('View',tView,K.view||0,fmt(tView))+
+    bar('Follow+',tFl,K.follow||0,fmt(tFl))+
+    bar('Lead',tLead,K.lead||0)+
+    bar('Doanh thu',tDt,K.dt||0,fmt(tDt))+
+    `<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:12.5px"><b>Chi phí</b><span class="mut">${fmt(tCp)} / hạn mức ${fmt(K.chiphi||0)} · ${K.chiphi>0?Math.round(tCp/K.chiphi*100):0}%</span></div><div class="kbar"><i style="width:${K.chiphi>0?Math.min(100,Math.round(tCp/K.chiphi*100)):0}%;background:linear-gradient(90deg,var(--warn),var(--red))"></i></div></div>`;
 }
 
 /* ================= BRAND VAULT ================= */
@@ -1586,7 +1741,8 @@ function ensureDynamic(){
   /* --- Trạm 5 --- */
   if(S.dna.m5 && S.dna.m5.videos) S.dna.m5.videos.forEach(v=>addVideo(v));
 
-  renderDNA(); renderStations(); renderVault(); refreshGates(); renderOverview(); ensureDynamic();
+  if(S.dna.xpSeen==null) S.dna.xpSeen=calcXP(); // không bắn toast cho tiến độ đã có
+  renderDNA(); renderStations(); renderVault(); refreshGates(); renderOverview(); renderXP(); ensureDynamic();
   document.getElementById('grade-hint').textContent = S.keys.gemini ? 'Gemini đã kết nối — chấm sâu bằng AI.' : 'Chưa có Gemini key → chấm offline cơ bản. Vào tab ⚡ Kết nối để AI chấm thật.';
 })();
 </script>
