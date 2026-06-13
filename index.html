@@ -961,8 +961,10 @@ function skSave(){
   const title = document.getElementById('sk-title').value.trim();
   if(!title){ alert('Nhập tiêu đề ý tưởng đã'); return; }
   const fmt=document.getElementById('sk-fmt').value;
-  S.dna.skuld.scored.push({title, link:document.getElementById('sk-link').value.trim(), desc:document.getElementById('sk-desc').value.trim(), fmt, score:skCalc(), checks:[...document.querySelectorAll('.sk-cb')].map(c=>c.checked), at:new Date().toISOString().slice(0,10)});
-  save(); renderBoard(); renderDpPick();
+  const data={ link:document.getElementById('sk-link').value.trim(), desc:document.getElementById('sk-desc').value.trim(), fmt, score:skCalc(), checks:[...document.querySelectorAll('.sk-cb')].map(c=>c.checked), at:new Date().toISOString().slice(0,10), _sc:true, _scv:FORGE_SV };
+  const ex=S.dna.skuld.scored.find(s=>s.title===title);
+  if(ex) Object.assign(ex,data); else S.dna.skuld.scored.push(Object.assign({title,from:'manual'},data)); // sửa-tại-chỗ, không tạo trùng
+  save(); renderBoard(); renderDpPick(); if(typeof renderForgePlan==='function') renderForgePlan();
   document.getElementById('sk-title').value=''; document.getElementById('sk-desc').value=''; document.getElementById('sk-link').value='';
   document.querySelectorAll('.sk-cb').forEach(c=>c.checked=false); skCalc();
 }
@@ -1003,6 +1005,27 @@ function forgeReset(){
   save(); renderForgePlan(); renderScripts();
   const f=document.getElementById('forge-fb'); if(f) f.innerHTML='<div class="fb">🔄 Đã làm sạch. Bấm "⚡ Tự động" để xem AI dựng kịch bản → chấm từ đầu.</div>';
 }
+/* --- nút ngữ cảnh trên từng dòng kịch bản: tự nạp data vào Lò A/B/C, không gõ tay --- */
+function forgeFind(day){ return (S.dna.skuld.scored||[]).find(x=>x.from==='gen'&&x.day===day); }
+function scriptText(title){ const s=(S.dna.skuld.scripts||{})[title]; return s?((s.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình:${c.hinhanh||''}; trám:${c.tram||''}]`).join('\n')):''; }
+function forgeEditDay(day){ const x=forgeFind(day); if(!x) return; // ✏ Lò A: soi & chỉnh điểm kịch bản này
+  document.getElementById('sk-fmt').value=x.fmt||forgeFmt();
+  document.getElementById('sk-title').value=x.title; document.getElementById('sk-link').value=x.link||'';
+  document.getElementById('sk-desc').value=scriptText(x.title)||x.desc||'';
+  renderScorecard();
+  document.querySelectorAll('.sk-cb').forEach((c,i)=>c.checked=!!(x.checks&&x.checks[i])); skCalc();
+  document.getElementById('sk-checklist').scrollIntoView({behavior:'smooth'});
+}
+function forgeDeepDay(day){ const x=forgeFind(day); if(!x) return; // 🔎 Lò B: phân tích sâu 18 câu kịch bản này
+  renderDpPick(); const sel=document.getElementById('dp-pick'); sel.value=x.title; renderDpForm();
+  document.getElementById('dp-form').scrollIntoView({behavior:'smooth'});
+}
+function forgeUpgradeDay(day){ const x=forgeFind(day); if(!x) return; // ⬆ Lò C: nâng cấp ý tưởng (cho kịch bản yếu)
+  document.getElementById('lk-tep').value=(S.dna.onboard&&S.dna.onboard.khach)||'';
+  document.getElementById('lk-goc').value=x.title;
+  document.getElementById('lk-diem').value=(scriptText(x.title)||x.desc||'').slice(0,400);
+  document.getElementById('lk-goc').scrollIntoView({behavior:'smooth'});
+}
 function importPlanToForge(){
   const cal=(S._pack&&S._pack.calendar)||[]; if(!cal.length) return 0;
   S.dna.skuld.scored=S.dna.skuld.scored.filter(x=>x.from!=='gen'); // thay kế hoạch cũ
@@ -1024,10 +1047,11 @@ function renderForgePlan(){
   el.className=''; if(act)act.style.display='flex';
   const scriptN=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, scored=L.filter(x=>x._scv===FORGE_SV).length, pass=L.filter(x=>x._scv===FORGE_SV&&x.score>=600).length;
   el.innerHTML=`<p class="mut">${L.length} ý tưởng · <b>${scriptN} có kịch bản</b> · ${scored} đã chấm · <b style="color:var(--ac)">${pass} ✅ sẵn sàng sản xuất (≥60%)</b></p>`+
-    '<div style="overflow:auto"><table style="font-size:12.5px"><tr><th>Ngày</th><th>Ý tưởng</th><th>Kịch bản</th><th>Điểm</th><th>%</th></tr>'+
+    '<div style="overflow:auto"><table style="font-size:12.5px"><tr><th>Ngày</th><th>Ý tưởng</th><th>Kịch bản</th><th>Điểm</th><th>%</th><th>Công cụ</th></tr>'+
     L.map(x=>{const p=Math.round(x.score/10), has=(S.dna.skuld.scripts||{})[x.title], done=x._scv===FORGE_SV;
       const badge=done?`<span style="color:${p>=60?'var(--ac)':'var(--warn)'}">${p}%${p>=60?' ✅':''}</span>`:'<span class="mut">—</span>';
-      return `<tr><td>N${x.day}</td><td>${x.title}</td><td>${has?'✅':'<span class="mut">—</span>'}</td><td>${done?x.score:'—'}</td><td>${badge}</td></tr>`;}).join('')+'</table></div>';
+      const tools=`<button class="btn sm ghost" title="Soi & sửa điểm (Lò A)" onclick="forgeEditDay(${x.day})" style="padding:3px 7px">✏</button> <button class="btn sm ghost" title="Phân tích sâu 18 câu (Lò B)" onclick="forgeDeepDay(${x.day})" style="padding:3px 7px">🔎</button> <button class="btn sm ghost" title="Nâng cấp ý tưởng (Lò C)" onclick="forgeUpgradeDay(${x.day})" style="padding:3px 7px">⬆</button>`;
+      return `<tr><td>N${x.day}</td><td>${x.title}</td><td>${has?'✅':'<span class="mut">—</span>'}</td><td>${done?x.score:'—'}</td><td>${badge}</td><td style="white-space:nowrap">${tools}</td></tr>`;}).join('')+'</table></div>';
 }
 async function scoreForgeBatch(){
   const btn=document.getElementById('forge-score'), fb=document.getElementById('forge-fb');
@@ -1136,7 +1160,8 @@ async function dpAI(){
   const v=S.dna.skuld.scored.find(x=>x.title===t);
   fb.innerHTML='<div class="fb">🤖 AI đang phân tích...</div>';
   try{
-    const prompt=`Bạn là chuyên gia SKULD. Điền 18 câu phân tích chuyên sâu cho ý tưởng video, bám DỮ LIỆU BRAND. Trả lời NGẮN mỗi câu (chọn từ gợi ý nếu có + 1 câu lý do).\nBRAND:\n${brandContext(4000)}\nÝ TƯỞNG: "${t}" — ${v?v.desc:''}\n18 CÂU:\n${DP_Q.map((q,i)=>`${i+1}. ${q[1]} (gợi ý: ${q[2]||'tự do'})`).join('\n')}\nTrả về DUY NHẤT JSON: {"answers":["..." x18]}`;
+    const sct=(typeof scriptText==='function'?scriptText(t):'');
+    const prompt=`Bạn là chuyên gia SKULD. Điền 18 câu phân tích chuyên sâu cho video, bám DỮ LIỆU BRAND. Trả lời NGẮN mỗi câu (chọn từ gợi ý nếu có + 1 câu lý do).\nBRAND:\n${brandContext(3500)}\nÝ TƯỞNG: "${t}" — ${v?v.desc:''}${sct?`\nKỊCH BẢN CHI TIẾT:\n${sct.slice(0,1200)}`:''}\n18 CÂU:\n${DP_Q.map((q,i)=>`${i+1}. ${q[1]} (gợi ý: ${q[2]||'tự do'})`).join('\n')}\nTrả về DUY NHẤT JSON: {"answers":["..." x18]}`;
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.5,responseMimeType:'application/json'}})});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const out=JSON.parse((await r.json()).candidates[0].content.parts[0].text);
