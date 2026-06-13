@@ -322,11 +322,11 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 
   <!-- DÂY CHUYỀN 30 NGÀY (auto-chain từ GENERATE) -->
   <div class="sec">
-    <h2><span class="tag">🥋 LÒ · Dây chuyền</span> Kế hoạch 30 ngày → kịch bản chi tiết <span class="pill">nạp từ GENERATE · chấm cả loạt · gate ≥60%</span></h2>
+    <h2><span class="tag">🥋 LÒ · Dây chuyền</span> Kế hoạch 30 ngày → kịch bản chi tiết <span class="pill">nạp từ GENERATE → dựng kịch bản → chấm xếp hạng</span></h2>
     <div id="forge-plan" class="mut">Chưa có kế hoạch. Sang cổng 🚀 GENERATE bấm "Sinh gói 30 ngày" — xong sẽ tự nạp về đây.</div>
     <div id="forge-actions" style="display:none;gap:10px;margin-top:10px;flex-wrap:wrap">
-      <button class="btn" id="forge-score" onclick="scoreForgeBatch()">🧠 Chấm cả loạt (AI)</button>
-      <button class="btn ghost" id="forge-script" onclick="buildScriptsTop()">🎬 Dựng kịch bản TOP (≥60%)</button>
+      <button class="btn" id="forge-script" onclick="buildScriptsTop()">🎬 Dựng kịch bản (cả loạt)</button>
+      <button class="btn ghost" id="forge-score" onclick="scoreForgeBatch()">🧠 Chấm + xếp hạng kịch bản</button>
     </div>
     <div id="forge-fb"></div>
     <div id="forge-scripts"></div>
@@ -999,38 +999,42 @@ function renderForgePlan(){
   const L=S.dna.skuld.scored.filter(x=>x.from==='gen').sort((a,b)=>(a.day||0)-(b.day||0));
   if(!L.length){ el.innerHTML='Chưa có kế hoạch. Sang cổng 🚀 GENERATE bấm "Sinh gói 30 ngày" — xong sẽ tự nạp về đây.'; el.className='mut'; if(act)act.style.display='none'; return; }
   el.className=''; if(act)act.style.display='flex';
-  const scored=L.filter(x=>x._sc).length, pass=L.filter(x=>x.score>=600).length, scriptN=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length;
-  el.innerHTML=`<p class="mut">${L.length} ý tưởng · ${scored} đã chấm · <b style="color:var(--ac)">${pass} đạt ≥60%</b> · ${scriptN} có kịch bản</p>`+
-    '<div style="overflow:auto"><table style="font-size:12.5px"><tr><th>Ngày</th><th>Ý tưởng</th><th>Điểm</th><th>%</th><th>Kịch bản</th></tr>'+
+  const scriptN=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, scored=L.filter(x=>x._sc).length, pass=L.filter(x=>x._sc&&x.score>=600).length;
+  el.innerHTML=`<p class="mut">${L.length} ý tưởng · <b>${scriptN} có kịch bản</b> · ${scored} đã chấm · <b style="color:var(--ac)">${pass} ✅ sẵn sàng sản xuất (≥60%)</b></p>`+
+    '<div style="overflow:auto"><table style="font-size:12.5px"><tr><th>Ngày</th><th>Ý tưởng</th><th>Kịch bản</th><th>Điểm</th><th>%</th></tr>'+
     L.map(x=>{const p=Math.round(x.score/10), has=(S.dna.skuld.scripts||{})[x.title];
-      const badge=x._sc?`<span style="color:${p>=60?'var(--ac)':'var(--warn)'}">${p}%</span>`:'<span class="mut">chưa chấm</span>';
-      return `<tr><td>N${x.day}</td><td>${x.title}</td><td>${x._sc?x.score:'—'}</td><td>${badge}</td><td>${has?'✅':'—'}</td></tr>`;}).join('')+'</table></div>';
+      const badge=x._sc?`<span style="color:${p>=60?'var(--ac)':'var(--warn)'}">${p}%${p>=60?' ✅':''}</span>`:'<span class="mut">—</span>';
+      return `<tr><td>N${x.day}</td><td>${x.title}</td><td>${has?'✅':'<span class="mut">—</span>'}</td><td>${x._sc?x.score:'—'}</td><td>${badge}</td></tr>`;}).join('')+'</table></div>';
 }
 async function scoreForgeBatch(){
   const btn=document.getElementById('forge-score'), fb=document.getElementById('forge-fb');
   if(!S.keys.gemini){ fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
-  const L=S.dna.skuld.scored.filter(x=>x.from==='gen'&&!x._sc);
-  if(!L.length){ fb.innerHTML='<div class="fb">Tất cả ý tưởng đã chấm. Bấm "🎬 Dựng kịch bản TOP" cho ý tưởng đạt ≥60%.</div>'; return; }
+  const sc=S.dna.skuld.scripts||{};
+  const L=S.dna.skuld.scored.filter(x=>x.from==='gen'&&sc[x.title]&&!x._sc); // chỉ chấm ý tưởng ĐÃ CÓ KỊCH BẢN
+  if(!L.length){
+    const noScript=S.dna.skuld.scored.filter(x=>x.from==='gen'&&!sc[x.title]).length;
+    fb.innerHTML=`<div class="fb">${noScript?'⚠️ Dựng kịch bản trước đã (bấm "🎬 Dựng kịch bản"). Chấm chạy trên KỊCH BẢN CHI TIẾT — không chấm ý tưởng trống.':'Tất cả kịch bản đã chấm. Xem xếp hạng ở Dashboard bên dưới.'}</div>`; return;
+  }
   btn.disabled=true; const W=SK_W[forgeFmt()];
   try{
-    for(let s=0;s<L.length;s+=8){
-      const chunk=L.slice(s,s+8);
-      btn.innerHTML=`<span class="spin"></span>Chấm ${Math.min(s+8,L.length)}/${L.length}...`;
-      const list=chunk.map((x,i)=>`#${i+1} "${x.title}" — ${x.desc}`).join('\n');
-      const out=await geminiCall(`Bạn là giám khảo SKULD/COREVIRAL. Với MỖI ý tưởng video, chấm 19 câu checklist (ĐẠT=true / KHÔNG=false cho từng câu, chấm CHẶT — chỉ true khi mô tả/bản chất format có bằng chứng rõ).\nBỐI CẢNH BRAND:\n${brandContext(2500)}\n19 CÂU:\n${SK_Q.map((q,i)=>`${i+1}. ${q[1]}`).join('\n')}\nDANH SÁCH Ý TƯỞNG:\n${list}\nTrả về DUY NHẤT JSON: {"rows":[{"i":1,"checks":[19 giá trị true/false]}]}.`,{json:true,temp:0.2});
+    for(let s=0;s<L.length;s+=6){
+      const chunk=L.slice(s,s+6);
+      btn.innerHTML=`<span class="spin"></span>Chấm ${Math.min(s+6,L.length)}/${L.length}...`;
+      const list=chunk.map((x,i)=>{ const body=((sc[x.title].scenes)||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình: ${c.hinhanh||''}; trám: ${c.tram||''}]`).join(' ').slice(0,800); return `#${i+1} "${x.title}" — KỊCH BẢN: ${body}`; }).join('\n');
+      const out=await geminiCall(`Bạn là giám khảo SKULD/COREVIRAL. Chấm 19 câu checklist cho MỖI KỊCH BẢN video (ĐẠT=true/false từng câu). Giờ chấm trên KỊCH BẢN CHI TIẾT đã dàn dựng — có bằng chứng từ cảnh/hình ảnh/trám/âm thanh, hãy chấm dựa trên các chi tiết đó.\nBỐI CẢNH BRAND:\n${brandContext(2500)}\n19 CÂU:\n${SK_Q.map((q,i)=>`${i+1}. ${q[1]}`).join('\n')}\nDANH SÁCH KỊCH BẢN:\n${list}\nTrả về DUY NHẤT JSON: {"rows":[{"i":1,"checks":[19 giá trị true/false]}]}.`,{json:true,temp:0.2});
       (out.rows||[]).forEach(o=>{ const x=chunk[o.i-1]; if(!x||!Array.isArray(o.checks)) return; x.checks=o.checks.map(Boolean); x.score=x.checks.reduce((t,c,i)=>t+(c?(W[i]||0):0),0); x._sc=true; });
       save(); renderForgePlan(); renderBoard();
     }
-    fb.innerHTML='<div class="fb">✅ Đã chấm cả loạt. Xem điểm ở Dashboard (sửa tay được), rồi bấm "🎬 Dựng kịch bản TOP" cho ý tưởng đạt ≥60%.</div>';
+    fb.innerHTML='<div class="fb">✅ Đã chấm + xếp hạng kịch bản. Cái nào ≥60% = ✅ sẵn sàng sản xuất; thấp hơn thì dùng "Liên kết ý tưởng" (LÒ C) nâng cấp rồi dựng lại. Điểm sửa tay được ở Scorecard.</div>';
   }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
-  btn.disabled=false; btn.innerHTML='🧠 Chấm cả loạt (AI)';
+  btn.disabled=false; btn.innerHTML='🧠 Chấm + xếp hạng kịch bản';
 }
 async function buildScriptsTop(){
   const btn=document.getElementById('forge-script'), fb=document.getElementById('forge-fb');
   if(!S.keys.gemini){ fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   S.dna.skuld.scripts=S.dna.skuld.scripts||{};
-  const L=S.dna.skuld.scored.filter(x=>x.from==='gen'&&x._sc&&x.score>=600&&!S.dna.skuld.scripts[x.title]);
-  if(!L.length){ fb.innerHTML='<div class="fb">Không có ý tưởng ≥60% nào chưa có kịch bản. (Chấm cả loạt trước, hoặc tất cả đã dựng.)</div>'; return; }
+  const L=S.dna.skuld.scored.filter(x=>x.from==='gen'&&!S.dna.skuld.scripts[x.title]); // dựng cho TẤT CẢ ý tưởng chưa có kịch bản (không gate)
+  if(!L.length){ fb.innerHTML='<div class="fb">Tất cả ý tưởng đã có kịch bản. Bấm "🧠 Chấm + xếp hạng kịch bản" để xếp hạng.</div>'; return; }
   btn.disabled=true;
   try{
     for(let i=0;i<L.length;i++){
@@ -1039,9 +1043,9 @@ async function buildScriptsTop(){
       S.dna.skuld.scripts[x.title]={scenes:(out.scenes||[]), at:new Date().toISOString().slice(0,10)};
       save(); renderForgePlan(); renderScripts();
     }
-    fb.innerHTML=`<div class="fb">✅ Đã dựng ${L.length} kịch bản chi tiết. Cuộn xuống xem + tải về.</div>`;
+    fb.innerHTML=`<div class="fb">✅ Đã dựng ${L.length} kịch bản chi tiết. Giờ bấm "🧠 Chấm + xếp hạng kịch bản" để biết cái nào sẵn sàng sản xuất. Cuộn xuống xem + tải về.</div>`;
   }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
-  btn.disabled=false; btn.innerHTML='🎬 Dựng kịch bản TOP (≥60%)';
+  btn.disabled=false; btn.innerHTML='🎬 Dựng kịch bản (cả loạt)';
 }
 function renderScripts(){
   const el=document.getElementById('forge-scripts'), ex=document.getElementById('forge-export'); if(!el) return;
