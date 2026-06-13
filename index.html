@@ -286,11 +286,13 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <h2>🚀 Cổng GENERATE <span class="pill">Channel DNA → 30 ngày content</span></h2>
     <p class="mut">Đọc toàn bộ Channel DNA của 6 trạm → AI sinh gói sản xuất: lịch 30 ngày, script 5-beat, prompt ảnh (EN) & prompt video Veo 3 (EN). Sinh theo từng bước, regenerate từng phần được.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0">
-      <button class="btn" id="gen-all" onclick="generateAll()">✨ Sinh trọn gói</button>
+      <button class="btn" id="gen-auto" onclick="runFullPipeline()" style="background:linear-gradient(135deg,#ffc23c,var(--ac))">⚡ AI chạy trọn pipeline → Vận hành</button>
+      <button class="btn ghost" id="gen-all" onclick="generateAll()">✨ Chỉ sinh gói 30 ngày</button>
       <button class="btn ghost sm" onclick="genPart('calendar')">↻ Lịch 30 ngày</button>
       <button class="btn ghost sm" onclick="genPart('scripts')">↻ 10 script 5-beat</button>
       <button class="btn ghost sm" onclick="genPart('prompts')">↻ 10 prompt ảnh+video</button>
     </div>
+    <p class="mut" style="font-size:12px;margin:-2px 0 8px">⚡ 1-click: sinh gói 30 ngày → tự dựng kịch bản chi tiết cả loạt → chấm + xếp hạng → đẩy sang 📊 Vận hành. Mất vài phút (nhiều lượt AI), có thể bấm lại để chạy tiếp phần dang dở.</p>
     <div id="gen-prog"></div>
     <div id="gen-out"></div>
     <div id="gen-actions" style="display:none;margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
@@ -325,7 +327,8 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <h2><span class="tag">🥋 LÒ · Dây chuyền</span> Kế hoạch 30 ngày → kịch bản chi tiết <span class="pill">nạp từ GENERATE → dựng kịch bản → chấm xếp hạng</span></h2>
     <div id="forge-plan" class="mut">Chưa có kế hoạch. Sang cổng 🚀 GENERATE bấm "Sinh gói 30 ngày" — xong sẽ tự nạp về đây.</div>
     <div id="forge-actions" style="display:none;gap:10px;margin-top:10px;flex-wrap:wrap">
-      <button class="btn" id="forge-script" onclick="buildScriptsTop()">🎬 Dựng kịch bản (cả loạt)</button>
+      <button class="btn" id="forge-auto" onclick="runFullPipeline()" style="background:linear-gradient(135deg,#ffc23c,var(--ac))">⚡ Tự động: dựng → chấm → đẩy Vận hành</button>
+      <button class="btn ghost" id="forge-script" onclick="buildScriptsTop()">🎬 Dựng kịch bản (cả loạt)</button>
       <button class="btn ghost" id="forge-score" onclick="scoreForgeBatch()">🧠 Chấm + xếp hạng kịch bản</button>
     </div>
     <div id="forge-fb"></div>
@@ -991,7 +994,14 @@ function importPlanToForge(){
   const cal=(S._pack&&S._pack.calendar)||[]; if(!cal.length) return 0;
   S.dna.skuld.scored=S.dna.skuld.scored.filter(x=>x.from!=='gen'); // thay kế hoạch cũ
   const fmt=forgeFmt(), at=new Date().toISOString().slice(0,10);
-  cal.forEach(d=>{ S.dna.skuld.scored.push({ title:`N${d.ngay}: ${(d.series||d.hook||'Ý tưởng')}`.slice(0,80), desc:`Series: ${d.series||''} | Hook: ${d.hook||''} | Format: ${d.format||''} | CTA: ${d.cta||''}`, link:'', fmt, score:0, checks:[], from:'gen', day:d.ngay, _sc:false, at }); });
+  const scripts=(S._pack&&S._pack.scripts)||[], prompts=(S._pack&&S._pack.prompts)||[];
+  cal.forEach((d,i)=>{
+    const sb=scripts[i], pr=prompts[i]; // mang TOÀN BỘ dữ liệu gói: 5-beat + prompt (theo index ngày)
+    let desc=`Series: ${d.series||''} | Hook: ${d.hook||''} | Format: ${d.format||''} | CTA: ${d.cta||''}`;
+    if(sb&&sb.beats) desc+=` || 5-BEAT — Hook:${sb.beats.hook||''} · Vấn đề:${sb.beats.van_de||''} · Giải pháp:${sb.beats.giai_phap||''} · Bằng chứng:${sb.beats.bang_chung||''} · CTA:${sb.beats.cta||''}`;
+    if(pr) desc+=` || PROMPT IMG:${pr.image_prompt_en||''} · VID:${pr.video_prompt_en||''}`;
+    S.dna.skuld.scored.push({ title:`N${d.ngay}: ${(d.series||d.hook||'Ý tưởng')}`.slice(0,80), desc:desc.slice(0,900), link:'', fmt, score:0, checks:[], from:'gen', day:d.ngay, _sc:false, at });
+  });
   save(); return cal.length;
 }
 function renderForgePlan(){
@@ -1679,6 +1689,34 @@ async function generateAll(){
   const nf=importPlanToForge();
   document.getElementById('gen-prog').innerHTML=`<div class="fb">🎉 Hoàn tất gói 30 ngày!${nf?` Đã tự nạp ${nf} ý tưởng sang 🥋 Lò Luyện. `:' '}<button class="btn sm" onclick="document.querySelector('.tab[data-v=&quot;skuld&quot;]').click()">🥋 Sang Lò: chấm + dựng kịch bản →</button></div>`;
   btn.disabled=false;
+}
+/* ===== ⚡ AUTO-PIPELINE: GENERATE → Lò (dựng→chấm→xếp hạng) → Vận hành ===== */
+async function runFullPipeline(){
+  const auto=document.getElementById('gen-auto');
+  if(!S.keys.gemini){ if(document.getElementById('gen-prog'))document.getElementById('gen-prog').innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const note=m=>{ ['gen-prog','forge-fb'].forEach(id=>{const e=document.getElementById(id); if(e)e.innerHTML=`<div class="fb">${m}</div>`;}); };
+  if(auto){ auto.disabled=true; }
+  try{
+    // B1: đảm bảo có gói 30 ngày + nạp sang Lò (mang toàn bộ dữ liệu gói)
+    if(!(S.dna.skuld.scored||[]).some(x=>x.from==='gen')){
+      if(!(S._pack&&S._pack.calendar&&S._pack.calendar.length)){ note('⚙️ Bước 1/4: AI sinh gói 30 ngày (lịch + script + prompt)...'); await generateAll(); }
+      else importPlanToForge();
+    }
+    if(!(S.dna.skuld.scored||[]).some(x=>x.from==='gen')){ note('❌ Chưa tạo được kế hoạch 30 ngày — cần Channel DNA đủ 6 trạm trước.'); if(auto)auto.disabled=false; return; }
+    // B2: AI dựng kịch bản chi tiết cả loạt
+    note('🎬 Bước 2/4: AI dựng kịch bản chi tiết cả loạt (mất vài phút)...');
+    await buildScriptsTop();
+    // B3: AI chấm + xếp hạng kịch bản
+    note('🧠 Bước 3/4: AI chấm + xếp hạng kịch bản...');
+    await scoreForgeBatch();
+    // B4: đẩy tự động sang Vận hành
+    note('📊 Bước 4/4: đẩy lịch sang Vận hành...');
+    opsImportPlan();
+    const L=(S.dna.skuld.scored||[]).filter(x=>x.from==='gen');
+    const scr=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, pass=L.filter(x=>x._sc&&x.score>=600).length;
+    note(`🎉 Xong trọn pipeline! ${scr}/${L.length} kịch bản chi tiết · <b style="color:var(--ac)">${pass} ✅ sẵn sàng sản xuất (≥60%)</b> · đã đẩy ${L.length} video sang 📊 Vận hành. <button class="btn sm" onclick="document.querySelector('.tab[data-v=&quot;skuld&quot;]').click()">🥋 Xem Lò</button> <button class="btn sm" onclick="document.querySelector('.tab[data-v=&quot;ops&quot;]').click()">📊 Mở Vận hành →</button>`);
+  }catch(e){ note('❌ Pipeline lỗi: '+e.message+' — bấm "⚡" lại để chạy tiếp phần dang dở.'); }
+  if(auto){ auto.disabled=false; }
 }
 function renderPack(){
   const p=S._pack||{}, out=document.getElementById('gen-out'); let h='';
