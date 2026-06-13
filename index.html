@@ -340,6 +340,27 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     </div>
   </div>
 
+  <!-- 🎥 PROMPT VIDEO OMNI (Google Flow) -->
+  <div class="sec">
+    <h2><span class="tag">🎥 LÒ · Video</span> Bộ prompt video Omni (Google Flow) <span class="pill">mỗi prompt = 1 video 10s · khoá nhân vật + sản phẩm · liền mạch</span></h2>
+    <p class="mut" style="font-size:12.5px">Cắt mỗi kịch bản thành chuỗi shot 10s → prompt cho Omni/Veo trên <b>Google Flow</b>. Chuẩn bị <b>1 ảnh nhân vật</b> + <b>1 ảnh sản phẩm</b> upload vào Flow (ingredients) để liền mạch cả 30 video.</p>
+    <div class="row" style="margin:8px 0">
+      <div><label>🎭 Nhân vật tham chiếu (dùng chung)</label><textarea id="vref-char" onchange="saveVRef()" placeholder="Sinh tự động hoặc tự mô tả nhân vật on-camera..."></textarea></div>
+      <div><label>📦 Sản phẩm tham chiếu</label><textarea id="vref-prod" onchange="saveVRef()" placeholder="Mô tả sản phẩm (chai/bao bì/màu)..."></textarea></div>
+      <div><label>🎨 Style / look</label><textarea id="vref-style" onchange="saveVRef()" placeholder="Tông màu, ánh sáng, phong cách quay..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="btn ghost" id="vref-gen" onclick="genVRef()">✨ Sinh bộ tham chiếu (AI)</button>
+      <button class="btn" id="vp-gen" onclick="genVPromptsAll()">🎥 Sinh prompt video (cả loạt)</button>
+    </div>
+    <div id="vp-fb"></div>
+    <div id="vp-out" class="mut">Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".</div>
+    <div id="vp-export" style="display:none;gap:10px;margin-top:10px">
+      <button class="btn ghost sm" onclick="exportVPrompts('md')">⬇️ Tải prompt .md</button>
+      <button class="btn ghost sm" onclick="exportVPrompts('csv')">⬇️ Tải .csv</button>
+    </div>
+  </div>
+
   <!-- A. SCORECARD 1000đ -->
   <div class="sec">
     <h2><span class="tag">LÒ A</span> Chấm ý tưởng video — Scorecard 1000 điểm <span class="pill">19 câu · 2 bộ trọng số theo định dạng</span></h2>
@@ -499,7 +520,7 @@ async function geminiCall(prompt, opt){
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act')); t.classList.add('act');
   ['home','lib','skuld','ops','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
-  if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); }
+  if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderVPrompts(); }
   if(t.dataset.v==='ops'){ renderOps(); }
 });
 
@@ -915,6 +936,8 @@ async function gradeGemini(b, key){
 /* ================= SKULD ================= */
 S.dna.skuld = S.dna.skuld || {scored:[], deep:{}, links:[]};
 S.dna.skuld.scripts = S.dna.skuld.scripts || {};
+S.dna.skuld.vref = S.dna.skuld.vref || {character:'',product:'',style:''};
+S.dna.skuld.vprompts = S.dna.skuld.vprompts || {};
 const SK_Q = [
  ['CHỦ ĐỀ','Chủ đề mang lại GIÁ TRỊ không?'],
  ['CHỦ ĐỀ','Chủ đề có tính DRAMA / TREND không?'],
@@ -1050,7 +1073,7 @@ function renderForgePlan(){
     '<div style="overflow:auto"><table style="font-size:12.5px"><tr><th>Ngày</th><th>Ý tưởng</th><th>Kịch bản</th><th>Điểm</th><th>%</th><th>Công cụ</th></tr>'+
     L.map(x=>{const p=Math.round(x.score/10), has=(S.dna.skuld.scripts||{})[x.title], done=x._scv===FORGE_SV;
       const badge=done?`<span style="color:${p>=60?'var(--ac)':'var(--warn)'}">${p}%${p>=60?' ✅':''}</span>`:'<span class="mut">—</span>';
-      const tools=`<button class="btn sm ghost" title="Soi & sửa điểm (Lò A)" onclick="forgeEditDay(${x.day})" style="padding:3px 7px">✏</button> <button class="btn sm ghost" title="Phân tích sâu 18 câu (Lò B)" onclick="forgeDeepDay(${x.day})" style="padding:3px 7px">🔎</button> <button class="btn sm ghost" title="Nâng cấp ý tưởng (Lò C)" onclick="forgeUpgradeDay(${x.day})" style="padding:3px 7px">⬆</button>`;
+      const tools=`<button class="btn sm ghost" title="Soi & sửa điểm (Lò A)" onclick="forgeEditDay(${x.day})" style="padding:3px 7px">✏</button> <button class="btn sm ghost" title="Phân tích sâu 18 câu (Lò B)" onclick="forgeDeepDay(${x.day})" style="padding:3px 7px">🔎</button> <button class="btn sm ghost" title="Nâng cấp ý tưởng (Lò C)" onclick="forgeUpgradeDay(${x.day})" style="padding:3px 7px">⬆</button> <button class="btn sm ghost" title="Sinh prompt video Omni 10s" onclick="genVPromptDay(${x.day})" style="padding:3px 7px">🎥</button>`;
       return `<tr><td>N${x.day}</td><td>${x.title}</td><td>${has?'✅':'<span class="mut">—</span>'}</td><td>${done?x.score:'—'}</td><td>${badge}</td><td style="white-space:nowrap">${tools}</td></tr>`;}).join('')+'</table></div>';
 }
 async function scoreForgeBatch(){
@@ -1110,6 +1133,81 @@ function exportScripts(fmt){
   if(fmt==='csv'){ data='Ý tưởng,Phần,Nội dung,Hình ảnh,TRÁM,Note\n'+keys.flatMap(t=>(sc[t].scenes||[]).map(c=>[t,c.phan,c.noidung,c.hinhanh,c.tram,c.note].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
   else { data=`# Kịch bản chi tiết — ${kenh}\n\n`+keys.map(t=>`## ${t}\n\n| Phần | Nội dung | Hình ảnh | TRÁM | Note |\n|---|---|---|---|---|\n`+(sc[t].scenes||[]).map(c=>`| ${c.phan||''} | ${(c.noidung||'').replace(/\|/g,'/')} | ${(c.hinhanh||'').replace(/\|/g,'/')} | ${(c.tram||'').replace(/\|/g,'/')} | ${(c.note||'').replace(/\|/g,'/')} |`).join('\n')).join('\n\n'); }
   const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='kich-ban-chi-tiet.'+fmt; a.click();
+}
+/* --- 🎥 Bộ prompt video Omni (Google Flow) — chuỗi 10s/script --- */
+function vref(){ S.dna.skuld.vref=S.dna.skuld.vref||{character:'',product:'',style:''}; return S.dna.skuld.vref; }
+function renderVRef(){ const v=vref(),c=document.getElementById('vref-char'),p=document.getElementById('vref-prod'),s=document.getElementById('vref-style'); if(c&&!c.value)c.value=v.character||''; if(p&&!p.value)p.value=v.product||''; if(s&&!s.value)s.value=v.style||''; }
+function saveVRef(){ const v=vref(); v.character=document.getElementById('vref-char').value.trim(); v.product=document.getElementById('vref-prod').value.trim(); v.style=document.getElementById('vref-style').value.trim(); save(); }
+async function genVRef(){
+  const btn=document.getElementById('vref-gen'), fb=document.getElementById('vp-fb');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>...';}
+  try{
+    const o=await geminiCall(`Tạo BỘ THAM CHIẾU NHẤT QUÁN cho kênh video (dùng chung cả 30 video — giữ nhân vật + sản phẩm giống nhau). Bám brand.\nBRAND:\n${brandContext(2500)}\nTrả JSON, mô tả bằng TIẾNG ANH (cho video model): {"character":"1 nhân vật on-camera cố định: tuổi/giới/ngoại hình/tóc/trang phục/thần thái, hợp kênh","product":"sản phẩm: loại/bao bì/màu/logo","style":"tông màu·ánh sáng·phong cách quay·nhịp"}.`,{json:true,temp:0.5});
+    const v=vref(); v.character=o.character||''; v.product=o.product||''; v.style=o.style||''; save();
+    if(document.getElementById('vref-char')){ document.getElementById('vref-char').value=v.character; document.getElementById('vref-prod').value=v.product; document.getElementById('vref-style').value=v.style; }
+    if(fb)fb.innerHTML='<div class="fb">✅ Đã sinh bộ tham chiếu kênh. Sửa lại nếu cần rồi bấm "🎥 Sinh prompt video".</div>';
+  }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  if(btn){btn.disabled=false; btn.innerHTML=old;}
+}
+async function ensureVRef(){ if(!(vref().character||'').trim()) await genVRef(); }
+async function genVPrompts(title){
+  const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
+  const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
+  const o=await geminiCall(`Bạn là đạo diễn AI. Cắt KỊCH BẢN sau thành chuỗi SHOT 10 GIÂY để tạo video bằng Omni/Veo trên Google Flow. Mỗi shot = 1 prompt video hoàn chỉnh.
+NHẤT QUÁN (bám sát, nhắc lại trong MỌI shot):
+- NHÂN VẬT: ${v.character||'(theo brand)'}
+- SẢN PHẨM: ${v.product||'(theo brand)'}
+- STYLE: ${v.style||'cinematic, hợp TikTok'}
+Mỗi shot: 9:16 dọc, 10 giây; mô tả hành động·bối cảnh·góc quay·ánh sáng·âm thanh; nhắc DÙNG ẢNH THAM CHIẾU nhân vật & sản phẩm; LIỀN MẠCH (shot sau nối shot trước, cùng nhân vật/bối cảnh). prompt viết TIẾNG ANH. onscreen = chữ overlay TIẾNG VIỆT của shot.
+KỊCH BẢN ("${title}"):
+${body}
+Trả JSON: {"shots":[{"seq":1,"prompt":"...English, 10s, 9:16, ref character+product, continuity...","onscreen":"chữ overlay tiếng Việt"}]}.`,{json:true,temp:0.6});
+  S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
+  S.dna.skuld.vprompts[title]={shots:(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',onscreen:s.onscreen||''})), at:new Date().toISOString().slice(0,10)};
+}
+async function genVPromptsAll(){
+  const btn=document.getElementById('vp-gen'), fb=document.getElementById('vp-fb');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  await ensureVRef();
+  S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
+  const scripts=S.dna.skuld.scripts||{}, titles=Object.keys(scripts).filter(t=>!S.dna.skuld.vprompts[t]);
+  if(!titles.length){ if(fb)fb.innerHTML='<div class="fb">'+(Object.keys(scripts).length?'Tất cả kịch bản đã có prompt video. Xem/tải bên dưới.':'Chưa có kịch bản. Dựng kịch bản trước (🎬).')+'</div>'; renderVPrompts(); return; }
+  if(btn)btn.disabled=true;
+  try{
+    for(let i=0;i<titles.length;i++){
+      forgeProg(`🎥 Sinh prompt video ${i+1}/${titles.length}: ${titles[i]}`,1);
+      if(btn)btn.innerHTML=`<span class="spin"></span>${i+1}/${titles.length}`;
+      await genVPrompts(titles[i]); save(); renderVPrompts();
+    }
+    if(fb)fb.innerHTML=`<div class="fb">✅ Đã sinh prompt video 10s cho ${titles.length} kịch bản. Tải .md/.csv → upload ảnh nhân vật+sản phẩm vào Google Flow → dán từng prompt theo thứ tự shot.</div>`;
+  }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  if(btn){btn.disabled=false; btn.innerHTML='🎥 Sinh prompt video (cả loạt)';}
+}
+function genVPromptDay(day){ const x=forgeFind(day); if(!x) return; const fb=document.getElementById('vp-fb');
+  if(!(S.dna.skuld.scripts||{})[x.title]){ if(fb)fb.innerHTML='<div class="fb bad">Kịch bản này chưa dựng — bấm ✏... à 🎬 dựng kịch bản trước.</div>'; return; }
+  (async()=>{ const btn=document.getElementById('vp-gen'); if(btn)btn.disabled=true; forgeProg('🎥 Sinh prompt video: '+x.title,1);
+    try{ await ensureVRef(); await genVPrompts(x.title); save(); renderVPrompts(); if(fb)fb.innerHTML='<div class="fb">✅ Xong prompt video cho "'+x.title+'".</div>'; }
+    catch(e){ if(fb)fb.innerHTML='<div class="fb bad">❌ '+e.message+'</div>'; }
+    if(btn){btn.disabled=false; btn.innerHTML='🎥 Sinh prompt video (cả loạt)';}
+    const o=document.getElementById('vp-out'); if(o)o.scrollIntoView({behavior:'smooth'}); })();
+}
+function renderVPrompts(){
+  const el=document.getElementById('vp-out'), ex=document.getElementById('vp-export'); if(!el) return;
+  const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp);
+  if(!keys.length){ el.className='mut'; el.innerHTML='Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".'; if(ex)ex.style.display='none'; return; }
+  el.className=''; if(ex)ex.style.display='flex';
+  el.innerHTML='<h3 style="color:var(--warn);margin-top:12px">🎥 Prompt video Omni ('+keys.length+' kịch bản · 10s/shot)</h3>'+
+    keys.map(t=>{const s=vp[t];
+      return `<div class="cách"><b>${t}</b> <span class="mut">· ${(s.shots||[]).length} shot × 10s</span>`+
+        (s.shots||[]).map(sh=>`<div style="border-top:1px solid var(--bd);margin-top:6px;padding-top:6px"><b style="color:var(--ac)">Shot ${sh.seq} · 10s</b>${sh.onscreen?` <span class="mut">· overlay: ${sh.onscreen}</span>`:''}<div class="mut" style="white-space:pre-wrap;font-size:12px;margin-top:3px">${sh.prompt||''}</div></div>`).join('')+`</div>`;}).join('');
+}
+function exportVPrompts(fmt){
+  const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp); if(!keys.length) return;
+  const v=vref(), kenh=(S.dna.onboard&&S.dna.onboard.kenh)||'Kênh'; let data;
+  if(fmt==='csv'){ data='Kịch bản,Shot,Thời lượng,Prompt (Omni EN),Overlay VN\n'+keys.flatMap(t=>(vp[t].shots||[]).map(s=>[t,s.seq,s.dur+'s',s.prompt,s.onscreen].map(x=>`"${(x||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
+  else { data=`# Bộ prompt video Omni — ${kenh}\n\n> Upload vào Google Flow (ingredients): **1 ảnh nhân vật** + **1 ảnh sản phẩm** để liền mạch cả loạt.\n\n**🎭 Nhân vật:** ${v.character||''}\n\n**📦 Sản phẩm:** ${v.product||''}\n\n**🎨 Style:** ${v.style||''}\n\n`+keys.map(t=>`## ${t}\n\n`+(vp[t].shots||[]).map(s=>`### Shot ${s.seq} · ${s.dur}s\n${s.onscreen?`*Overlay (VN):* ${s.onscreen}\n\n`:''}\`\`\`\n${s.prompt||''}\n\`\`\`\n`).join('\n')).join('\n'); }
+  const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt-video-omni.'+fmt; a.click();
 }
 /* --- B. Phân tích chuyên sâu 18 câu --- */
 const DP_Q = [
@@ -1737,18 +1835,21 @@ async function runFullPipeline(){
   try{
     // B1: đảm bảo có gói 30 ngày + nạp sang Lò (mang toàn bộ dữ liệu gói)
     if(!(S.dna.skuld.scored||[]).some(x=>x.from==='gen')){
-      if(!(S._pack&&S._pack.calendar&&S._pack.calendar.length)){ note('⚙️ Bước 1/4: AI sinh gói 30 ngày (lịch + script + prompt)...'); await generateAll(); }
+      if(!(S._pack&&S._pack.calendar&&S._pack.calendar.length)){ note('⚙️ Bước 1/5: AI sinh gói 30 ngày (lịch + script + prompt)...'); await generateAll(); }
       else importPlanToForge();
     }
     if(!(S.dna.skuld.scored||[]).some(x=>x.from==='gen')){ note('❌ Chưa tạo được kế hoạch 30 ngày — cần Channel DNA đủ 6 trạm trước.'); if(auto)auto.disabled=false; return; }
     // B2: AI dựng kịch bản chi tiết cả loạt
-    note('🎬 Bước 2/4: AI dựng kịch bản chi tiết cả loạt (mất vài phút)...');
+    note('🎬 Bước 2/5: AI dựng kịch bản chi tiết cả loạt (mất vài phút)...');
     await buildScriptsTop();
     // B3: AI chấm + xếp hạng kịch bản
-    note('🧠 Bước 3/4: AI chấm + xếp hạng kịch bản...');
+    note('🧠 Bước 3/5: AI chấm + xếp hạng kịch bản...');
     await scoreForgeBatch();
-    // B4: đẩy tự động sang Vận hành
-    note('📊 Bước 4/4: đẩy lịch sang Vận hành...');
+    // B4: AI sinh bộ prompt video Omni (chuỗi 10s) cho cả loạt
+    note('🎥 Bước 4/5: AI sinh prompt video Omni (chuỗi 10s)...');
+    await genVPromptsAll();
+    // B5: đẩy tự động sang Vận hành
+    note('📊 Bước 5/5: đẩy lịch sang Vận hành...');
     opsImportPlan();
     const L=(S.dna.skuld.scored||[]).filter(x=>x.from==='gen');
     const scr=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, pass=L.filter(x=>x._sc&&x.score>=600).length;
