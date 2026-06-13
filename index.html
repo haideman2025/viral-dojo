@@ -330,6 +330,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <button class="btn" id="forge-auto" onclick="runFullPipeline()" style="background:linear-gradient(135deg,#ffc23c,var(--ac))">⚡ Tự động: dựng → chấm → đẩy Vận hành</button>
       <button class="btn ghost" id="forge-script" onclick="buildScriptsTop()">🎬 Dựng kịch bản (cả loạt)</button>
       <button class="btn ghost" id="forge-score" onclick="scoreForgeBatch()">🧠 Chấm + xếp hạng kịch bản</button>
+      <button class="btn ghost sm" onclick="forgeReset()">🔄 Làm lại từ đầu</button>
     </div>
     <div id="forge-fb"></div>
     <div id="forge-scripts"></div>
@@ -990,6 +991,18 @@ async function skAIScore(){
 }
 /* --- 🥋 LÒ · Dây chuyền 30 ngày (auto-chain GENERATE → chấm cả loạt → kịch bản) --- */
 function forgeFmt(){ return /kiến thức/i.test((S.dna.m1&&S.dna.m1.dinhdang)||'')?'kt':'htkh'; }
+const FORGE_SV='s1'; // phiên bản chấm-trên-kịch-bản; điểm cũ (chấm ý tưởng trống) sẽ tự chấm lại 1 lần
+function forgeProg(msg,spin){ // hiện tiến trình ở CẢ tab Lò lẫn cổng GENERATE
+  ['forge-fb','gen-prog'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=`<div class="fb">${spin?'<span class=\"spin\"></span>':''}${msg}</div>`; });
+}
+function forgeReset(){
+  if(!confirm('Làm lại từ đầu: xoá kịch bản + điểm của 30 ý tưởng để chạy lại sạch (xem AI chạy từng bước)? Ý tưởng giữ nguyên.')) return;
+  const sk=S.dna.skuld; const titles=new Set((sk.scored||[]).filter(x=>x.from==='gen').map(x=>x.title));
+  (sk.scored||[]).forEach(x=>{ if(x.from==='gen'){ x._sc=false; x._scv=null; x.score=0; x.checks=[]; } });
+  sk.scripts=sk.scripts||{}; Object.keys(sk.scripts).forEach(t=>{ if(titles.has(t)) delete sk.scripts[t]; });
+  save(); renderForgePlan(); renderScripts();
+  const f=document.getElementById('forge-fb'); if(f) f.innerHTML='<div class="fb">🔄 Đã làm sạch. Bấm "⚡ Tự động" để xem AI dựng kịch bản → chấm từ đầu.</div>';
+}
 function importPlanToForge(){
   const cal=(S._pack&&S._pack.calendar)||[]; if(!cal.length) return 0;
   S.dna.skuld.scored=S.dna.skuld.scored.filter(x=>x.from!=='gen'); // thay kế hoạch cũ
@@ -1009,18 +1022,18 @@ function renderForgePlan(){
   const L=S.dna.skuld.scored.filter(x=>x.from==='gen').sort((a,b)=>(a.day||0)-(b.day||0));
   if(!L.length){ el.innerHTML='Chưa có kế hoạch. Sang cổng 🚀 GENERATE bấm "Sinh gói 30 ngày" — xong sẽ tự nạp về đây.'; el.className='mut'; if(act)act.style.display='none'; return; }
   el.className=''; if(act)act.style.display='flex';
-  const scriptN=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, scored=L.filter(x=>x._sc).length, pass=L.filter(x=>x._sc&&x.score>=600).length;
+  const scriptN=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, scored=L.filter(x=>x._scv===FORGE_SV).length, pass=L.filter(x=>x._scv===FORGE_SV&&x.score>=600).length;
   el.innerHTML=`<p class="mut">${L.length} ý tưởng · <b>${scriptN} có kịch bản</b> · ${scored} đã chấm · <b style="color:var(--ac)">${pass} ✅ sẵn sàng sản xuất (≥60%)</b></p>`+
     '<div style="overflow:auto"><table style="font-size:12.5px"><tr><th>Ngày</th><th>Ý tưởng</th><th>Kịch bản</th><th>Điểm</th><th>%</th></tr>'+
-    L.map(x=>{const p=Math.round(x.score/10), has=(S.dna.skuld.scripts||{})[x.title];
-      const badge=x._sc?`<span style="color:${p>=60?'var(--ac)':'var(--warn)'}">${p}%${p>=60?' ✅':''}</span>`:'<span class="mut">—</span>';
-      return `<tr><td>N${x.day}</td><td>${x.title}</td><td>${has?'✅':'<span class="mut">—</span>'}</td><td>${x._sc?x.score:'—'}</td><td>${badge}</td></tr>`;}).join('')+'</table></div>';
+    L.map(x=>{const p=Math.round(x.score/10), has=(S.dna.skuld.scripts||{})[x.title], done=x._scv===FORGE_SV;
+      const badge=done?`<span style="color:${p>=60?'var(--ac)':'var(--warn)'}">${p}%${p>=60?' ✅':''}</span>`:'<span class="mut">—</span>';
+      return `<tr><td>N${x.day}</td><td>${x.title}</td><td>${has?'✅':'<span class="mut">—</span>'}</td><td>${done?x.score:'—'}</td><td>${badge}</td></tr>`;}).join('')+'</table></div>';
 }
 async function scoreForgeBatch(){
   const btn=document.getElementById('forge-score'), fb=document.getElementById('forge-fb');
   if(!S.keys.gemini){ fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   const sc=S.dna.skuld.scripts||{};
-  const L=S.dna.skuld.scored.filter(x=>x.from==='gen'&&sc[x.title]&&!x._sc); // chỉ chấm ý tưởng ĐÃ CÓ KỊCH BẢN
+  const L=S.dna.skuld.scored.filter(x=>x.from==='gen'&&sc[x.title]&&x._scv!==FORGE_SV); // chấm ý tưởng ĐÃ CÓ KỊCH BẢN & chưa chấm theo bản mới
   if(!L.length){
     const noScript=S.dna.skuld.scored.filter(x=>x.from==='gen'&&!sc[x.title]).length;
     fb.innerHTML=`<div class="fb">${noScript?'⚠️ Dựng kịch bản trước đã (bấm "🎬 Dựng kịch bản"). Chấm chạy trên KỊCH BẢN CHI TIẾT — không chấm ý tưởng trống.':'Tất cả kịch bản đã chấm. Xem xếp hạng ở Dashboard bên dưới.'}</div>`; return;
@@ -1029,10 +1042,10 @@ async function scoreForgeBatch(){
   try{
     for(let s=0;s<L.length;s+=6){
       const chunk=L.slice(s,s+6);
-      btn.innerHTML=`<span class="spin"></span>Chấm ${Math.min(s+6,L.length)}/${L.length}...`;
+      btn.innerHTML=`<span class="spin"></span>Chấm ${Math.min(s+6,L.length)}/${L.length}...`; forgeProg(`🧠 Chấm + xếp hạng kịch bản ${Math.min(s+6,L.length)}/${L.length}...`,1);
       const list=chunk.map((x,i)=>{ const body=((sc[x.title].scenes)||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình: ${c.hinhanh||''}; trám: ${c.tram||''}]`).join(' ').slice(0,800); return `#${i+1} "${x.title}" — KỊCH BẢN: ${body}`; }).join('\n');
       const out=await geminiCall(`Bạn là giám khảo SKULD/COREVIRAL. Chấm 19 câu checklist cho MỖI KỊCH BẢN video (ĐẠT=true/false từng câu). Giờ chấm trên KỊCH BẢN CHI TIẾT đã dàn dựng — có bằng chứng từ cảnh/hình ảnh/trám/âm thanh, hãy chấm dựa trên các chi tiết đó.\nBỐI CẢNH BRAND:\n${brandContext(2500)}\n19 CÂU:\n${SK_Q.map((q,i)=>`${i+1}. ${q[1]}`).join('\n')}\nDANH SÁCH KỊCH BẢN:\n${list}\nTrả về DUY NHẤT JSON: {"rows":[{"i":1,"checks":[19 giá trị true/false]}]}.`,{json:true,temp:0.2});
-      (out.rows||[]).forEach(o=>{ const x=chunk[o.i-1]; if(!x||!Array.isArray(o.checks)) return; x.checks=o.checks.map(Boolean); x.score=x.checks.reduce((t,c,i)=>t+(c?(W[i]||0):0),0); x._sc=true; });
+      (out.rows||[]).forEach(o=>{ const x=chunk[o.i-1]; if(!x||!Array.isArray(o.checks)) return; x.checks=o.checks.map(Boolean); x.score=x.checks.reduce((t,c,i)=>t+(c?(W[i]||0):0),0); x._sc=true; x._scv=FORGE_SV; });
       save(); renderForgePlan(); renderBoard();
     }
     fb.innerHTML='<div class="fb">✅ Đã chấm + xếp hạng kịch bản. Cái nào ≥60% = ✅ sẵn sàng sản xuất; thấp hơn thì dùng "Liên kết ý tưởng" (LÒ C) nâng cấp rồi dựng lại. Điểm sửa tay được ở Scorecard.</div>';
@@ -1048,7 +1061,7 @@ async function buildScriptsTop(){
   btn.disabled=true;
   try{
     for(let i=0;i<L.length;i++){
-      const x=L[i]; btn.innerHTML=`<span class="spin"></span>Dựng ${i+1}/${L.length}...`;
+      const x=L[i]; btn.innerHTML=`<span class="spin"></span>Dựng ${i+1}/${L.length}...`; forgeProg(`🎬 Dựng kịch bản chi tiết ${i+1}/${L.length}: ${x.title}`,1);
       const out=await geminiCall(`Bạn là biên kịch COREVIRAL. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6});
       S.dna.skuld.scripts[x.title]={scenes:(out.scenes||[]), at:new Date().toISOString().slice(0,10)};
       save(); renderForgePlan(); renderScripts();
