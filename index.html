@@ -365,7 +365,8 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 
   <!-- A. SCORECARD 1000đ -->
   <div class="sec">
-    <h2><span class="tag">LÒ A</span> Chấm ý tưởng video — Scorecard 1000 điểm <span class="pill">19 câu · 2 bộ trọng số theo định dạng</span></h2>
+    <h2 onclick="loToggle('lo-a-body')" style="cursor:pointer"><span class="tag">LÒ A</span> Soi &amp; chỉnh điểm 1 kịch bản <span class="pill">mở từ nút ✏ trên Dây chuyền · bấm để mở/ẩn</span></h2>
+    <div id="lo-a-body" style="display:none">
     <div class="row">
       <div><label>Định dạng</label><select id="sk-fmt" onchange="renderScorecard()"><option value="htkh">Hình thức / Kết hợp</option><option value="kt">Kiến thức</option></select></div>
       <div><label>Tiêu đề ý tưởng/video</label><input id="sk-title" placeholder="VD: Thử thách 7 ngày chỉ dùng bọt ONIIZ"></div>
@@ -380,6 +381,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <span class="pill" id="sk-rank">—</span>
     </div>
     <div id="sk-ai-fb"></div>
+    </div>
   </div>
 
   <!-- DASHBOARD RANK -->
@@ -390,7 +392,8 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 
   <!-- B. PHÂN TÍCH CHUYÊN SÂU -->
   <div class="sec">
-    <h2><span class="tag">LÒ B</span> Phân tích chuyên sâu — 18 câu cho video top <span class="pill">4 nhóm: Sản phẩm · Tone · Hình ảnh · Nhân vật</span></h2>
+    <h2 onclick="loToggle('lo-b-body')" style="cursor:pointer"><span class="tag">LÒ B</span> Phân tích chuyên sâu — 18 câu <span class="pill">mở từ nút 🔎 · bấm để mở/ẩn</span></h2>
+    <div id="lo-b-body" style="display:none">
     <div class="row"><div><label>Chọn video đã chấm</label><select id="dp-pick" onchange="renderDpForm()"></select></div></div>
     <div id="dp-form"></div>
     <div style="display:flex;gap:10px;margin-top:8px">
@@ -398,11 +401,13 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <button class="btn" onclick="dpSave()">💾 Lưu phân tích</button>
     </div>
     <div id="dp-fb"></div>
+    </div>
   </div>
 
   <!-- C. LIÊN KẾT Ý TƯỞNG -->
   <div class="sec">
-    <h2><span class="tag">LÒ C</span> Liên kết ý tưởng — nâng cấp thành format của mình</h2>
+    <h2 onclick="loToggle('lo-c-body')" style="cursor:pointer"><span class="tag">LÒ C</span> Nâng cấp ý tưởng yếu <span class="pill">mở từ nút ⬆ · bấm để mở/ẩn</span></h2>
+    <div id="lo-c-body" style="display:none">
     <div class="row">
       <div><label>Tệp khách hàng</label><input id="lk-tep" placeholder="VD: Nam 18-30 mua trên TikTok Shop"></div>
       <div><label>Ý tưởng ban đầu (từ video viral)</label><input id="lk-goc" placeholder="VD: Thử thách xin 5 món đồ giá 0 đồng"></div>
@@ -422,6 +427,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <button class="btn" onclick="lkSave()">💾 Lưu → đưa vào kho ý tưởng chấm điểm</button>
     </div>
     <div id="lk-fb"></div>
+    </div>
   </div>
 </div>
 
@@ -1031,9 +1037,11 @@ function forgeReset(){
   const f=document.getElementById('forge-fb'); if(f) f.innerHTML='<div class="fb">🔄 Đã làm sạch. Bấm "⚡ Tự động" để xem AI dựng kịch bản → chấm từ đầu.</div>';
 }
 /* --- nút ngữ cảnh trên từng dòng kịch bản: tự nạp data vào Lò A/B/C, không gõ tay --- */
+function loToggle(id){ const e=document.getElementById(id); if(e) e.style.display = e.style.display==='none'?'':'none'; }
+function loOpen(id){ const e=document.getElementById(id); if(e) e.style.display=''; }
 function forgeFind(day){ return (S.dna.skuld.scored||[]).find(x=>x.from==='gen'&&x.day===day); }
 function scriptText(title){ const s=(S.dna.skuld.scripts||{})[title]; return s?((s.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình:${c.hinhanh||''}; trám:${c.tram||''}]`).join('\n')):''; }
-function forgeEditDay(day){ const x=forgeFind(day); if(!x) return; // ✏ Lò A: soi & chỉnh điểm kịch bản này
+function forgeEditDay(day){ const x=forgeFind(day); if(!x) return; loOpen('lo-a-body'); // ✏ Lò A: soi & chỉnh điểm kịch bản này
   document.getElementById('sk-fmt').value=x.fmt||forgeFmt();
   document.getElementById('sk-title').value=x.title; document.getElementById('sk-link').value=x.link||'';
   document.getElementById('sk-desc').value=scriptText(x.title)||x.desc||'';
@@ -1041,11 +1049,11 @@ function forgeEditDay(day){ const x=forgeFind(day); if(!x) return; // ✏ Lò A:
   document.querySelectorAll('.sk-cb').forEach((c,i)=>c.checked=!!(x.checks&&x.checks[i])); skCalc();
   document.getElementById('sk-checklist').scrollIntoView({behavior:'smooth'});
 }
-function forgeDeepDay(day){ const x=forgeFind(day); if(!x) return; // 🔎 Lò B: phân tích sâu 18 câu kịch bản này
+function forgeDeepDay(day){ const x=forgeFind(day); if(!x) return; loOpen('lo-b-body'); // 🔎 Lò B: phân tích sâu 18 câu kịch bản này
   renderDpPick(); const sel=document.getElementById('dp-pick'); sel.value=x.title; renderDpForm();
   document.getElementById('dp-form').scrollIntoView({behavior:'smooth'});
 }
-function forgeUpgradeDay(day){ const x=forgeFind(day); if(!x) return; // ⬆ Lò C: nâng cấp ý tưởng (cho kịch bản yếu)
+function forgeUpgradeDay(day){ const x=forgeFind(day); if(!x) return; loOpen('lo-c-body'); // ⬆ Lò C: nâng cấp ý tưởng (cho kịch bản yếu)
   document.getElementById('lk-tep').value=(S.dna.onboard&&S.dna.onboard.khach)||'';
   document.getElementById('lk-goc').value=x.title;
   document.getElementById('lk-diem').value=(scriptText(x.title)||x.desc||'').slice(0,400);
