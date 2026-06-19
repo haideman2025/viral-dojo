@@ -78,6 +78,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <button class="tab" data-v="lib">📚 Tri thức</button>
     <button class="tab" data-v="skuld">🥋 LÒ LUYỆN</button>
     <button class="tab" data-v="ops">📊 Vận hành</button>
+    <button class="tab" data-v="dist">📤 Phân phối</button>
     <button class="tab" data-v="conn">⚡ Kết nối</button>
     <button class="tab" data-v="dna">🧬 Channel DNA</button>
   </div>
@@ -528,6 +529,40 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
   </div>
 </div>
 
+<!-- ============ VIEW: PHÂN PHỐI ============ -->
+<div id="v-dist" style="display:none">
+  <div class="note">📤 <b>Lịch phân phối (C-0)</b> — chạy ngay trên máy: lên lịch video + caption/hashtag, xuất file CSV/JSON để đăng tay. Đăng <b>tự động qua API Zernio</b> sẽ bật khi backend sẵn sàng (xem ROADMAP Part C). Video chỉ lưu <b>tên + dung lượng</b> (file gốc nằm trên máy bạn).</div>
+  <div class="sec">
+    <h2>➕ Thêm video vào lịch</h2>
+    <div class="row">
+      <div><label>🎬 Chọn video (mp4/mov...)</label><input type="file" id="dist-file" accept="video/*" onchange="distPickFile(this.files)"></div>
+      <div><label>Hoặc nhập tên video thủ công</label><input id="dist-name" placeholder="VD: N1-phan-tich-chuyen-sau.mp4"></div>
+    </div>
+    <div id="dist-file-info" class="mut" style="font-size:12px;margin:4px 0"></div>
+    <div class="row" style="margin-top:6px">
+      <div><label>📋 Lấy caption + hashtag từ video theo ngày</label><select id="dist-day" onchange="distFillFromDay(this.value)"></select></div>
+      <div><label>🗓 Ngày & giờ đăng</label><input type="datetime-local" id="dist-at"></div>
+    </div>
+    <div style="margin-top:8px"><label>📝 Caption</label><textarea id="dist-caption" placeholder="Caption đăng bài (tự điền khi chọn video theo ngày, hoặc nhập tay)" style="min-height:70px"></textarea></div>
+    <div style="margin-top:8px"><label>#️⃣ Hashtag</label><input id="dist-tags" placeholder="#viral #review ..."></div>
+    <div style="margin-top:8px"><label>📡 Nền tảng đăng</label><div id="dist-plats" style="display:flex;gap:14px;flex-wrap:wrap;padding:4px 0"></div></div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" onclick="distAdd()">➕ Thêm vào lịch</button>
+      <button class="btn ghost" disabled title="Sẽ bật khi tích hợp API Zernio (cần backend)">🔌 Kết nối Zernio (sắp có)</button>
+    </div>
+    <div id="dist-fb"></div>
+  </div>
+  <div class="sec">
+    <h2>🗓 Lịch đã lên <span id="dist-count" class="pill"></span></h2>
+    <div id="dist-list" class="mut">Chưa có lịch nào. Thêm video phía trên.</div>
+    <div id="dist-export" style="display:none;gap:10px;margin-top:12px">
+      <button class="btn ghost sm" onclick="exportDist('csv')">⬇️ Tải lịch .csv</button>
+      <button class="btn ghost sm" onclick="exportDist('json')">⬇️ Tải lịch .json</button>
+      <button class="btn ghost sm" style="color:var(--red)" onclick="distClear()">🗑 Xoá toàn bộ lịch</button>
+    </div>
+  </div>
+</div>
+
 <footer>VIRAL DOJO MVP v0.1 · Giáo trình COREVIRAL 6 module · AI grading by Gemini · Key lưu local · © EcomLegend 2026</footer>
 </div>
 
@@ -601,7 +636,8 @@ async function geminiCall(prompt, opt){
 /* ================= NAV ================= */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act')); t.classList.add('act');
-  ['home','lib','skuld','ops','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
+  ['home','lib','skuld','ops','dist','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
+  if(t.dataset.v==='dist'){ renderDistDayOptions(); renderDist(); }
   if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderVPrompts(); }
   if(t.dataset.v==='ops'){ renderOps(); }
 });
@@ -1451,6 +1487,53 @@ function copyBio(btn){ const p=btn.getAttribute('data-bio'), f=btn.getAttribute(
   const done=()=>{ const o=btn.innerHTML; btn.innerHTML='✅'; setTimeout(()=>btn.innerHTML=o,1200); };
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done)); } else fallbackCopy(text,done);
 }
+
+/* ===== 📤 PHÂN PHỐI (C-0: lịch local + xuất file; Zernio API về sau) ===== */
+const DIST_PLATS=[{key:'tiktok',label:'🎵 TikTok'},{key:'facebook',label:'📘 FB Page'},{key:'youtube',label:'▶️ YouTube'},{key:'instagram',label:'📸 Instagram'},{key:'threads',label:'🧵 Threads'}];
+let _distFile=null; // {name,size} video vừa chọn — KHÔNG lưu binary (C-0)
+function distPlatsHtml(){ return DIST_PLATS.map(p=>`<label style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:5px;color:var(--tx)"><input type="checkbox" class="dist-plat" value="${p.key}" style="width:auto"> ${p.label}</label>`).join(''); }
+function distPickFile(files){ const f=files&&files[0]; const info=document.getElementById('dist-file-info');
+  if(!f){ _distFile=null; if(info)info.textContent=''; return; }
+  _distFile={name:f.name,size:f.size}; if(info)info.textContent=`✅ ${f.name} · ${(f.size/1048576).toFixed(1)} MB (chỉ lưu thông tin, chưa upload)`;
+  const nm=document.getElementById('dist-name'); if(nm&&!nm.value)nm.value=f.name; }
+function renderDistDayOptions(){ const sel=document.getElementById('dist-day'); if(!sel)return;
+  const vp=(S.dna.skuld&&S.dna.skuld.vprompts)||{}, days=Object.keys(vp).filter(t=>vp[t].caption||(vp[t].hashtags&&vp[t].hashtags.length));
+  sel.innerHTML='<option value="">— không lấy / nhập tay —</option>'+days.map(t=>`<option value="${_escAttr(t)}">${_escAttr(t)}</option>`).join(''); }
+function distFillFromDay(title){ if(!title)return; const k=((S.dna.skuld&&S.dna.skuld.vprompts)||{})[title]||{};
+  const cap=document.getElementById('dist-caption'), tags=document.getElementById('dist-tags');
+  if(cap)cap.value=k.caption||''; if(tags)tags.value=(k.hashtags||[]).join(' ');
+  const nm=document.getElementById('dist-name'); if(nm&&!nm.value)nm.value=title.replace(/[^\w\-]+/g,'-').replace(/^-+|-+$/g,'')+'.mp4'; }
+function distAdd(){ const fb=document.getElementById('dist-fb');
+  const name=(document.getElementById('dist-name').value||(_distFile&&_distFile.name)||'').trim();
+  const at=document.getElementById('dist-at').value;
+  const caption=document.getElementById('dist-caption').value.trim();
+  const tags=document.getElementById('dist-tags').value.trim();
+  const plats=[...document.querySelectorAll('.dist-plat:checked')].map(c=>c.value);
+  if(!name){ if(fb)fb.innerHTML='<div class="fb bad">Chọn video hoặc nhập tên video.</div>'; return; }
+  if(!plats.length){ if(fb)fb.innerHTML='<div class="fb bad">Chọn ít nhất 1 nền tảng.</div>'; return; }
+  if(!at){ if(fb)fb.innerHTML='<div class="fb bad">Chọn ngày & giờ đăng.</div>'; return; }
+  S.dna.dist=S.dna.dist||{schedule:[]};
+  S.dna.dist.schedule.push({id:_pid(),video:name,size:(_distFile&&_distFile.size)||0,platforms:plats,caption,hashtags:tags,at,status:'planned'});
+  _distFile=null; const fi=document.getElementById('dist-file'); if(fi)fi.value=''; document.getElementById('dist-file-info').textContent='';
+  document.querySelectorAll('.dist-plat:checked').forEach(c=>c.checked=false);
+  if(fb)fb.innerHTML='<div class="fb">✅ Đã thêm vào lịch.</div>';
+  save(); renderDist(); }
+function distDel(id){ if(!S.dna.dist)return; S.dna.dist.schedule=S.dna.dist.schedule.filter(x=>x.id!==id); save(); renderDist(); }
+function distClear(){ if(!confirm('Xoá TOÀN BỘ lịch phân phối của dự án này?'))return; S.dna.dist={schedule:[]}; save(); renderDist(); }
+function distPlatLabel(k){ const p=DIST_PLATS.find(x=>x.key===k); return p?p.label:k; }
+function renderDist(){ const el=document.getElementById('dist-list'), ex=document.getElementById('dist-export'), cnt=document.getElementById('dist-count');
+  const pc=document.getElementById('dist-plats'); if(pc&&!pc.children.length) pc.innerHTML=distPlatsHtml();
+  const list=(((S.dna.dist&&S.dna.dist.schedule)||[]).slice()).sort((a,b)=>(a.at||'').localeCompare(b.at||''));
+  if(cnt)cnt.textContent=list.length+' bài';
+  if(!el)return;
+  if(!list.length){ el.className='mut'; el.innerHTML='Chưa có lịch nào. Thêm video phía trên.'; if(ex)ex.style.display='none'; return; }
+  el.className=''; if(ex)ex.style.display='flex';
+  el.innerHTML='<div style="overflow:auto"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="text-align:left"><th style="padding:5px">🗓 Giờ đăng</th><th>🎬 Video</th><th>📡 Nền tảng</th><th>📝 Caption</th><th></th></tr>'+
+    list.map(x=>`<tr style="border-top:1px solid var(--bd)"><td style="padding:5px;white-space:nowrap">${_escAttr((x.at||'').replace('T',' '))}</td><td style="word-break:break-all">${_escAttr(x.video)}</td><td style="white-space:nowrap">${x.platforms.map(distPlatLabel).join('<br>')}</td><td class="mut" style="max-width:280px">${_escAttr((x.caption||'').slice(0,90))}${(x.caption||'').length>90?'…':''}${x.hashtags?`<div style="color:var(--ac)">${_escAttr(x.hashtags)}</div>`:''}</td><td><button class="del" onclick="distDel('${x.id}')">✕</button></td></tr>`).join('')+'</table></div>'; }
+function exportDist(fmt){ const list=(S.dna.dist&&S.dna.dist.schedule)||[]; if(!list.length)return; let data;
+  if(fmt==='csv'){ data='Gio dang,Video,Nen tang,Caption,Hashtag\n'+list.map(x=>[x.at,x.video,x.platforms.join('|'),x.caption,x.hashtags].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n'); }
+  else { data=JSON.stringify(list,null,2); }
+  const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='lich-phan-phoi.'+fmt; document.body.appendChild(a); a.click(); a.remove(); }
 function regenVPromptsAll(){ if(!confirm('Tạo lại TẤT CẢ prompt video (xoá bản hiện có)?')) return; S.dna.skuld.vprompts={}; save(); renderVPrompts(); genVPromptsAll(); }
 async function genVPromptsAll(){
   const btn=document.getElementById('vp-gen'), fb=document.getElementById('vp-fb');
