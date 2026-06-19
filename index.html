@@ -126,6 +126,16 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div style="margin-top:14px"><button class="btn" onclick="saveOnboard()">Lưu & vào Trạm 1 →</button></div>
   </div>
 
+  <!-- 🪪 BIO ĐA NỀN TẢNG -->
+  <div class="sec" id="biokit">
+    <h2>🪪 Tiểu sử / Bio đa nền tảng <span class="pill">TikTok · Instagram · Threads · Facebook · YouTube — copy &amp; dán</span></h2>
+    <p class="mut" style="margin:0 0 8px">AI viết tiểu sử kênh chuẩn từng nền tảng (đúng giới hạn ký tự + CTA + đối tượng), bám Brand Vault. Bấm Copy là dán thẳng vào phần hồ sơ kênh.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="bio-gen" onclick="genBioKit(this)">🪪 Sinh bio đa nền tảng (AI)</button>
+    </div>
+    <div id="bio-out" class="mut" style="margin-top:10px">Chưa có bio. Điền Bước 0 / nạp Brand Vault rồi bấm "Sinh bio đa nền tảng".</div>
+  </div>
+
   <!-- TRẠM 1 -->
   <div class="sec" id="m1" style="display:none">
     <h2>Trạm 1 · Nền móng — Chiến lược & Định dạng kênh <span class="pill">Rubric 100đ · cần ≥70đ để mở Trạm 2</span></h2>
@@ -1398,6 +1408,49 @@ function copyVKit(btn){ const t=btn.getAttribute('data-vk-title'), kind=btn.getA
   else fallbackCopy(text,done);
 }
 function fallbackCopy(text,cb){ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); cb&&cb(); }
+
+/* ===== Bio đa nền tảng (TikTok/IG/Threads/Facebook/YouTube) ===== */
+const BIO_PLATS = [
+  {key:'tiktok',    label:'🎵 TikTok',        limit:80,  note:'Bio ≤80 ký tự · CTA + 1 emoji'},
+  {key:'instagram', label:'📸 Instagram',     limit:150, note:'Bio ≤150 ký tự · xuống dòng · CTA'},
+  {key:'threads',   label:'🧵 Threads',       limit:150, note:'Bio ≤150 ký tự'},
+  {key:'facebook',  label:'📘 Facebook Page', limit:255, note:'Phần Giới thiệu (Intro) ≤255 ký tự'},
+  {key:'youtube',   label:'▶️ YouTube',       limit:800, note:'Mô tả kênh 300–800 ký tự · kèm từ khoá SEO + lịch đăng'}
+];
+async function genBioKit(btn){
+  if(!S.keys.gemini){ alert('🤖 Sinh bio cần Gemini key — vào tab ⚡ Kết nối.'); return; }
+  const ob=S.dna.onboard||{};
+  if(!(S.dna.brand&&S.dna.brand.length) && !ob.nganh){ alert('Điền Bước 0 (ngành hàng) hoặc nạp Brand Vault trước để AI hiểu kênh.'); return; }
+  const old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang viết bio...';
+  try{
+    const o=await geminiCall(`Bạn là chuyên gia xây kênh social bán hàng. Viết TIỂU SỬ / BIO chuẩn cho TỪNG nền tảng, bám thương hiệu, TIẾNG VIỆT (giữ tên riêng/handle/hashtag nếu hợp).
+BRAND:
+${brandContext(2500)}
+Mỗi nền tảng cần: "name" = tên hiển thị ngắn có chất riêng; "bio" = giới thiệu TÔN TRỌNG GIỚI HẠN KÝ TỰ, nêu giá trị cốt lõi + đối tượng + 1 CTA (vd "Inbox/Mua tại…") + emoji hợp lý.
+GIỚI HẠN: TikTok bio ≤80 ký tự · Instagram ≤150 · Threads ≤150 · Facebook Intro ≤255 · YouTube mô tả 300–800 ký tự (kèm 3–5 từ khoá SEO + 1 dòng lịch đăng).
+Trả về DUY NHẤT JSON: {"tiktok":{"name":"","bio":""},"instagram":{"name":"","bio":""},"threads":{"name":"","bio":""},"facebook":{"name":"","bio":""},"youtube":{"name":"","bio":""}}`,{json:true,temp:0.7});
+    S.dna.bio={};
+    BIO_PLATS.forEach(p=>{ const d=o[p.key]||{}; S.dna.bio[p.key]={name:asText(d.name),bio:asText(d.bio)}; });
+    save(); renderBioKit();
+  }catch(e){ alert('AI lỗi: '+(e.message==='NO_KEY'?'chưa có Gemini key':e.message)); }
+  btn.innerHTML=old; btn.disabled=false;
+}
+function renderBioKit(){
+  const el=document.getElementById('bio-out'); if(!el) return;
+  const b=S.dna.bio||{};
+  if(!Object.keys(b).length){ el.className='mut'; el.innerHTML='Chưa có bio. Điền Bước 0 / nạp Brand Vault rồi bấm "Sinh bio đa nền tảng".'; return; }
+  el.className='';
+  el.innerHTML=BIO_PLATS.filter(p=>b[p.key]).map(p=>{ const d=b[p.key], len=(d.bio||'').length, over=len>p.limit;
+    return `<div class="cách"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:var(--warn)">${p.label}</b><span class="mut" style="font-size:11px">${p.note}</span></div>`+
+      (d.name?`<div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:12.5px">Tên:</b><span style="font-size:12.5px">${_escAttr(d.name)}</span><button class="btn ghost sm" data-bio="${p.key}" data-biof="name" onclick="copyBio(this)">📋</button></div>`:'')+
+      `<div style="margin-top:6px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:3px"><b style="font-size:12.5px">Bio:</b><span style="font-size:11px;color:${over?'var(--red)':'var(--mut)'}">${len}/${p.limit} ký tự${over?' ⚠️ quá dài':''}</span><button class="btn ghost sm" data-bio="${p.key}" data-biof="bio" onclick="copyBio(this)">📋 Copy bio</button></div>`+
+      `<div style="white-space:pre-wrap;font-size:12.5px">${_escAttr(d.bio||'')}</div></div></div>`;
+  }).join('');
+}
+function copyBio(btn){ const p=btn.getAttribute('data-bio'), f=btn.getAttribute('data-biof'); const d=(S.dna.bio||{})[p]||{}; const text=d[f]||''; if(!text) return;
+  const done=()=>{ const o=btn.innerHTML; btn.innerHTML='✅'; setTimeout(()=>btn.innerHTML=o,1200); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done)); } else fallbackCopy(text,done);
+}
 function regenVPromptsAll(){ if(!confirm('Tạo lại TẤT CẢ prompt video (xoá bản hiện có)?')) return; S.dna.skuld.vprompts={}; save(); renderVPrompts(); genVPromptsAll(); }
 async function genVPromptsAll(){
   const btn=document.getElementById('vp-gen'), fb=document.getElementById('vp-fb');
@@ -2165,7 +2218,7 @@ function ensureDynamic(){
   if(S.dna.m5 && S.dna.m5.videos) S.dna.m5.videos.forEach(v=>addVideo(v));
 
   if(S.dna.xpSeen==null) S.dna.xpSeen=calcXP(); // không bắn toast cho tiến độ đã có
-  renderProjBar(); renderDNA(); renderStations(); renderVault(); refreshGates(); renderOverview(); renderXP(); ensureDynamic();
+  renderProjBar(); renderDNA(); renderStations(); renderVault(); renderBioKit(); refreshGates(); renderOverview(); renderXP(); ensureDynamic();
   document.getElementById('grade-hint').textContent = S.keys.gemini ? 'Gemini đã kết nối — chấm sâu bằng AI.' : 'Chưa có Gemini key → chấm offline cơ bản. Vào tab ⚡ Kết nối để AI chấm thật.';
 })();
 </script>
