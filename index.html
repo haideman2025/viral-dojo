@@ -372,6 +372,11 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <button class="btn" id="vp-gen" onclick="genVPromptsAll()">🎥 Sinh prompt video (cả loạt)</button>
       <button class="btn ghost" onclick="regenVPromptsAll()">🔄 Tạo lại tất cả</button>
     </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="btn ghost" id="vp-kit" onclick="genPostKitAll()" style="border-color:var(--blue);color:var(--blue)">📋 Sinh bộ đăng bài (caption + nhạc + hashtag · cả loạt)</button>
+      <button class="btn ghost sm" onclick="regenPostKitAll()">🔄 Tạo lại bộ đăng bài</button>
+    </div>
+    <p class="mut" style="font-size:12px;margin:-2px 0 8px">📋 Mỗi video kèm <b>caption sẵn đăng</b> + <b>hashtag</b> + <b>prompt nhạc nền</b> (Suno/Udio) — bấm Copy là dán thẳng lên page.</p>
     <p class="mut" style="font-size:12px;margin:-2px 0 8px">💡 Tạo thử 1 video: bấm nút 🎥 trên từng dòng ở bảng Dây chuyền. Mỗi shot kèm <b>voice-over</b> lấy đúng từ kịch bản + chỉ dẫn dùng ảnh tham chiếu.</p>
     <div id="vp-fb"></div>
     <div id="vp-out" class="mut">Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".</div>
@@ -1342,8 +1347,57 @@ KỊCH BẢN ("${title}"):
 ${body}
 Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]} — số shot vừa đủ kể trọn kịch bản (mỗi shot 10s).`,{json:true,temp:0.55});
   S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
-  S.dna.skuld.vprompts[title]={shots:(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',voiceover:s.voiceover||'',onscreen:s.onscreen||''})), at:new Date().toISOString().slice(0,10)};
+  const prev=S.dna.skuld.vprompts[title]||{};
+  S.dna.skuld.vprompts[title]={...prev, shots:(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',voiceover:s.voiceover||'',onscreen:s.onscreen||''})), at:_today()};
 }
+/* ===== Bộ đăng bài: caption + hashtag + prompt nhạc nền (copy đăng page) ===== */
+function cleanTags(h){ const arr=Array.isArray(h)?h:asText(h).split(/[\s,]+/); return arr.map(x=>asText(x).trim()).filter(Boolean).map(x=>'#'+x.replace(/^#+/,'').replace(/\s+/g,'')); }
+async function genPostKit(title){
+  const sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
+  const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | trám: ${c.tram||''}`).join('\n');
+  const o=await geminiCall(`Bạn là content creator TikTok/Reels chuyên bán hàng, đã học COREVIRAL. Từ KỊCH BẢN video + thương hiệu, tạo BỘ ĐĂNG BÀI sẵn để copy đăng page.
+BRAND:
+${brandContext(2000)}
+KỊCH BẢN ("${title}"):
+${body}
+Trả về DUY NHẤT JSON:
+{"caption":"caption TIẾNG VIỆT sẵn đăng: DÒNG HOOK đầu giật mạnh, 2-4 dòng giá trị/cảm xúc bám insight khách, 1 CTA rõ ở cuối; dùng \\n để xuống dòng, chèn 2-4 emoji hợp lý; KHÔNG nhồi hashtag vào caption","hashtags":["8-12 hashtag liên quan: trộn hashtag RỘNG đang trend + hashtag NGÁCH sản phẩm/insight; mỗi phần tử bắt đầu bằng # và viết liền không dấu cách"],"music":"BACKGROUND MUSIC PROMPT bằng TIẾNG ANH cho Suno/Udio: genre + mood + tempo (BPM) + nhạc cụ chính + energy arc khớp nhịp video; instrumental, no vocals, loopable ~15-30s"}`,{json:true,temp:0.7});
+  const vp=S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
+  vp[title]=vp[title]||{shots:[],at:_today()};
+  vp[title].caption=asText(o.caption);
+  vp[title].hashtags=cleanTags(o.hashtags);
+  vp[title].music=asText(o.music);
+}
+async function genPostKitAll(){
+  const fb=document.getElementById('vp-fb'), btn=document.getElementById('vp-kit');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  healScripts();
+  const scripts=S.dna.skuld.scripts||{}, vp=S.dna.skuld.vprompts||{};
+  const titles=Object.keys(scripts).filter(t=>!(vp[t]&&vp[t].caption));
+  if(!titles.length){ if(fb)fb.innerHTML='<div class="fb">'+(Object.keys(scripts).length?'Mọi video đã có bộ đăng bài. Xem/copy bên dưới.':'Chưa có kịch bản. Dựng kịch bản trước (🎬).')+'</div>'; renderVPrompts(); return; }
+  if(btn)btn.disabled=true;
+  try{
+    for(let i=0;i<titles.length;i++){
+      forgeProg(`📋 Sinh bộ đăng bài ${i+1}/${titles.length}: ${titles[i]}`,1);
+      if(btn)btn.innerHTML=`<span class="spin"></span>${i+1}/${titles.length}`;
+      await genPostKit(titles[i]); save(); renderVPrompts();
+    }
+    if(fb)fb.innerHTML=`<div class="fb">✅ Đã sinh caption + hashtag + prompt nhạc cho ${titles.length} video. Bấm Copy ở từng video để đăng.</div>`;
+  }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  if(btn){btn.disabled=false; btn.innerHTML='📋 Sinh bộ đăng bài (caption + nhạc + hashtag · cả loạt)';}
+}
+function regenPostKitAll(){ if(!confirm('Tạo lại bộ đăng bài (caption/hashtag/nhạc) cho TẤT CẢ video?')) return; const vp=S.dna.skuld.vprompts||{}; Object.values(vp).forEach(k=>{ delete k.caption; delete k.hashtags; delete k.music; }); save(); renderVPrompts(); genPostKitAll(); }
+function vkitText(title, kind){ const k=(S.dna.skuld.vprompts||{})[title]||{};
+  if(kind==='music') return k.music||'';
+  if(kind==='hashtags') return (k.hashtags||[]).join(' ');
+  return (k.caption||'')+(k.hashtags&&k.hashtags.length?'\n\n'+k.hashtags.join(' '):''); /* post = caption + hashtag */
+}
+function copyVKit(btn){ const t=btn.getAttribute('data-vk-title'), kind=btn.getAttribute('data-vk'); const text=vkitText(t,kind); if(!text){ return; }
+  const done=()=>{ const o=btn.innerHTML; btn.innerHTML='✅ Đã copy'; setTimeout(()=>btn.innerHTML=o,1500); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done)); }
+  else fallbackCopy(text,done);
+}
+function fallbackCopy(text,cb){ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); cb&&cb(); }
 function regenVPromptsAll(){ if(!confirm('Tạo lại TẤT CẢ prompt video (xoá bản hiện có)?')) return; S.dna.skuld.vprompts={}; save(); renderVPrompts(); genVPromptsAll(); }
 async function genVPromptsAll(){
   const btn=document.getElementById('vp-gen'), fb=document.getElementById('vp-fb');
@@ -1378,14 +1432,23 @@ function renderVPrompts(){
   el.className=''; if(ex)ex.style.display='flex';
   el.innerHTML='<h3 style="color:var(--warn);margin-top:12px">🎥 Prompt video Omni ('+keys.length+' kịch bản · 10s/shot)</h3>'+
     keys.map(t=>{const s=vp[t];
-      return `<div class="cách"><b>${t}</b> <span class="mut">· ${(s.shots||[]).length} shot × 10s</span>`+
+      const hasKit=s.caption||s.music||(s.hashtags&&s.hashtags.length);
+      const kit=hasKit?`<div style="border:1px solid var(--blue);border-radius:10px;padding:8px 10px;margin:8px 0;background:rgba(109,179,255,.06)">`+
+        `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><b style="color:var(--blue)">📋 Bộ đăng bài</b>`+
+        `<button class="btn ghost sm" data-vk="post" data-vk-title="${_escAttr(t)}" onclick="copyVKit(this)">📋 Copy caption + hashtag</button>`+
+        `<button class="btn ghost sm" data-vk="music" data-vk-title="${_escAttr(t)}" onclick="copyVKit(this)">🎵 Copy prompt nhạc</button></div>`+
+        (s.caption?`<div style="white-space:pre-wrap;font-size:12.5px">${_escAttr(s.caption)}</div>`:'')+
+        (s.hashtags&&s.hashtags.length?`<div style="font-size:12px;margin-top:5px;color:var(--ac)">${_escAttr(s.hashtags.join(' '))}</div>`:'')+
+        (s.music?`<div style="font-size:12px;margin-top:7px;border-top:1px dashed var(--bd);padding-top:6px"><b style="color:var(--warn)">🎵 Nhạc nền (Suno/Udio):</b> <span class="mut" style="white-space:pre-wrap">${_escAttr(s.music)}</span></div>`:'')+
+        `</div>`:'';
+      return `<div class="cách"><b>${t}</b> <span class="mut">· ${(s.shots||[]).length} shot × 10s</span>`+kit+
         (s.shots||[]).map(sh=>`<div style="border-top:1px solid var(--bd);margin-top:6px;padding-top:6px"><b style="color:var(--ac)">Shot ${sh.seq} · 10s</b><div class="mut" style="white-space:pre-wrap;font-size:12px;margin-top:3px">${sh.prompt||''}</div>${sh.voiceover?`<div style="font-size:12px;margin-top:3px"><b style="color:var(--warn)">🎙 VO:</b> ${sh.voiceover}</div>`:''}${sh.onscreen?`<div class="mut" style="font-size:11px;margin-top:2px">▦ overlay: ${sh.onscreen}</div>`:''}</div>`).join('')+`</div>`;}).join('');
 }
 function exportVPrompts(fmt){
   const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp); if(!keys.length) return;
   const v=vref(), kenh=(S.dna.onboard&&S.dna.onboard.kenh)||'Kênh'; let data;
   if(fmt==='csv'){ data='Kịch bản,Shot,Thời lượng,Prompt (Omni EN),Voice-over VN,Overlay VN\n'+keys.flatMap(t=>(vp[t].shots||[]).map(s=>[t,s.seq,s.dur+'s',s.prompt,s.voiceover,s.onscreen].map(x=>`"${(x||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
-  else { data=`# Bộ prompt video Omni — ${kenh}\n\n> **HƯỚNG DẪN:** Vào Google Flow → upload **1 ảnh nhân vật** + **1 ảnh sản phẩm** vào phần ingredients/reference, GIỮ NGUYÊN cho TẤT CẢ shot của mọi video để nhân vật & sản phẩm đồng nhất. Dán prompt từng shot theo thứ tự; ghép các shot 10s thành 1 video.\n\n**🎭 Nhân vật (ảnh tham chiếu):** ${v.character||''}\n\n**📦 Sản phẩm (ảnh tham chiếu):** ${v.product||''}\n\n**🎨 Style:** ${v.style||''}\n\n`+keys.map(t=>`## ${t}\n\n`+(vp[t].shots||[]).map(s=>`### Shot ${s.seq} · ${s.dur}s\n${s.voiceover?`**🎙 Voice-over (VN):** ${s.voiceover}\n\n`:''}${s.onscreen?`*▦ Overlay (VN):* ${s.onscreen}\n\n`:''}\`\`\`\n${s.prompt||''}\n\`\`\`\n`).join('\n')).join('\n'); }
+  else { data=`# Bộ prompt video Omni — ${kenh}\n\n> **HƯỚNG DẪN:** Vào Google Flow → upload **1 ảnh nhân vật** + **1 ảnh sản phẩm** vào phần ingredients/reference, GIỮ NGUYÊN cho TẤT CẢ shot của mọi video để nhân vật & sản phẩm đồng nhất. Dán prompt từng shot theo thứ tự; ghép các shot 10s thành 1 video.\n\n**🎭 Nhân vật (ảnh tham chiếu):** ${v.character||''}\n\n**📦 Sản phẩm (ảnh tham chiếu):** ${v.product||''}\n\n**🎨 Style:** ${v.style||''}\n\n`+keys.map(t=>{const k=vp[t]; const kit=(k.caption||k.music||(k.hashtags&&k.hashtags.length))?`### 📋 Bộ đăng bài\n${k.caption?`**📝 Caption:**\n${k.caption}\n\n`:''}${k.hashtags&&k.hashtags.length?`**#️⃣ Hashtag:** ${k.hashtags.join(' ')}\n\n`:''}${k.music?`**🎵 Nhạc nền (Suno/Udio):** ${k.music}\n\n`:''}`:''; return `## ${t}\n\n`+kit+(k.shots||[]).map(s=>`### Shot ${s.seq} · ${s.dur}s\n${s.voiceover?`**🎙 Voice-over (VN):** ${s.voiceover}\n\n`:''}${s.onscreen?`*▦ Overlay (VN):* ${s.onscreen}\n\n`:''}\`\`\`\n${s.prompt||''}\n\`\`\`\n`).join('\n');}).join('\n'); }
   const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt-video-omni.'+fmt; document.body.appendChild(a); a.click(); a.remove();
 }
 /* --- B. Phân tích chuyên sâu 18 câu --- */
