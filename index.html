@@ -84,6 +84,16 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
   <div id="xp-head"></div>
 </header>
 
+<div id="projbar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 12px">
+  <span style="font-size:12.5px;font-weight:800;color:var(--mut);white-space:nowrap">📁 Dự án</span>
+  <select id="proj-sel" onchange="projSwitch(this.value)" style="width:auto;min-width:170px;padding:7px 10px;font-weight:700"></select>
+  <button class="btn ghost sm" onclick="projNew()">➕ Tạo mới</button>
+  <button class="btn ghost sm" onclick="projRename()">✏️ Đổi tên</button>
+  <button class="btn ghost sm" onclick="projDuplicate()">📑 Nhân bản</button>
+  <button class="btn ghost sm" onclick="projDelete()" style="color:var(--red);border-color:#4a2424">🗑 Xoá</button>
+  <span class="mut" style="font-size:11.5px;flex:1 0 100%;margin-top:2px">Mỗi dự án = 1 kênh / 1 pack nội dung độc lập (Brand Vault, trạm, kịch bản riêng). API key dùng chung mọi dự án.</span>
+</div>
+
 <!-- ============ VIEW: HOME ============ -->
 <div id="v-home">
   <div class="station" id="stations"></div>
@@ -509,10 +519,51 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 <script>
 /* ================= STATE ================= */
 const S = JSON.parse(localStorage.getItem('dojo')||'{}');
-S.dna = S.dna || {onboard:{}, m1:{}, scores:{}};
+const _today = ()=> new Date().toISOString().slice(0,10);
+const _pid = ()=> 'proj_'+Math.random().toString(36).slice(2,8);
+const _escAttr = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+/* ===== Migration v2: bọc state cũ (1 dự án) thành workspace đa dự án ===== */
+(function migrateV2(){
+  if(S.v===2 && S.projects && S.activeId && S.projects[S.activeId]) return;
+  const oldDna  = (S.dna && typeof S.dna==='object') ? S.dna : {onboard:{}, m1:{}, scores:{}};
+  const oldKeys = S.keys || {};
+  const id = _pid();
+  const name = (oldDna.onboard && (oldDna.onboard.kenh||oldDna.onboard.nganh)) || 'Dự án 1';
+  for(const k of Object.keys(S)) delete S[k];            // dọn gốc, thao tác trên CHÍNH object S
+  S.v=2; S.activeId=id; S.keys=oldKeys;
+  S.projects={ [id]:{ name, createdAt:_today(), updatedAt:_today(), dna:oldDna } };
+  localStorage.setItem('dojo', JSON.stringify(S));
+})();
 S.keys = S.keys || {};
+
+/* dự án đang mở (tự nhặt dự án đầu nếu activeId hỏng) */
+function activeProject(){ if(!S.projects[S.activeId]) S.activeId=Object.keys(S.projects)[0]; return S.projects[S.activeId]; }
+
+/* S.dna là GETTER trỏ vào dna của dự án đang mở → toàn bộ code cũ chạy y nguyên */
+Object.defineProperty(S,'dna',{
+  configurable:true,
+  get(){ const p=activeProject(); p.dna=p.dna||{onboard:{},m1:{},scores:{}}; return p.dna; },
+  set(v){ activeProject().dna=v; }     // giữ importDNA() hoạt động (nạp vào dự án đang mở)
+});
+
 const PASS = 70; // điểm tối thiểu mở trạm sau
-function save(){ localStorage.setItem('dojo', JSON.stringify(S)); renderDNA(); renderStations(); refreshGates(); renderOverview(); if(typeof xpTick==='function') xpTick(); if(typeof ensureDynamic==='function') ensureDynamic(); }
+function save(){ const p=S.projects&&S.projects[S.activeId]; if(p) p.updatedAt=_today();
+  localStorage.setItem('dojo', JSON.stringify(S)); renderDNA(); renderStations(); refreshGates(); renderOverview(); if(typeof xpTick==='function') xpTick(); if(typeof ensureDynamic==='function') ensureDynamic(); }
+
+/* ===================== QUẢN LÝ DỰ ÁN (đa pack) ===================== */
+function projList(){ return Object.entries(S.projects).map(([id,p])=>({id,...p})); }
+function renderProjBar(){ const sel=document.getElementById('proj-sel'); if(!sel) return;
+  sel.innerHTML = projList().map(p=>`<option value="${p.id}"${p.id===S.activeId?' selected':''}>${_escAttr(p.name)}</option>`).join(''); }
+function projSwitch(id){ if(id && S.projects[id] && id!==S.activeId){ S.activeId=id; localStorage.setItem('dojo',JSON.stringify(S)); location.reload(); } }
+function projNew(){ const name=(prompt('Tên dự án mới (1 kênh / 1 pack nội dung):','Dự án '+(Object.keys(S.projects).length+1))||'').trim(); if(!name) return;
+  const id=_pid(); S.projects[id]={name,createdAt:_today(),updatedAt:_today(),dna:{onboard:{},m1:{},scores:{}}}; S.activeId=id; localStorage.setItem('dojo',JSON.stringify(S)); location.reload(); }
+function projRename(){ const p=activeProject(); const name=(prompt('Đổi tên dự án:',p.name)||'').trim(); if(name){ p.name=name; localStorage.setItem('dojo',JSON.stringify(S)); renderProjBar(); } }
+function projDuplicate(){ const src=activeProject(); const id=_pid();
+  S.projects[id]={name:src.name+' (copy)',createdAt:_today(),updatedAt:_today(),dna:JSON.parse(JSON.stringify(src.dna||{}))}; S.activeId=id; localStorage.setItem('dojo',JSON.stringify(S)); location.reload(); }
+function projDelete(){ if(Object.keys(S.projects).length<=1){ alert('Không thể xoá dự án cuối cùng — tạo dự án khác trước.'); return; }
+  const p=activeProject(); if(!confirm('Xoá dự án "'+p.name+'"? Không hồi lại được. Nên Tải DNA backup trước.')) return;
+  delete S.projects[S.activeId]; S.activeId=Object.keys(S.projects)[0]; localStorage.setItem('dojo',JSON.stringify(S)); location.reload(); }
 
 /* ================= GEMINI HELPER (dùng chung mọi trạm) ================= */
 const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -1459,7 +1510,7 @@ function importDNA(file){
     }catch(err){ alert('❌ File không hợp lệ: '+err.message); } };
   r.readAsText(file,'utf-8');
 }
-function resetDNA(){ if(confirm('Xoá TOÀN BỘ tiến độ & Channel DNA? Không hồi lại được. Nên Tải DNA backup trước.')){ localStorage.removeItem('dojo'); location.reload(); } }
+function resetDNA(){ if(confirm('Xoá TOÀN BỘ tiến độ & Channel DNA của DỰ ÁN HIỆN TẠI ("'+activeProject().name+'")? Không hồi lại được. Nên Tải DNA backup trước.')){ activeProject().dna={onboard:{},m1:{},scores:{}}; localStorage.setItem('dojo',JSON.stringify(S)); location.reload(); } }
 
 /* ================= COACH DÙNG CHUNG (Trạm 2-6) ================= */
 async function coachGeneric(num, baiText, btn, res){
@@ -2051,7 +2102,7 @@ function ensureDynamic(){
   if(S.dna.m5 && S.dna.m5.videos) S.dna.m5.videos.forEach(v=>addVideo(v));
 
   if(S.dna.xpSeen==null) S.dna.xpSeen=calcXP(); // không bắn toast cho tiến độ đã có
-  renderDNA(); renderStations(); renderVault(); refreshGates(); renderOverview(); renderXP(); ensureDynamic();
+  renderProjBar(); renderDNA(); renderStations(); renderVault(); refreshGates(); renderOverview(); renderXP(); ensureDynamic();
   document.getElementById('grade-hint').textContent = S.keys.gemini ? 'Gemini đã kết nối — chấm sâu bằng AI.' : 'Chưa có Gemini key → chấm offline cơ bản. Vào tab ⚡ Kết nối để AI chấm thật.';
 })();
 </script>
