@@ -292,7 +292,7 @@ Có thể chuẩn bị trước phần "đầu vào" để khi backend sẵn sà
 
 ### C.5. Lộ trình
 
-- **C-0 (làm ngay):** UI lịch phân phối + xuất CSV/JSON (chưa gọi API thật).
+- **C-0 (✅ ĐÃ XONG — commit `87d0df4`):** tab "📤 Phân phối" — UI lịch phân phối + xuất CSV/JSON (chưa gọi API thật).
 - **C-1:** Backend nhận upload video (R2) + lưu lịch (sau Part B Milestone 2).
 - **C-2:** Tích hợp Zernio (REST hoặc MCP) + scheduler chạy nền + trạng thái đăng.
 - **C-3:** Mở rộng nền tảng, retry khi lỗi, báo cáo hiệu suất bài đã đăng.
