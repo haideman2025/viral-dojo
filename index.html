@@ -108,6 +108,11 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <button class="btn ghost sm" style="margin-top:6px" onclick="addBrandPaste()">+ Thêm vào Vault</button></div>
     <div id="bv-list" class="mut" style="font-size:13px"></div>
 
+    <div style="margin-top:12px;padding:10px 12px;background:var(--card2);border:1px dashed var(--ac);border-radius:10px">
+      <button class="btn ghost sm" id="btn-ai-onboard" style="border-color:var(--ac);color:var(--ac)" onclick="aiFillOnboard(this)">✨ AI tự điền từ dữ liệu đã nạp</button>
+      <span class="mut" style="font-size:12px;margin-left:6px">AI đọc Brand Vault + nội dung paste → tự suy ra Ngành hàng, Tên kênh, Khách hàng mục tiêu. (Cần Gemini key)</span>
+    </div>
+
     <div style="margin-top:14px"><button class="btn" onclick="saveOnboard()">Lưu & vào Trạm 1 →</button></div>
   </div>
 
@@ -886,6 +891,28 @@ async function coach(){
 }
 
 /* ================= ONBOARD ================= */
+async function aiFillOnboard(btn){
+  if(!S.keys.gemini){ alert('🤖 AI tự điền cần Gemini key — vào tab ⚡ Kết nối (miễn phí, ~1 phút).'); return; }
+  const paste = (document.getElementById('bv-paste').value||'').trim();
+  if(!S.dna.brand.length && !paste){ alert('Hãy nạp ít nhất 1 file hoặc paste nội dung vào Brand Vault trước để AI phân tích.'); return; }
+  const old = btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin" style="border-color:var(--ac);border-top-color:transparent"></span>AI đang đọc dữ liệu…';
+  try{
+    let ctx = brandContext(12000);
+    if(paste) ctx += '\n--- NỘI DUNG PASTE ---\n' + paste.slice(0,4000);
+    const out = await geminiCall(
+      `Bạn là chuyên gia chiến lược kênh TikTok bán hàng. Đọc TOÀN BỘ dữ liệu thương hiệu / sản phẩm / chiến lược nội dung dưới đây và SUY LUẬN ra 3 thông tin khởi tạo kênh.\n\n=== DỮ LIỆU ===\n${ctx}\n\nTrả về DUY NHẤT JSON đúng cấu trúc:\n{"nganh":"ngành hàng / sản phẩm cốt lõi — ngắn gọn, cụ thể","kenh":"gợi ý 1 tên kênh TikTok dạng @handle bám thương hiệu, không dấu, viết liền hoặc dùng _","khach":"chân dung khách hàng mục tiêu: độ tuổi + giới tính + nghề/hành vi + nơi mua"}\nTiếng Việt, súc tích. Bám sát dữ liệu, KHÔNG bịa thông tin nếu đã nêu rõ.`,
+      {json:true, temp:0.3});
+    if(out.nganh) document.getElementById('ob-nganh').value = out.nganh;
+    if(out.kenh)  document.getElementById('ob-kenh').value  = out.kenh;
+    if(out.khach) document.getElementById('ob-kh').value    = out.khach;
+    btn.innerHTML = '✅ Đã điền — kiểm tra & chỉnh nếu cần';
+    setTimeout(()=>{ btn.innerHTML=old; btn.disabled=false; }, 2600);
+  }catch(e){
+    alert('AI lỗi: ' + (e.message==='NO_KEY' ? 'chưa có Gemini key' : e.message));
+    btn.innerHTML=old; btn.disabled=false;
+  }
+}
+
 function saveOnboard(){
   S.dna.onboard = {
     nganh: document.getElementById('ob-nganh').value.trim(),
