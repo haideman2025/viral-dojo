@@ -233,9 +233,77 @@ là 1 cổng dữ liệu độc lập."* Lộ trình trên chỉ là **hiện th
 
 ---
 
+## PHẦN C — Upload video + Lên lịch phân phối đa nền tảng (Zernio)
+
+> Mục tiêu: người dùng **upload video của mình** → **lên lịch tự động đăng** lên
+> TikTok / Facebook Page / YouTube (và mở rộng) qua **API Zernio**.
+
+### C.1. Vì sao KHÔNG làm được trong app single-file hiện tại
+
+App đang chạy 100% ở trình duyệt + localStorage. Tính năng này **bắt buộc có backend**:
+
+1. **Upload file video nặng** (chục–trăm MB): localStorage không chứa được; cần object
+   storage (R2/S3) + upload có resume.
+2. **Gọi API Zernio cần token bí mật**: nếu để token trong client thì lộ ngay (ai mở
+   DevTools cũng thấy). Phải gọi **server-side**.
+3. **CORS**: phần lớn API phân phối **chặn gọi thẳng từ trình duyệt**.
+4. **Lên lịch chạy nền**: đến giờ phải tự đăng dù người dùng đã tắt máy → cần
+   **scheduler/queue ở server**, không thể dựa vào tab đang mở.
+
+→ Phần C là **phần mở rộng của Part B** (cần backend đã dựng xong, ít nhất Milestone 2).
+
+### C.2. Thông tin CẦN từ Zernio để tích hợp (đang chờ)
+
+- [ ] **API docs / base URL** của Zernio (endpoint upload video, tạo lịch đăng).
+- [ ] **Cơ chế auth**: API key? OAuth? token theo workspace/page?
+- [ ] **Kết nối tài khoản đích**: Zernio tự quản lý kết nối TikTok/FB/YouTube, hay app phải
+      tự OAuth từng nền tảng rồi đẩy cho Zernio?
+- [ ] **Định dạng/giới hạn video** mỗi nền tảng (độ dài, tỉ lệ, dung lượng, codec).
+- [ ] **Caption/hashtag/lịch**: Zernio nhận field gì khi tạo bài (đã có sẵn từ "Bộ đăng bài").
+- [ ] **Trạng thái & callback**: cách biết bài đã đăng / lỗi (polling hay webhook).
+
+> Ghi chú: trong hệ MCP "Game of Ecom" có sẵn khái niệm trang Zernio + publish
+> (`set_active_zernio_page`, `schedule_post`, `publish_now`, `list_fb_pages`). Nếu Zernio ở
+> đây chính là hệ đó → có thể tích hợp qua **MCP** thay vì REST trực tiếp. Cần xác nhận.
+
+### C.3. Kiến trúc dự kiến (sau khi có backend)
+
+```
+[Web/CLI/MCP] → API Dojo (Workers)
+                   │  1. xin presigned URL → upload video lên R2
+                   │  2. POST /distributions {projectId, videoId, platforms[],
+                   │       caption, hashtags, scheduleAt}
+                   ▼
+              Hàng đợi lịch (Cloudflare Queue/Cron)
+                   │  đến giờ → gọi Zernio API (token server-side)
+                   ▼
+        Zernio → TikTok / FB Page / YouTube
+                   │  webhook/poll trạng thái → cập nhật DB → báo UI
+```
+
+### C.4. Việc làm trong app (phần làm được NGAY, không cần Zernio)
+
+Có thể chuẩn bị trước phần "đầu vào" để khi backend sẵn sàng là cắm vào:
+- [ ] Màn **"📤 Phân phối"**: chọn video (kéo-thả), gắn caption + hashtag (lấy sẵn từ Bộ
+      đăng bài theo ngày), chọn nền tảng, chọn ngày–giờ đăng → tạo **danh sách lịch** (lưu
+      local trước).
+- [ ] **Xuất lịch đăng** (CSV/JSON) để hiện tại đăng tay hoặc nạp vào công cụ khác.
+- [ ] Khi có API: thay bước "lưu local" bằng gọi API Dojo → Zernio.
+
+### C.5. Lộ trình
+
+- **C-0 (làm ngay):** UI lịch phân phối + xuất CSV/JSON (chưa gọi API thật).
+- **C-1:** Backend nhận upload video (R2) + lưu lịch (sau Part B Milestone 2).
+- **C-2:** Tích hợp Zernio (REST hoặc MCP) + scheduler chạy nền + trạng thái đăng.
+- **C-3:** Mở rộng nền tảng, retry khi lỗi, báo cáo hiệu suất bài đã đăng.
+
+---
+
 ## Phụ lục — Nhật ký quyết định
 
 | Ngày | Quyết định | Ghi chú |
 |------|-----------|---------|
 | 2026-06-19 | API key **dùng chung** mọi dự án | `keys` ở cấp gốc localStorage, ngoài `projects` |
 | 2026-06-19 | Part A trước, Part B theo milestone | Part A rủi ro thấp, giá trị ngay; Part B là nền thương mại |
+| 2026-06-19 | Part A **đã xong** (đa dự án) | commit `5b2bb7b` |
+| 2026-06-19 | Phân phối Zernio (Part C) cần backend | Không làm client-only được; chờ API docs Zernio; có thể đi qua MCP Game of Ecom |
