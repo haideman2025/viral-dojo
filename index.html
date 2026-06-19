@@ -1207,7 +1207,7 @@ async function buildScriptsTop(){
     for(let i=0;i<L.length;i++){
       const x=L[i]; btn.innerHTML=`<span class="spin"></span>Dựng ${i+1}/${L.length}...`; forgeProg(`🎬 Dựng kịch bản chi tiết ${i+1}/${L.length}: ${x.title}`,1);
       const out=await geminiCall(`Bạn là biên kịch COREVIRAL. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6});
-      S.dna.skuld.scripts[x.title]={scenes:(out.scenes||[]), at:new Date().toISOString().slice(0,10)};
+      S.dna.skuld.scripts[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
       save(); renderForgePlan(); renderScripts();
     }
     fb.innerHTML=`<div class="fb">✅ Đã dựng ${L.length} kịch bản chi tiết. Giờ bấm "🧠 Chấm + xếp hạng kịch bản" để biết cái nào sẵn sàng sản xuất. Cuộn xuống xem + tải về.</div>`;
@@ -1216,6 +1216,7 @@ async function buildScriptsTop(){
 }
 function renderScripts(){
   const el=document.getElementById('forge-scripts'), ex=document.getElementById('forge-export'); if(!el) return;
+  healScripts(); // tự chữa kịch bản cũ bị lưu dạng object
   const sc=S.dna.skuld.scripts||{}, keys=Object.keys(sc);
   if(!keys.length){ el.innerHTML=''; if(ex)ex.style.display='none'; return; }
   if(ex)ex.style.display='flex';
@@ -1232,7 +1233,27 @@ function exportScripts(fmt){
   const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='kich-ban-chi-tiet.'+fmt; document.body.appendChild(a); a.click(); a.remove();
 }
 /* --- 🎥 Bộ prompt video Omni (Google Flow) — chuỗi 10s/script --- */
-function vref(){ S.dna.skuld.vref=S.dna.skuld.vref||{character:'',product:'',style:''}; return S.dna.skuld.vref; }
+/* ép mọi giá trị (string/array/object) thành chuỗi đọc được — AI đôi khi trả object */
+function asText(x){
+  if(x==null) return '';
+  if(typeof x==='string') return x;
+  if(Array.isArray(x)) return x.map(asText).filter(Boolean).join('; ');
+  if(typeof x==='object') return Object.entries(x).map(([k,val])=>`${k}: ${asText(val)}`).join('; ');
+  return String(x);
+}
+function vref(){
+  S.dna.skuld.vref=S.dna.skuld.vref||{character:'',product:'',style:''};
+  const v=S.dna.skuld.vref; let fixed=false;
+  ['character','product','style'].forEach(k=>{ if(typeof v[k]!=='string'){ v[k]=asText(v[k]); fixed=true; } });
+  if(fixed) save(); // tự chữa dữ liệu cũ bị lưu dạng object
+  return v;
+}
+/* chuẩn hoá scene kịch bản — mọi trường về chuỗi (AI đôi khi trả object/array) */
+function normScenes(arr){ return (arr||[]).map(c=>({phan:asText(c.phan),noidung:asText(c.noidung),hinhanh:asText(c.hinhanh),tram:asText(c.tram),note:asText(c.note)})); }
+function healScripts(){ const sc=S.dna.skuld&&S.dna.skuld.scripts; if(!sc) return; let fixed=false;
+  Object.values(sc).forEach(s=>{ if(s&&s.scenes&&s.scenes.some(c=>['phan','noidung','hinhanh','tram','note'].some(k=>c[k]!=null&&typeof c[k]!=='string'))){ s.scenes=normScenes(s.scenes); fixed=true; } });
+  if(fixed) save();
+}
 function renderVRef(){ const v=vref(),c=document.getElementById('vref-char'),p=document.getElementById('vref-prod'),s=document.getElementById('vref-style'); if(c&&!c.value)c.value=v.character||''; if(p&&!p.value)p.value=v.product||''; if(s&&!s.value)s.value=v.style||''; }
 function saveVRef(){ const v=vref(); v.character=document.getElementById('vref-char').value.trim(); v.product=document.getElementById('vref-prod').value.trim(); v.style=document.getElementById('vref-style').value.trim(); save(); }
 async function genVRef(){
@@ -1241,13 +1262,13 @@ async function genVRef(){
   const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>...';}
   try{
     const o=await geminiCall(`Tạo BỘ THAM CHIẾU NHẤT QUÁN cho kênh video (dùng chung cả 30 video — giữ nhân vật + sản phẩm giống nhau). Bám brand.\nBRAND:\n${brandContext(2500)}\nTrả JSON, mô tả bằng TIẾNG ANH (cho video model): {"character":"1 nhân vật on-camera cố định: tuổi/giới/ngoại hình/tóc/trang phục/thần thái, hợp kênh","product":"sản phẩm: loại/bao bì/màu/logo","style":"tông màu·ánh sáng·phong cách quay·nhịp"}.`,{json:true,temp:0.5});
-    const v=vref(); v.character=o.character||''; v.product=o.product||''; v.style=o.style||''; save();
+    const v=vref(); v.character=asText(o.character); v.product=asText(o.product); v.style=asText(o.style); save();
     if(document.getElementById('vref-char')){ document.getElementById('vref-char').value=v.character; document.getElementById('vref-prod').value=v.product; document.getElementById('vref-style').value=v.style; }
     if(fb)fb.innerHTML='<div class="fb">✅ Đã sinh bộ tham chiếu kênh. Sửa lại nếu cần rồi bấm "🎥 Sinh prompt video".</div>';
   }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
   if(btn){btn.disabled=false; btn.innerHTML=old;}
 }
-async function ensureVRef(){ if(!(vref().character||'').trim()) await genVRef(); }
+async function ensureVRef(){ if(!asText(vref().character).trim()) await genVRef(); }
 async function genVPrompts(title){
   const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
@@ -1276,7 +1297,7 @@ function regenVPromptsAll(){ if(!confirm('Tạo lại TẤT CẢ prompt video (x
 async function genVPromptsAll(){
   const btn=document.getElementById('vp-gen'), fb=document.getElementById('vp-fb');
   if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
-  await ensureVRef();
+  healScripts(); await ensureVRef();
   S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
   const scripts=S.dna.skuld.scripts||{}, titles=Object.keys(scripts).filter(t=>!S.dna.skuld.vprompts[t]);
   if(!titles.length){ if(fb)fb.innerHTML='<div class="fb">'+(Object.keys(scripts).length?'Tất cả kịch bản đã có prompt video. Xem/tải bên dưới.':'Chưa có kịch bản. Dựng kịch bản trước (🎬).')+'</div>'; renderVPrompts(); return; }
@@ -1294,7 +1315,7 @@ async function genVPromptsAll(){
 function genVPromptDay(day){ const x=forgeFind(day); if(!x) return; const fb=document.getElementById('vp-fb');
   if(!(S.dna.skuld.scripts||{})[x.title]){ if(fb)fb.innerHTML='<div class="fb bad">Kịch bản này chưa dựng — bấm ✏... à 🎬 dựng kịch bản trước.</div>'; return; }
   (async()=>{ const btn=document.getElementById('vp-gen'); if(btn)btn.disabled=true; forgeProg('🎥 Sinh prompt video: '+x.title,1);
-    try{ await ensureVRef(); await genVPrompts(x.title); save(); renderVPrompts(); if(fb)fb.innerHTML='<div class="fb">✅ Xong prompt video cho "'+x.title+'".</div>'; }
+    try{ healScripts(); await ensureVRef(); await genVPrompts(x.title); save(); renderVPrompts(); if(fb)fb.innerHTML='<div class="fb">✅ Xong prompt video cho "'+x.title+'".</div>'; }
     catch(e){ if(fb)fb.innerHTML='<div class="fb bad">❌ '+e.message+'</div>'; }
     if(btn){btn.disabled=false; btn.innerHTML='🎥 Sinh prompt video (cả loạt)';}
     const o=document.getElementById('vp-out'); if(o)o.scrollIntoView({behavior:'smooth'}); })();
