@@ -101,9 +101,9 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <div><label>Khách hàng mục tiêu</label><input id="ob-kh" placeholder="VD: nam 18-30, sinh viên + đi làm, mua trên TikTok Shop"></div>
     </div>
 
-    <h3 style="font-size:14px;margin:16px 0 6px">📦 Brand Vault — nạp dữ liệu thương hiệu/sản phẩm <span class="pill">txt · md · csv · json · html — kéo thả nhiều file</span></h3>
-    <p class="mut" style="margin:0 0 8px">Mọi thứ bạn có: brand DNA, mô tả sản phẩm, bảng giá, review khách, insight pack, script cũ... AI sẽ dùng kho này làm bối cảnh cho MỌI bước phía sau (hướng dẫn, chấm điểm, tự làm hết).</p>
-    <input type="file" id="bv-file" multiple accept=".txt,.md,.csv,.json,.html,.htm" onchange="addBrandFiles(this.files)">
+    <h3 style="font-size:14px;margin:16px 0 6px">📦 Brand Vault — nạp dữ liệu thương hiệu/sản phẩm <span class="pill">PDF · Excel · Word · txt · md · csv · json · html — kéo thả nhiều file</span></h3>
+    <p class="mut" style="margin:0 0 8px">Mọi thứ bạn có: chiến lược nội dung, chiến lược thương hiệu, brand DNA, mô tả sản phẩm, bảng giá, review khách, insight pack, script cũ... (PDF / Excel / Word / txt / csv / json / html). AI sẽ tự đọc &amp; phân tích, dùng làm bối cảnh cho MỌI bước phía sau (hướng dẫn, chấm điểm, tự làm hết).</p>
+    <input type="file" id="bv-file" multiple accept=".txt,.md,.csv,.json,.html,.htm,.pdf,.xlsx,.xls,.docx" onchange="addBrandFiles(this.files)">
     <div style="margin:8px 0"><textarea id="bv-paste" placeholder="Hoặc paste thẳng nội dung vào đây (mô tả sản phẩm, USP, giá, đối tượng...)" style="min-height:60px"></textarea>
     <button class="btn ghost sm" style="margin-top:6px" onclick="addBrandPaste()">+ Thêm vào Vault</button></div>
     <div id="bv-list" class="mut" style="font-size:13px"></div>
@@ -750,17 +750,63 @@ function renderOpsDashboard(){
 
 /* ================= BRAND VAULT ================= */
 S.dna.brand = S.dna.brand || [];
-function addBrandFiles(files){
-  [...files].forEach(f=>{
-    const r = new FileReader();
-    r.onload = e => {
-      let txt = e.target.result;
-      if(/\.html?$/i.test(f.name)) txt = txt.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
-      S.dna.brand.push({name:f.name, size:txt.length, content:txt.slice(0,20000)});
-      save(); renderVault();
-    };
-    r.readAsText(f,'utf-8');
+
+/* lazy-load thư viện parse từ CDN, cache theo src */
+const _cdnCache = {};
+function loadScript(src){
+  if(_cdnCache[src]) return _cdnCache[src];
+  _cdnCache[src] = new Promise((res,rej)=>{
+    const s=document.createElement('script'); s.src=src; s.async=true;
+    s.onload=()=>res(); s.onerror=()=>rej(new Error('không tải được thư viện (cần mạng)'));
+    document.head.appendChild(s);
   });
+  return _cdnCache[src];
+}
+
+/* trích xuất text từ mọi định dạng được hỗ trợ */
+async function extractFileText(f){
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(ext==='pdf'){
+    await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+    let out='';
+    for(let p=1;p<=pdf.numPages;p++){
+      const tc=await (await pdf.getPage(p)).getTextContent();
+      out+=tc.items.map(i=>i.str).join(' ')+'\n';
+    }
+    return out;
+  }
+  if(ext==='xlsx'||ext==='xls'){
+    await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+    return wb.SheetNames.map(n=>`# Sheet: ${n}\n`+XLSX.utils.sheet_to_csv(wb.Sheets[n])).join('\n\n');
+  }
+  if(ext==='docx'){
+    await loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js');
+    return (await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value;
+  }
+  if(ext==='html'||ext==='htm'){
+    return (await f.text()).replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+  }
+  return await f.text(); // txt, md, csv, json...
+}
+
+async function addBrandFiles(files){
+  for(const f of [...files]){
+    const item={name:f.name, size:0, content:'', loading:true};
+    S.dna.brand.push(item); renderVault();
+    try{
+      const txt=(await extractFileText(f)||'').trim();
+      if(!txt) throw new Error('không có nội dung text đọc được');
+      item.content=txt.slice(0,20000); item.size=txt.length; item.loading=false;
+    }catch(err){
+      const i=S.dna.brand.indexOf(item); if(i>=0) S.dna.brand.splice(i,1);
+      alert('⚠️ Không đọc được "'+f.name+'": '+err.message);
+    }
+    save(); renderVault();
+  }
+  const inp=document.getElementById('bv-file'); if(inp) inp.value='';
 }
 function addBrandPaste(){
   const t = document.getElementById('bv-paste').value.trim();
@@ -772,7 +818,7 @@ function delBrand(i){ S.dna.brand.splice(i,1); save(); renderVault(); }
 function renderVault(){
   const el = document.getElementById('bv-list'); if(!el) return;
   el.innerHTML = S.dna.brand.length
-    ? '🗂 ' + S.dna.brand.map((b,i)=>`<span style="border:1px solid var(--bd);border-radius:14px;padding:2px 9px;margin:2px;display:inline-block">${b.name} <i>(${(b.size/1000).toFixed(1)}k)</i> <a href="#" style="color:var(--red);text-decoration:none" onclick="delBrand(${i});return false">✕</a></span>`).join(' ')
+    ? '🗂 ' + S.dna.brand.map((b,i)=>`<span style="border:1px solid var(--bd);border-radius:14px;padding:2px 9px;margin:2px;display:inline-block">${b.name} <i>${b.loading?'<span class="spin" style="border-color:var(--ac);border-top-color:transparent"></span>đang đọc…':'('+(b.size/1000).toFixed(1)+'k)'}</i> ${b.loading?'':`<a href="#" style="color:var(--red);text-decoration:none" onclick="delBrand(${i});return false">✕</a>`}</span>`).join(' ')
     : 'Vault trống — nạp ít nhất 1 nguồn để AI hiểu thương hiệu của bạn.';
 }
 function brandContext(maxLen){
