@@ -543,10 +543,10 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
   <div class="note">📤 <b>Phân phối tự động qua Zernio</b> — lên lịch video + caption/hashtag rồi đẩy thẳng lên TikTok/FB/YouTube qua Worker trung gian (giữ key an toàn). Chưa có Worker? Vẫn dùng được chế độ xuất CSV/JSON để đăng tay.</div>
   <div class="sec">
     <h2>🔌 Kết nối Zernio <span id="z-status" class="pill">chưa kết nối</span></h2>
-    <p class="mut" style="font-size:12.5px;margin:0 0 8px">Cần deploy Worker trong thư mục <b>zernio-worker/</b> (xem README) → dán URL + App token vào đây. Key Zernio nằm trong Worker, không lưu ở trình duyệt.</p>
+    <p class="mut" style="font-size:12.5px;margin:0 0 8px">Dán <b>API key Zernio của BẠN</b> (Zernio → Settings → API Keys). Key chỉ lưu trong trình duyệt của bạn; đi qua 1 proxy chung (không lưu key) để vượt CORS. Proxy URL đã có sẵn — chỉ sửa nếu bạn tự host.</p>
     <div class="row">
-      <div><label>Worker URL</label><input id="z-url" placeholder="https://zernio-proxy.xxx.workers.dev"></div>
-      <div><label>App token</label><input id="z-token" type="password" placeholder="chuỗi APP_TOKEN đã đặt khi deploy"></div>
+      <div><label>🔑 Zernio API key (của bạn)</label><input id="z-key" type="password" placeholder="sk_..."></div>
+      <div><label>Proxy URL <span class="mut">(mặc định có sẵn)</span></label><input id="z-url" placeholder="https://zernio-proxy.xxx.workers.dev"></div>
     </div>
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" onclick="zLoadAccounts(this)">🔗 Kết nối & tải tài khoản</button>
@@ -1611,19 +1611,21 @@ function exportDist(fmt){ const list=(S.dna.dist&&S.dna.dist.schedule)||[]; if(!
   else { data=JSON.stringify(list,null,2); }
   const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='lich-phan-phoi.'+fmt; document.body.appendChild(a); a.click(); a.remove(); }
 
-/* ===== ĐĂNG THẬT QUA ZERNIO (qua Cloudflare Worker) ===== */
+/* ===== ĐĂNG THẬT QUA ZERNIO (BYOK — user tự nhập key; qua proxy chung không lưu key) ===== */
 const ZTZ='Asia/Ho_Chi_Minh';
-function zCfg(){ return {url:(S.keys.zernioUrl||'').replace(/\/+$/,''), token:S.keys.zernioToken||''}; }
-function zSaveCfg(){ S.keys.zernioUrl=(document.getElementById('z-url').value||'').trim(); S.keys.zernioToken=(document.getElementById('z-token').value||'').trim(); save(); const st=document.getElementById('z-status'); if(st)st.textContent=zCfg().url?'đã lưu cấu hình':'chưa kết nối'; }
-function zHeaders(extra){ return Object.assign({'x-app-token':zCfg().token}, extra||{}); }
-function renderZernioCfg(){ const u=document.getElementById('z-url'), t=document.getElementById('z-token'), st=document.getElementById('z-status'), box=document.getElementById('z-accounts');
-  if(u)u.value=S.keys.zernioUrl||''; if(t)t.value=S.keys.zernioToken||'';
+const ZPROXY_DEFAULT='https://zernio-proxy.hai-cbe.workers.dev'; /* proxy chung đã deploy — user chỉ cần nhập key Zernio của họ */
+function zCfg(){ return {url:((S.keys.zernioUrl||ZPROXY_DEFAULT)||'').replace(/\/+$/,''), key:S.keys.zernioKey||''}; }
+function zSaveCfg(){ S.keys.zernioUrl=(document.getElementById('z-url').value||'').trim(); S.keys.zernioKey=(document.getElementById('z-key').value||'').trim(); save(); const st=document.getElementById('z-status'); if(st)st.textContent=zCfg().key?'đã lưu key':'chưa kết nối'; }
+function zHeaders(extra){ return Object.assign({'x-zernio-key':zCfg().key}, extra||{}); }
+function renderZernioCfg(){ const u=document.getElementById('z-url'), k=document.getElementById('z-key'), st=document.getElementById('z-status'), box=document.getElementById('z-accounts');
+  if(u)u.value=S.keys.zernioUrl||ZPROXY_DEFAULT||''; if(k)k.value=S.keys.zernioKey||'';
   const n=(S.zernioAccounts||[]).length;
-  if(st)st.textContent=n?('✅ '+n+' tài khoản'):(S.keys.zernioUrl?'đã lưu cấu hình':'chưa kết nối');
+  if(st)st.textContent=n?('✅ '+n+' tài khoản'):(S.keys.zernioKey?'đã lưu key':'chưa kết nối');
   if(box&&n)box.innerHTML='Tài khoản đã nối: '+S.zernioAccounts.map(a=>`<span style="border:1px solid var(--bd);border-radius:12px;padding:2px 8px;margin:2px;display:inline-block">${distPlatLabel(a.platform)} · ${_escAttr(a.name)}</span>`).join(' '); }
 async function zLoadAccounts(btn){
   zSaveCfg(); const cfg=zCfg(), box=document.getElementById('z-accounts'), st=document.getElementById('z-status');
-  if(!cfg.url||!cfg.token){ if(box)box.innerHTML='<span style="color:var(--red)">Nhập Worker URL + App token trước.</span>'; return; }
+  if(!cfg.key){ if(box)box.innerHTML='<span style="color:var(--red)">Nhập API key Zernio của bạn trước.</span>'; return; }
+  if(!cfg.url){ if(box)box.innerHTML='<span style="color:var(--red)">Chưa có Proxy URL — dán URL Worker đã deploy (xem zernio-worker/README).</span>'; return; }
   const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>Đang kết nối...';}
   try{
     const r=await fetch(cfg.url+'/accounts',{headers:zHeaders()});
@@ -1643,7 +1645,7 @@ function zAccountIdsFor(platforms){ const accs=S.zernioAccounts||[]; const out=[
 function pickVideoFile(){ return new Promise(res=>{ const i=document.createElement('input'); i.type='file'; i.accept='video/*'; i.onchange=()=>res(i.files&&i.files[0]||null); i.click(); }); }
 async function zPostOne(id){
   const cfg=zCfg(); const item=((S.dna.dist&&S.dna.dist.schedule)||[]).find(x=>x.id===id); if(!item) return;
-  if(!cfg.url||!cfg.token){ alert('Chưa kết nối Zernio — điền Worker URL + App token ở trên.'); return; }
+  if(!cfg.key||!cfg.url){ alert('Chưa kết nối Zernio — nhập API key của bạn (và Proxy URL) ở trên.'); return; }
   if(!(S.zernioAccounts&&S.zernioAccounts.length)){ alert('Chưa tải tài khoản — bấm "Kết nối & tải tài khoản" trước.'); return; }
   const map=zAccountIdsFor(item.platforms);
   if(!map.platforms.length){ alert('Các nền tảng đã chọn chưa nối trong Zernio: '+item.platforms.map(distPlatLabel).join(', ')); return; }

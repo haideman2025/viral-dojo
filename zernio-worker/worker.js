@@ -1,67 +1,47 @@
 /**
- * Viral Dojo → Zernio proxy (Cloudflare Worker)
+ * Viral Dojo → Zernio CORS proxy (stateless · BYOK)
  *
- * Giữ API key Zernio ở server (secret), mở CORS cho trang Viral Dojo,
- * chuyển tiếp 3 việc: liệt kê tài khoản, xin URL upload (presign), đặt lịch bài đăng.
+ * Proxy "câm": KHÔNG lưu key nào ở server. Mỗi người dùng tự nhập API key Zernio
+ * CỦA HỌ ở app; app gửi kèm header `x-zernio-key`, Worker chỉ chuyển tiếp lên Zernio
+ * và thêm CORS (vì Zernio chặn gọi thẳng từ trình duyệt).
  *
- * Secrets (đặt bằng: wrangler secret put ...):
- *   ZERNIO_API_KEY  — key sk_... lấy ở Zernio → Settings → API Keys
- *   APP_TOKEN       — chuỗi bí mật tự đặt, dán y hệt vào Viral Dojo (chống người lạ gọi Worker)
- * Vars (trong wrangler.jsonc):
- *   ALLOWED_ORIGIN  — origin trang của bạn, vd https://haideman2025.github.io ("*" để mở hết)
+ * Deploy 1 lần (không cần secret):  wrangler deploy
+ * Ai dùng app cũng chung 1 proxy này — key của ai người đó tự giữ trong trình duyệt.
  */
 const ZB = 'https://zernio.com/api/v1';
-
-function corsHeaders(env) {
-  return {
-    'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type,x-app-token',
-    'Access-Control-Max-Age': '86400',
-  };
-}
-function json(data, status, env) {
-  return new Response(JSON.stringify(data), {
-    status: status || 200,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders(env) },
-  });
-}
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type,x-zernio-key',
+  'Access-Control-Max-Age': '86400',
+};
+const json = (d, s) => new Response(JSON.stringify(d), { status: s || 200, headers: { 'Content-Type': 'application/json', ...CORS } });
 
 export default {
-  async fetch(req, env) {
+  async fetch(req) {
     const url = new URL(req.url);
-    if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(env) });
+    if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
-    // cổng token chia sẻ — chặn người lạ dùng Worker của bạn
-    if ((req.headers.get('x-app-token') || '') !== (env.APP_TOKEN || '')) return json({ error: 'unauthorized' }, 401, env);
-    if (!env.ZERNIO_API_KEY) return json({ error: 'server thiếu ZERNIO_API_KEY' }, 500, env);
-    const auth = { Authorization: 'Bearer ' + env.ZERNIO_API_KEY };
+    const key = req.headers.get('x-zernio-key') || '';
+    if (!key) return json({ error: 'Thiếu x-zernio-key — nhập API key Zernio của bạn ở app.' }, 401);
+    const auth = { Authorization: 'Bearer ' + key };
 
     try {
-      // 1) Liệt kê tài khoản đã nối
       if (url.pathname === '/accounts' && req.method === 'GET') {
         const r = await fetch(ZB + '/accounts?status=connected', { headers: auth });
-        return json(await r.json(), r.status, env);
+        return json(await r.json(), r.status);
       }
-      // 2) Xin URL upload trực tiếp lên cloud (presign) — file PUT thẳng từ trình duyệt, không qua Worker
       if (url.pathname === '/presign' && req.method === 'POST') {
-        const body = await req.json(); // { filename, contentType, size }
-        const r = await fetch(ZB + '/media/presign', {
-          method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-        });
-        return json(await r.json(), r.status, env);
+        const r = await fetch(ZB + '/media/presign', { method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(await req.json()) });
+        return json(await r.json(), r.status);
       }
-      // 3) Tạo / đặt lịch bài đăng
       if (url.pathname === '/schedule' && req.method === 'POST') {
-        const body = await req.json(); // { content, mediaItems, platforms, scheduledFor, timezone, publishNow }
-        const r = await fetch(ZB + '/posts', {
-          method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-        });
-        return json(await r.json(), r.status, env);
+        const r = await fetch(ZB + '/posts', { method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(await req.json()) });
+        return json(await r.json(), r.status);
       }
-      return json({ error: 'not found' }, 404, env);
+      return json({ error: 'not found' }, 404);
     } catch (e) {
-      return json({ error: String((e && e.message) || e) }, 502, env);
+      return json({ error: String((e && e.message) || e) }, 502);
     }
   },
 };

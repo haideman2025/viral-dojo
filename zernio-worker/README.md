@@ -1,53 +1,42 @@
-# Zernio Proxy — Cloudflare Worker cho Viral Dojo
+# Zernio Proxy — Cloudflare Worker (stateless · BYOK)
 
-Backend trung gian để Viral Dojo (web tĩnh) đăng bài qua **Zernio** mà **không lộ API key**.
+Proxy "câm" để Viral Dojo (web tĩnh) đăng bài qua **Zernio**. **KHÔNG lưu key nào** ở server.
 
 ```
-Viral Dojo (trình duyệt) → Worker này (giữ key + CORS) → Zernio API
+Viral Dojo (trình duyệt)  →  Worker này (chỉ thêm CORS + chuyển tiếp)  →  Zernio API
+   • mỗi user tự nhập key Zernio của họ (BYOK)
+   • key đi kèm header x-zernio-key, Worker forward nguyên vẹn
 ```
 
-## Vì sao cần
-- Key Zernio `sk_...` là **bí mật** → không được nhét vào web tĩnh public.
-- Zernio chặn gọi thẳng từ trình duyệt (CORS).
-- Worker giữ key dạng *secret*, chỉ mở 3 route tối thiểu.
+## Vì sao cần proxy
+Zernio chặn gọi thẳng từ trình duyệt (CORS) → cần 1 trung gian. Proxy này **không giữ key**,
+nên **deploy 1 lần dùng chung cho mọi user** — ai dùng app cũng nhập key Zernio của riêng mình.
 
-## Deploy (1 lần, ~5 phút)
-
-Cần Node.js + tài khoản Cloudflare.
+## Deploy 1 lần (KHÔNG cần secret)
 
 ```bash
 cd zernio-worker
-npm i -g wrangler          # nếu chưa có
-wrangler login             # đăng nhập Cloudflare
-
-# Đặt 2 secret:
-wrangler secret put ZERNIO_API_KEY    # dán key sk_... (Zernio → Settings → API Keys)
-wrangler secret put APP_TOKEN         # tự đặt 1 chuỗi ngẫu nhiên, NHỚ để dán vào Viral Dojo
-
-# (tuỳ chọn) sửa ALLOWED_ORIGIN trong wrangler.jsonc cho đúng trang của bạn
-
+npm i -g wrangler     # nếu chưa có
+wrangler login        # đăng nhập Cloudflare (bước duy nhất cần trình duyệt)
 wrangler deploy
 ```
 
-Sau khi deploy, Cloudflare in ra URL dạng:
-`https://zernio-proxy.<tên-bạn>.workers.dev`
+Cloudflare in ra URL: `https://zernio-proxy.<tên-bạn>.workers.dev`
 
-## Nối vào Viral Dojo
-Mở app → tab **📤 Phân phối** → ô **Kết nối Zernio**:
-- **Worker URL**: dán URL workers.dev ở trên.
-- **App token**: dán đúng chuỗi `APP_TOKEN` bạn vừa đặt.
-- Bấm **Kết nối & tải tài khoản** → thấy danh sách kênh đã nối trong Zernio.
+→ Dán URL này vào hằng `ZPROXY_DEFAULT` trong `index.html` (hoặc để user tự dán ở tab Phân phối).
+Sau đó **người dùng cuối không phải deploy gì** — chỉ dán API key Zernio của họ.
 
-## Route Worker cung cấp
-| Method | Path | Việc |
-|---|---|---|
-| GET  | `/accounts`  | liệt kê tài khoản đã nối (status=connected) |
-| POST | `/presign`   | xin `uploadUrl` + `publicUrl` để PUT video thẳng lên cloud |
-| POST | `/schedule`  | tạo/đặt lịch bài (`POST /v1/posts` của Zernio) |
+## Route
+| Method | Path | Việc | Forward tới |
+|---|---|---|---|
+| GET  | `/accounts` | liệt kê kênh đã nối | `GET /v1/accounts?status=connected` |
+| POST | `/presign`  | xin URL upload | `POST /v1/media/presign` |
+| POST | `/schedule` | tạo/đặt lịch bài | `POST /v1/posts` |
 
-Tất cả route yêu cầu header `x-app-token` khớp `APP_TOKEN`.
+Mọi route đọc API key từ header **`x-zernio-key`** (do app gửi). Không có key → 401.
 
-## Bảo mật
-- Đổi `ALLOWED_ORIGIN` thành đúng origin trang bạn (đừng để `*` khi chạy thật).
-- `APP_TOKEN` ngăn người lạ biết URL Worker rồi đăng bậy lên tài khoản bạn.
-- Không commit key/token vào git (chúng là secret trên Cloudflare).
+## Ghi chú
+- Proxy mở CORS `*` để app ở bất kỳ origin nào cũng gọi được. An toàn vì proxy không chứa
+  secret — mỗi request phải tự kèm key Zernio hợp lệ.
+- Key Zernio của user chỉ nằm trong **localStorage trình duyệt của họ** + đi qua proxy này
+  (mã nguồn mở, bạn tự host) → không bên thứ ba nào giữ key.
