@@ -378,6 +378,11 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <div><label>📦 Sản phẩm tham chiếu</label><textarea id="vref-prod" onchange="saveVRef()" placeholder="Mô tả sản phẩm (chai/bao bì/màu)..."></textarea></div>
       <div><label>🎨 Style / look</label><textarea id="vref-style" onchange="saveVRef()" placeholder="Tông màu, ánh sáng, phong cách quay..."></textarea></div>
     </div>
+    <div class="note" style="margin:4px 0 10px">📎 <b>Đính kèm ảnh thật</b> để prompt bám đúng — nhất là <b>ảnh sản phẩm</b>: Veo sẽ lấy y nguyên sản phẩm từ ảnh, prompt KHÔNG bịa màu/bao bì/logo. Bấm 🔎 để AI Vision đọc ảnh ra mô tả chính xác. (Nhớ upload đúng ảnh này vào Google Flow → ingredients.)</div>
+    <div class="row" style="margin:0 0 8px">
+      <div><label>🖼 Ảnh nhân vật (đính kèm thật)</label><input type="file" id="vref-char-img" accept="image/*" onchange="pickRefImg('character',this.files)"><div id="vref-char-prev" style="margin-top:6px"></div></div>
+      <div><label>🖼 Ảnh sản phẩm (Veo lấy ĐÚNG từ ảnh này)</label><input type="file" id="vref-prod-img" accept="image/*" onchange="pickRefImg('product',this.files)"><div id="vref-prod-prev" style="margin-top:6px"></div></div>
+    </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <button class="btn ghost" id="vref-gen" onclick="genVRef()">✨ Sinh bộ tham chiếu (AI)</button>
       <button class="btn" id="vp-gen" onclick="genVPromptsAll()">🎥 Sinh prompt video (cả loạt)</button>
@@ -623,9 +628,11 @@ async function geminiCall(prompt, opt){
   if(!key) throw new Error('NO_KEY');
   const cfg = { temperature: opt.temp==null?0.4:opt.temp };
   if(opt.json) cfg.responseMimeType = 'application/json';
+  const parts=[{text:prompt}];
+  (opt.images||[]).forEach(im=>{ if(im&&im.data) parts.push({inline_data:{mime_type:im.mime||'image/jpeg', data:im.data}}); });
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,{
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:cfg})
+    body: JSON.stringify({contents:[{parts}], generationConfig:cfg})
   });
   if(!r.ok) throw new Error('HTTP '+r.status);
   const txt = (((await r.json()).candidates||[])[0]||{}).content?.parts?.[0]?.text || '';
@@ -1356,17 +1363,56 @@ function healScripts(){ const sc=S.dna.skuld&&S.dna.skuld.scripts; if(!sc) retur
   Object.values(sc).forEach(s=>{ if(s&&s.scenes&&s.scenes.some(c=>['phan','noidung','hinhanh','tram','note'].some(k=>c[k]!=null&&typeof c[k]!=='string'))){ s.scenes=normScenes(s.scenes); fixed=true; } });
   if(fixed) save();
 }
-function renderVRef(){ const v=vref(),c=document.getElementById('vref-char'),p=document.getElementById('vref-prod'),s=document.getElementById('vref-style'); if(c&&!c.value)c.value=v.character||''; if(p&&!p.value)p.value=v.product||''; if(s&&!s.value)s.value=v.style||''; }
+function renderVRef(){ const v=vref(),c=document.getElementById('vref-char'),p=document.getElementById('vref-prod'),s=document.getElementById('vref-style'); if(c&&!c.value)c.value=v.character||''; if(p&&!p.value)p.value=v.product||''; if(s&&!s.value)s.value=v.style||''; renderRefImgPreviews(); }
 function saveVRef(){ const v=vref(); v.character=document.getElementById('vref-char').value.trim(); v.product=document.getElementById('vref-prod').value.trim(); v.style=document.getElementById('vref-style').value.trim(); save(); }
+
+/* ---- Ảnh tham chiếu THẬT cho nhân vật/sản phẩm (Veo lấy đúng từ ảnh) ---- */
+function fileToScaledImg(file, maxDim){ return new Promise((res,rej)=>{
+  const r=new FileReader();
+  r.onload=()=>{ const img=new Image();
+    img.onload=()=>{ let w=img.width,h=img.height; const m=maxDim||640;
+      if(w>h&&w>m){h=Math.round(h*m/w);w=m;} else if(h>=w&&h>m){w=Math.round(w*m/h);h=m;}
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl=cv.toDataURL('image/jpeg',0.82); res({dataUrl, base64:dataUrl.split(',')[1], mime:'image/jpeg'}); };
+    img.onerror=()=>rej(new Error('ảnh hỏng')); img.src=r.result; };
+  r.onerror=()=>rej(new Error('không đọc được file')); r.readAsDataURL(file);
+}); }
+async function pickRefImg(kind, files){ const f=files&&files[0]; if(!f) return; const fb=document.getElementById('vp-fb');
+  try{ const img=await fileToScaledImg(f,640); const v=vref(); v[kind+'Img']=img.dataUrl; save(); renderRefImgPreviews();
+    if(fb)fb.innerHTML='<div class="fb"><span class="spin"></span>Đang đọc ảnh '+(kind==='product'?'sản phẩm':'nhân vật')+' bằng AI Vision…</div>';
+    await analyzeRefImg(kind);
+  }catch(e){ if(fb)fb.innerHTML='<div class="fb bad">❌ Không đọc được ảnh: '+e.message+'</div>'; }
+}
+async function analyzeRefImg(kind){ const v=vref(), dataUrl=v[kind+'Img']; if(!dataUrl) return; const fb=document.getElementById('vp-fb');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Đã lưu ảnh. Cần Gemini key để AI đọc ảnh → mô tả (tab ⚡ Kết nối).</div>'; return; }
+  const base64=dataUrl.split(',')[1];
+  const prompt = kind==='product'
+   ? 'Mô tả CHÍNH XÁC sản phẩm trong ảnh để làm THAM CHIẾU video (TIẾNG ANH, 1 đoạn ngắn gọn): loại bao bì/chai/hộp, MÀU SẮC thực tế, nhãn/logo/chữ nhìn thấy, hình dạng, chất liệu bề mặt. CHỈ tả những gì THỰC SỰ THẤY trong ảnh, KHÔNG suy diễn/không bịa.'
+   : 'Mô tả CHÍNH XÁC người trong ảnh để làm NHÂN VẬT tham chiếu video (TIẾNG ANH, 1 đoạn ngắn): tuổi ước lượng, giới tính, kiểu/ màu tóc, đặc điểm khuôn mặt nổi bật, trang phục, thần thái. CHỈ tả những gì THẤY trong ảnh.';
+  try{ const txt=await geminiCall(prompt,{temp:0.2, images:[{mime:'image/jpeg',data:base64}]});
+    const field=kind==='product'?'product':'character'; v[field]=asText(txt).trim(); save();
+    const ta=document.getElementById(kind==='product'?'vref-prod':'vref-char'); if(ta) ta.value=v[field];
+    if(fb)fb.innerHTML='<div class="fb">✅ Đã đọc ảnh '+(kind==='product'?'sản phẩm':'nhân vật')+' → mô tả chính xác. Prompt video sẽ bám đúng ảnh này.</div>';
+  }catch(e){ if(fb)fb.innerHTML='<div class="fb bad">❌ AI đọc ảnh lỗi: '+e.message+'</div>'; }
+}
+function delRefImg(kind){ const v=vref(); delete v[kind+'Img']; save(); renderRefImgPreviews(); }
+function renderRefImgPreviews(){ const v=vref();
+  [['character','vref-char-prev'],['product','vref-prod-prev']].forEach(([k,id])=>{ const el=document.getElementById(id); if(!el) return; const url=v[k+'Img'];
+    el.innerHTML=url?`<div style="display:flex;align-items:center;gap:8px"><img src="${url}" style="height:62px;border-radius:8px;border:1px solid var(--bd)"><button class="btn ghost sm" onclick="delRefImg('${k}')">✕ Gỡ ảnh</button></div>`:''; });
+}
 async function genVRef(){
   const btn=document.getElementById('vref-gen'), fb=document.getElementById('vp-fb');
   if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>...';}
   try{
-    const o=await geminiCall(`Tạo BỘ THAM CHIẾU NHẤT QUÁN cho kênh video (dùng chung cả 30 video — giữ nhân vật + sản phẩm giống nhau). Bám brand.\nBRAND:\n${brandContext(2500)}\nTrả JSON, mô tả bằng TIẾNG ANH (cho video model): {"character":"1 nhân vật on-camera cố định: tuổi/giới/ngoại hình/tóc/trang phục/thần thái, hợp kênh","product":"sản phẩm: loại/bao bì/màu/logo","style":"tông màu·ánh sáng·phong cách quay·nhịp"}.`,{json:true,temp:0.5});
-    const v=vref(); v.character=asText(o.character); v.product=asText(o.product); v.style=asText(o.style); save();
+    const hasCharImg=!!vref().characterImg, hasProdImg=!!vref().productImg;
+    const o=await geminiCall(`Tạo BỘ THAM CHIẾU NHẤT QUÁN cho kênh video (dùng chung cả 30 video — giữ nhân vật + sản phẩm giống nhau). Bám brand.\nBRAND:\n${brandContext(2500)}\nTrả JSON, mô tả bằng TIẾNG ANH (cho video model): {"character":"1 nhân vật on-camera cố định: tuổi/giới/ngoại hình/tóc/trang phục/thần thái, hợp kênh","product":"TÊN + LOẠI sản phẩm theo brand; CHỈ nêu bao bì/màu/logo nếu brand ghi RÕ — TUYỆT ĐỐI KHÔNG tự bịa ngoại hình/màu sắc nếu brand không nêu","style":"tông màu·ánh sáng·phong cách quay·nhịp"}.`,{json:true,temp:0.5});
+    const v=vref();
+    if(!hasCharImg) v.character=asText(o.character);   // giữ mô tả từ ảnh nếu đã đính kèm
+    if(!hasProdImg) v.product=asText(o.product);
+    v.style=asText(o.style); save();
     if(document.getElementById('vref-char')){ document.getElementById('vref-char').value=v.character; document.getElementById('vref-prod').value=v.product; document.getElementById('vref-style').value=v.style; }
-    if(fb)fb.innerHTML='<div class="fb">✅ Đã sinh bộ tham chiếu kênh. Sửa lại nếu cần rồi bấm "🎥 Sinh prompt video".</div>';
+    if(fb)fb.innerHTML='<div class="fb">✅ Đã sinh bộ tham chiếu kênh.'+(hasProdImg?' (Giữ mô tả sản phẩm từ ảnh đính kèm.)':'')+' Sửa lại nếu cần rồi bấm "🎥 Sinh prompt video".</div>';
   }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
   if(btn){btn.disabled=false; btn.innerHTML=old;}
 }
@@ -1374,24 +1420,29 @@ async function ensureVRef(){ if(!asText(vref().character).trim()) await genVRef(
 async function genVPrompts(title){
   const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
-  const o=await geminiCall(`Bạn là ĐẠO DIỄN đã học toàn bộ COREVIRAL — hiểu chuẩn video viral (hook 3 giây đầu, nhịp nhanh, format an toàn, sản phẩm xuất hiện tự nhiên). Nhiệm vụ: chuyển KỊCH BẢN text thành chuỗi SHOT 10 GIÂY để tạo bằng Omni/Veo trên Google Flow; khi ghép các shot 10s lại phải thành 1 video HOÀN CHỈNH, MƯỢT, LIỀN MẠCH, đúng nhịp độ/bối cảnh/trang phục/nhân vật/sản phẩm của kịch bản.
+  const prodName=(v.product||'').trim();
+  const PRODUCT_RULE = `- PRODUCT = ĐÚNG sản phẩm trong ẢNH SẢN PHẨM ĐÍNH KÈM (uploaded product reference image) — đây là NGUỒN SỰ THẬT DUY NHẤT về ngoại hình sản phẩm. TUYỆT ĐỐI KHÔNG mô tả / sáng tạo / đổi màu / đổi bao bì / đổi nhãn / đổi logo / đổi hình dạng sản phẩm bằng chữ. Mọi shot CHỈ gọi sản phẩm là "the exact product from the uploaded product reference image"${prodName?` (nhận biết nội bộ: ${prodName} — KHÔNG tả lại ngoại hình)`:''}; chỉ tả CÁCH cầm/đặt/dùng/đặt sản phẩm ở đâu trong khung, KHÔNG tả ngoại hình.`;
+  const MANDATORY = `"Use the uploaded product reference image as the SINGLE source of truth for the product — render the product EXACTLY as shown in that image; do NOT recolor, relabel, restyle, redesign, or replace it, and do NOT invent any packaging, color, or logo. Use the uploaded character reference image for the person. Keep both identical across all shots."`;
+  const o=await geminiCall(`Bạn là ĐẠO DIỄN đã học toàn bộ COREVIRAL — hiểu chuẩn video viral (hook 3 giây đầu, nhịp nhanh, format an toàn, sản phẩm xuất hiện tự nhiên). Nhiệm vụ: chuyển KỊCH BẢN text thành chuỗi SHOT 10 GIÂY để tạo bằng Omni/Veo trên Google Flow; khi ghép các shot 10s lại phải thành 1 video HOÀN CHỈNH, MƯỢT, LIỀN MẠCH, đúng nhịp độ/bối cảnh/trang phục/nhân vật/sản phẩm của kịch bản.${v.productImg?'\n\n(Ảnh sản phẩm thật được đính kèm bên dưới — hãy NHÌN ảnh để hiểu sản phẩm, nhưng KHÔNG mô tả ngoại hình nó bằng chữ trong prompt.)':''}
 
 KHOÁ NHẤT QUÁN — nhắc lại NGUYÊN VĂN trong MỌI shot prompt:
 - CHARACTER (giữ y hệt mọi shot, dùng ảnh tham chiếu): ${v.character||'(theo brand)'}
-- PRODUCT (giữ y hệt, dùng ảnh tham chiếu): ${v.product||'(theo brand)'}
+${PRODUCT_RULE}
 - WARDROBE/SETTING: trang phục + bối cảnh phải GIỐNG NHAU xuyên suốt 1 video (trừ khi kịch bản đổi cảnh rõ ràng).
 - STYLE: ${v.style||'cinematic, hợp TikTok'}
 
-Bám CHÍNH XÁC field của kịch bản: "Nội dung"→hành động & lời thoại · "Hình ảnh"→bối cảnh/góc quay/nhân vật/sản phẩm · "TRÁM"→overlay/âm thanh. KHÔNG bịa khác kịch bản.
+⛔ QUY TẮC SẢN PHẨM (BẮT BUỘC): KHÔNG dùng BẤT KỲ tính từ nào mô tả ngoại hình sản phẩm (màu sắc, chất liệu, kiểu chai/hộp/tuýp, nhãn, logo) trong prompt — ngoại hình 100% đến từ ảnh đính kèm. Nếu kịch bản/Hình ảnh có tả ngoại hình sản phẩm khác ảnh, BỎ QUA phần đó và ưu tiên ẢNH.
+
+Bám CHÍNH XÁC field của kịch bản: "Nội dung"→hành động & lời thoại · "Hình ảnh"→bối cảnh/góc quay/nhân vật (KHÔNG lấy mô tả ngoại hình sản phẩm) · "TRÁM"→overlay/âm thanh. KHÔNG bịa khác kịch bản.
 
 Mỗi shot 10s, trả 3 trường:
-- prompt (TIẾNG ANH, chuẩn Veo/Omni): 1 đoạn liền mạch gồm — [shot size + camera move + angle] (vd medium tracking shot, slow push-in, eye-level) · [subject = CHARACTER y hệt + wardrobe] · [action cụ thể từ kịch bản] · [PRODUCT cầm/đặt thế nào] · [setting/bối cảnh + props] · [lighting + mood + color] · [lens/DOF] · [audio: nhạc/SFX] · [on-screen text nếu có] · và CÂU BẮT BUỘC: "Use the uploaded character reference image for the person and the product reference image for the item; keep them identical across all shots." · CONTINUITY: shot ≥2 mở đầu bằng "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;" để match-cut mượt khi ghép.
+- prompt (TIẾNG ANH, chuẩn Veo/Omni): 1 đoạn liền mạch gồm — [shot size + camera move + angle] (vd medium tracking shot, slow push-in, eye-level) · [subject = CHARACTER y hệt + wardrobe] · [action cụ thể từ kịch bản] · [PRODUCT: chỉ nêu CÁCH cầm/đặt/dùng — gọi là "the product from the uploaded reference image", KHÔNG tả ngoại hình/màu/bao bì] · [setting/bối cảnh + props] · [lighting + mood + color] · [lens/DOF] · [audio: nhạc/SFX] · [on-screen text nếu có] · và CÂU BẮT BUỘC: ${MANDATORY} · CONTINUITY: shot ≥2 mở đầu bằng "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;" để match-cut mượt khi ghép.
 - voiceover (TIẾNG VIỆT): lời thoại CHÍNH XÁC cho shot, lấy ĐÚNG từ "Nội dung" (chia vừa 10s, không bịa). Không có thì để trống.
 - onscreen (TIẾNG VIỆT): chữ overlay ngắn (từ TRÁM).
 
 KỊCH BẢN ("${title}"):
 ${body}
-Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]} — số shot vừa đủ kể trọn kịch bản (mỗi shot 10s).`,{json:true,temp:0.55});
+Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]} — số shot vừa đủ kể trọn kịch bản (mỗi shot 10s).`,{json:true,temp:0.55, images: v.productImg?[{mime:'image/jpeg',data:v.productImg.split(',')[1]}]:[]});
   S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
   const prev=S.dna.skuld.vprompts[title]||{};
   S.dna.skuld.vprompts[title]={...prev, shots:(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',voiceover:s.voiceover||'',onscreen:s.onscreen||''})), at:_today()};
