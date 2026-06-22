@@ -402,6 +402,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div id="vp-export" style="display:none;gap:10px;margin-top:10px">
       <button class="btn ghost sm" onclick="exportVPrompts('md')">⬇️ Tải prompt .md</button>
       <button class="btn ghost sm" onclick="exportVPrompts('csv')">⬇️ Tải .csv</button>
+      <button class="btn ghost sm" style="border-color:var(--blue);color:var(--blue)" onclick="exportVForFlow()">⬇️ Xuất cho Flow Tool (tách shot ---)</button>
     </div>
   </div>
 
@@ -1640,6 +1641,15 @@ function exportVPrompts(fmt){
   if(fmt==='csv'){ data='Kịch bản,Shot,Thời lượng,Prompt (Omni EN),Voice-over VN,Overlay VN\n'+keys.flatMap(t=>(vp[t].shots||[]).map(s=>[t,s.seq,s.dur+'s',s.prompt,s.voiceover,s.onscreen].map(x=>`"${(x||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
   else { data=`# Bộ prompt video Omni — ${kenh}\n\n> **HƯỚNG DẪN:** Vào Google Flow → upload **1 ảnh nhân vật** + **1 ảnh sản phẩm** vào phần ingredients/reference, GIỮ NGUYÊN cho TẤT CẢ shot của mọi video để nhân vật & sản phẩm đồng nhất. Dán prompt từng shot theo thứ tự; ghép các shot 10s thành 1 video.\n\n**🎭 Nhân vật (ảnh tham chiếu):** ${v.character||''}\n\n**📦 Sản phẩm (ảnh tham chiếu):** ${v.product||''}\n\n**🎨 Style:** ${v.style||''}\n\n`+keys.map(t=>{const k=vp[t]; const kit=(k.caption||k.music||(k.hashtags&&k.hashtags.length))?`### 📋 Bộ đăng bài\n${k.caption?`**📝 Caption:**\n${k.caption}\n\n`:''}${k.hashtags&&k.hashtags.length?`**#️⃣ Hashtag:** ${k.hashtags.join(' ')}\n\n`:''}${k.music?`**🎵 Nhạc nền (Suno/Udio):** ${k.music}\n\n`:''}`:''; return `## ${t}\n\n`+kit+(k.shots||[]).map(s=>`### Shot ${s.seq} · ${s.dur}s\n${s.voiceover?`**🎙 Voice-over (VN):** ${s.voiceover}\n\n`:''}${s.onscreen?`*▦ Overlay (VN):* ${s.onscreen}\n\n`:''}\`\`\`\n${s.prompt||''}\n\`\`\`\n`).join('\n');}).join('\n'); }
   const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt-video-omni.'+fmt; document.body.appendChild(a); a.click(); a.remove();
+}
+/* Xuất CHỈ prompt hình, mỗi shot tách bằng "---" — dán thẳng vào tool Flow để chia luồng/shot */
+function exportVForFlow(){
+  const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp); if(!keys.length){ alert('Chưa có prompt video. Sinh prompt trước đã.'); return; }
+  const blocks=[];
+  keys.forEach(t=>{ (vp[t].shots||[]).forEach(s=>{ const p=(s.prompt||'').trim(); if(p) blocks.push(`## ${t} — Shot ${s.seq}\n${p}`); }); });
+  if(!blocks.length){ alert('Chưa có prompt hình nào.'); return; }
+  const data=blocks.join('\n\n---\n\n');
+  const blob=new Blob([data],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt-cho-flow.txt'; document.body.appendChild(a); a.click(); a.remove();
 }
 /* --- B. Phân tích chuyên sâu 18 câu --- */
 const DP_Q = [
