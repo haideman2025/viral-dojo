@@ -1,0 +1,11 @@
+{
+  "name": "zernio-proxy",
+  "main": "worker.js",
+  "compatibility_date": "2026-06-01",
+  "vars": {
+    // Đổi thành origin trang của bạn để chặn nơi khác gọi. "*" = mở cho mọi origin.
+    "ALLOWED_ORIGIN": "https://haideman2025.github.io"
+  }
+  // ZERNIO_API_KEY và APP_TOKEN là SECRET — KHÔNG ghi ở đây.
+  // Đặt bằng: wrangler secret put ZERNIO_API_KEY   /   wrangler secret put APP_TOKEN
+}

@@ -540,7 +540,20 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
 
 <!-- ============ VIEW: PHÂN PHỐI ============ -->
 <div id="v-dist" style="display:none">
-  <div class="note">📤 <b>Lịch phân phối (C-0)</b> — chạy ngay trên máy: lên lịch video + caption/hashtag, xuất file CSV/JSON để đăng tay. Đăng <b>tự động qua API Zernio</b> sẽ bật khi backend sẵn sàng (xem ROADMAP Part C). Video chỉ lưu <b>tên + dung lượng</b> (file gốc nằm trên máy bạn).</div>
+  <div class="note">📤 <b>Phân phối tự động qua Zernio</b> — lên lịch video + caption/hashtag rồi đẩy thẳng lên TikTok/FB/YouTube qua Worker trung gian (giữ key an toàn). Chưa có Worker? Vẫn dùng được chế độ xuất CSV/JSON để đăng tay.</div>
+  <div class="sec">
+    <h2>🔌 Kết nối Zernio <span id="z-status" class="pill">chưa kết nối</span></h2>
+    <p class="mut" style="font-size:12.5px;margin:0 0 8px">Cần deploy Worker trong thư mục <b>zernio-worker/</b> (xem README) → dán URL + App token vào đây. Key Zernio nằm trong Worker, không lưu ở trình duyệt.</p>
+    <div class="row">
+      <div><label>Worker URL</label><input id="z-url" placeholder="https://zernio-proxy.xxx.workers.dev"></div>
+      <div><label>App token</label><input id="z-token" type="password" placeholder="chuỗi APP_TOKEN đã đặt khi deploy"></div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" onclick="zLoadAccounts(this)">🔗 Kết nối & tải tài khoản</button>
+      <button class="btn ghost sm" onclick="zSaveCfg()">💾 Lưu cấu hình</button>
+    </div>
+    <div id="z-accounts" class="mut" style="font-size:12.5px;margin-top:10px"></div>
+  </div>
   <div class="sec">
     <h2>➕ Thêm video vào lịch</h2>
     <div class="row">
@@ -557,14 +570,14 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div style="margin-top:8px"><label>📡 Nền tảng đăng</label><div id="dist-plats" style="display:flex;gap:14px;flex-wrap:wrap;padding:4px 0"></div></div>
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" onclick="distAdd()">➕ Thêm vào lịch</button>
-      <button class="btn ghost" disabled title="Sẽ bật khi tích hợp API Zernio (cần backend)">🔌 Kết nối Zernio (sắp có)</button>
     </div>
     <div id="dist-fb"></div>
   </div>
   <div class="sec">
     <h2>🗓 Lịch đã lên <span id="dist-count" class="pill"></span></h2>
     <div id="dist-list" class="mut">Chưa có lịch nào. Thêm video phía trên.</div>
-    <div id="dist-export" style="display:none;gap:10px;margin-top:12px">
+    <div id="dist-export" style="display:none;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn" style="background:var(--blue)" onclick="zPostAll(this)">🚀 Đẩy tất cả (đã gắn file) lên Zernio</button>
       <button class="btn ghost sm" onclick="exportDist('csv')">⬇️ Tải lịch .csv</button>
       <button class="btn ghost sm" onclick="exportDist('json')">⬇️ Tải lịch .json</button>
       <button class="btn ghost sm" style="color:var(--red)" onclick="distClear()">🗑 Xoá toàn bộ lịch</button>
@@ -648,7 +661,7 @@ async function geminiCall(prompt, opt){
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act')); t.classList.add('act');
   ['home','lib','skuld','ops','dist','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
-  if(t.dataset.v==='dist'){ renderDistDayOptions(); renderDist(); }
+  if(t.dataset.v==='dist'){ renderDistDayOptions(); renderDist(); renderZernioCfg(); }
   if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderVPrompts(); }
   if(t.dataset.v==='ops'){ renderOps(); }
 });
@@ -1545,11 +1558,12 @@ function copyBio(btn){ const p=btn.getAttribute('data-bio'), f=btn.getAttribute(
 
 /* ===== 📤 PHÂN PHỐI (C-0: lịch local + xuất file; Zernio API về sau) ===== */
 const DIST_PLATS=[{key:'tiktok',label:'🎵 TikTok'},{key:'facebook',label:'📘 FB Page'},{key:'youtube',label:'▶️ YouTube'},{key:'instagram',label:'📸 Instagram'},{key:'threads',label:'🧵 Threads'}];
-let _distFile=null; // {name,size} video vừa chọn — KHÔNG lưu binary (C-0)
+let _distFile=null, _distFileObj=null; // {name,size} + File thật (giữ trong phiên, không persist)
+const _distFiles={}; // id lịch -> File (để đẩy lên Zernio không cần chọn lại trong cùng phiên)
 function distPlatsHtml(){ return DIST_PLATS.map(p=>`<label style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:5px;color:var(--tx)"><input type="checkbox" class="dist-plat" value="${p.key}" style="width:auto"> ${p.label}</label>`).join(''); }
 function distPickFile(files){ const f=files&&files[0]; const info=document.getElementById('dist-file-info');
-  if(!f){ _distFile=null; if(info)info.textContent=''; return; }
-  _distFile={name:f.name,size:f.size}; if(info)info.textContent=`✅ ${f.name} · ${(f.size/1048576).toFixed(1)} MB (chỉ lưu thông tin, chưa upload)`;
+  if(!f){ _distFile=null; _distFileObj=null; if(info)info.textContent=''; return; }
+  _distFile={name:f.name,size:f.size}; _distFileObj=f; if(info)info.textContent=`✅ ${f.name} · ${(f.size/1048576).toFixed(1)} MB (sẽ upload khi đẩy lên Zernio)`;
   const nm=document.getElementById('dist-name'); if(nm&&!nm.value)nm.value=f.name; }
 function renderDistDayOptions(){ const sel=document.getElementById('dist-day'); if(!sel)return;
   const vp=(S.dna.skuld&&S.dna.skuld.vprompts)||{}, days=Object.keys(vp).filter(t=>vp[t].caption||(vp[t].hashtags&&vp[t].hashtags.length));
@@ -1568,8 +1582,10 @@ function distAdd(){ const fb=document.getElementById('dist-fb');
   if(!plats.length){ if(fb)fb.innerHTML='<div class="fb bad">Chọn ít nhất 1 nền tảng.</div>'; return; }
   if(!at){ if(fb)fb.innerHTML='<div class="fb bad">Chọn ngày & giờ đăng.</div>'; return; }
   S.dna.dist=S.dna.dist||{schedule:[]};
-  S.dna.dist.schedule.push({id:_pid(),video:name,size:(_distFile&&_distFile.size)||0,platforms:plats,caption,hashtags:tags,at,status:'planned'});
-  _distFile=null; const fi=document.getElementById('dist-file'); if(fi)fi.value=''; document.getElementById('dist-file-info').textContent='';
+  const id=_pid();
+  if(_distFileObj) _distFiles[id]=_distFileObj; // giữ File để đẩy lên Zernio
+  S.dna.dist.schedule.push({id,video:name,size:(_distFile&&_distFile.size)||0,platforms:plats,caption,hashtags:tags,at,status:'planned'});
+  _distFile=null; _distFileObj=null; const fi=document.getElementById('dist-file'); if(fi)fi.value=''; document.getElementById('dist-file-info').textContent='';
   document.querySelectorAll('.dist-plat:checked').forEach(c=>c.checked=false);
   if(fb)fb.innerHTML='<div class="fb">✅ Đã thêm vào lịch.</div>';
   save(); renderDist(); }
@@ -1583,12 +1599,81 @@ function renderDist(){ const el=document.getElementById('dist-list'), ex=documen
   if(!el)return;
   if(!list.length){ el.className='mut'; el.innerHTML='Chưa có lịch nào. Thêm video phía trên.'; if(ex)ex.style.display='none'; return; }
   el.className=''; if(ex)ex.style.display='flex';
-  el.innerHTML='<div style="overflow:auto"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="text-align:left"><th style="padding:5px">🗓 Giờ đăng</th><th>🎬 Video</th><th>📡 Nền tảng</th><th>📝 Caption</th><th></th></tr>'+
-    list.map(x=>`<tr style="border-top:1px solid var(--bd)"><td style="padding:5px;white-space:nowrap">${_escAttr((x.at||'').replace('T',' '))}</td><td style="word-break:break-all">${_escAttr(x.video)}</td><td style="white-space:nowrap">${x.platforms.map(distPlatLabel).join('<br>')}</td><td class="mut" style="max-width:280px">${_escAttr((x.caption||'').slice(0,90))}${(x.caption||'').length>90?'…':''}${x.hashtags?`<div style="color:var(--ac)">${_escAttr(x.hashtags)}</div>`:''}</td><td><button class="del" onclick="distDel('${x.id}')">✕</button></td></tr>`).join('')+'</table></div>'; }
+  el.innerHTML='<div style="overflow:auto"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="text-align:left"><th style="padding:5px">🗓 Giờ đăng</th><th>🎬 Video</th><th>📡 Nền tảng</th><th>📝 Caption</th><th>Trạng thái</th><th></th></tr>'+
+    list.map(x=>{ const hasFile=!!_distFiles[x.id];
+      return `<tr style="border-top:1px solid var(--bd)"><td style="padding:5px;white-space:nowrap">${_escAttr((x.at||'').replace('T',' '))}</td><td style="word-break:break-all">${_escAttr(x.video)}<div style="font-size:10.5px" class="mut">${hasFile?'📎 đã gắn file':'⚠️ chưa gắn file'}</div></td><td style="white-space:nowrap">${x.platforms.map(distPlatLabel).join('<br>')}</td><td class="mut" style="max-width:240px">${_escAttr((x.caption||'').slice(0,90))}${(x.caption||'').length>90?'…':''}${x.hashtags?`<div style="color:var(--ac)">${_escAttr(x.hashtags)}</div>`:''}</td><td style="white-space:nowrap">${distStatusBadge(x)}</td><td style="white-space:nowrap"><button class="btn ghost sm" style="border-color:var(--blue);color:var(--blue)" onclick="zPostOne('${x.id}')">📤 Đăng</button> <button class="del" onclick="distDel('${x.id}')">✕</button></td></tr>`;
+    }).join('')+'</table></div>'; }
+function distStatusBadge(x){ const s=x.status||'planned';
+  const m={planned:['#8fa0b3','⏳ chờ'],uploading:['var(--warn)','⬆ đang upload'],scheduling:['var(--warn)','📅 đang đặt lịch'],scheduled:['var(--ac)','✅ đã lên lịch'],posted:['var(--ac)','✅ đã đăng'],error:['var(--red)','❌ lỗi']};
+  const c=m[s]||m.planned; return `<span style="color:${c[0]}">${c[1]}</span>`+(x.zerr?`<div style="font-size:10px;color:var(--red);max-width:160px">${_escAttr(x.zerr)}</div>`:'')+(x.zurl?`<div style="font-size:10px"><a href="${x.zurl}" target="_blank" style="color:var(--blue)">mở bài</a></div>`:''); }
 function exportDist(fmt){ const list=(S.dna.dist&&S.dna.dist.schedule)||[]; if(!list.length)return; let data;
   if(fmt==='csv'){ data='Gio dang,Video,Nen tang,Caption,Hashtag\n'+list.map(x=>[x.at,x.video,x.platforms.join('|'),x.caption,x.hashtags].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n'); }
   else { data=JSON.stringify(list,null,2); }
   const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='lich-phan-phoi.'+fmt; document.body.appendChild(a); a.click(); a.remove(); }
+
+/* ===== ĐĂNG THẬT QUA ZERNIO (qua Cloudflare Worker) ===== */
+const ZTZ='Asia/Ho_Chi_Minh';
+function zCfg(){ return {url:(S.keys.zernioUrl||'').replace(/\/+$/,''), token:S.keys.zernioToken||''}; }
+function zSaveCfg(){ S.keys.zernioUrl=(document.getElementById('z-url').value||'').trim(); S.keys.zernioToken=(document.getElementById('z-token').value||'').trim(); save(); const st=document.getElementById('z-status'); if(st)st.textContent=zCfg().url?'đã lưu cấu hình':'chưa kết nối'; }
+function zHeaders(extra){ return Object.assign({'x-app-token':zCfg().token}, extra||{}); }
+function renderZernioCfg(){ const u=document.getElementById('z-url'), t=document.getElementById('z-token'), st=document.getElementById('z-status'), box=document.getElementById('z-accounts');
+  if(u)u.value=S.keys.zernioUrl||''; if(t)t.value=S.keys.zernioToken||'';
+  const n=(S.zernioAccounts||[]).length;
+  if(st)st.textContent=n?('✅ '+n+' tài khoản'):(S.keys.zernioUrl?'đã lưu cấu hình':'chưa kết nối');
+  if(box&&n)box.innerHTML='Tài khoản đã nối: '+S.zernioAccounts.map(a=>`<span style="border:1px solid var(--bd);border-radius:12px;padding:2px 8px;margin:2px;display:inline-block">${distPlatLabel(a.platform)} · ${_escAttr(a.name)}</span>`).join(' '); }
+async function zLoadAccounts(btn){
+  zSaveCfg(); const cfg=zCfg(), box=document.getElementById('z-accounts'), st=document.getElementById('z-status');
+  if(!cfg.url||!cfg.token){ if(box)box.innerHTML='<span style="color:var(--red)">Nhập Worker URL + App token trước.</span>'; return; }
+  const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>Đang kết nối...';}
+  try{
+    const r=await fetch(cfg.url+'/accounts',{headers:zHeaders()});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
+    const accs=(d.accounts||d||[]).map(a=>({id:a._id||a.accountId||a.id, platform:(a.platform||'').toLowerCase(), name:a.displayName||a.username||a.name||''}));
+    S.zernioAccounts=accs; save();
+    if(st)st.textContent='✅ đã kết nối · '+accs.length+' tài khoản';
+    if(box)box.innerHTML= accs.length? 'Tài khoản đã nối: '+accs.map(a=>`<span style="border:1px solid var(--bd);border-radius:12px;padding:2px 8px;margin:2px;display:inline-block">${distPlatLabel(a.platform)} · ${_escAttr(a.name)}</span>`).join(' ') : '<span style="color:var(--warn)">Chưa có tài khoản nào nối trong Zernio. Vào dashboard Zernio nối kênh trước.</span>';
+  }catch(e){ if(st)st.textContent='❌ lỗi'; if(box)box.innerHTML=`<span style="color:var(--red)">Không kết nối được: ${_escAttr(e.message)}</span> <span class="mut">(kiểm tra URL/token/Worker đã deploy chưa)</span>`; }
+  if(btn){btn.disabled=false; btn.innerHTML=old;}
+}
+function zAccountIdsFor(platforms){ const accs=S.zernioAccounts||[]; const out=[], miss=[];
+  platforms.forEach(p=>{ const a=accs.find(x=>x.platform===p); if(a) out.push({platform:p,accountId:a.id}); else miss.push(p); });
+  return {platforms:out, missing:miss};
+}
+function pickVideoFile(){ return new Promise(res=>{ const i=document.createElement('input'); i.type='file'; i.accept='video/*'; i.onchange=()=>res(i.files&&i.files[0]||null); i.click(); }); }
+async function zPostOne(id){
+  const cfg=zCfg(); const item=((S.dna.dist&&S.dna.dist.schedule)||[]).find(x=>x.id===id); if(!item) return;
+  if(!cfg.url||!cfg.token){ alert('Chưa kết nối Zernio — điền Worker URL + App token ở trên.'); return; }
+  if(!(S.zernioAccounts&&S.zernioAccounts.length)){ alert('Chưa tải tài khoản — bấm "Kết nối & tải tài khoản" trước.'); return; }
+  const map=zAccountIdsFor(item.platforms);
+  if(!map.platforms.length){ alert('Các nền tảng đã chọn chưa nối trong Zernio: '+item.platforms.map(distPlatLabel).join(', ')); return; }
+  let file=_distFiles[id]; if(!file){ file=await pickVideoFile(); if(!file){ return; } _distFiles[id]=file; }
+  try{
+    item.status='uploading'; item.zerr=''; save(); renderDist();
+    // 1) presign
+    const pr=await fetch(cfg.url+'/presign',{method:'POST',headers:zHeaders({'Content-Type':'application/json'}),body:JSON.stringify({filename:file.name,contentType:file.type||'video/mp4',size:file.size})});
+    const pd=await pr.json(); if(!pr.ok) throw new Error(pd.error||('presign HTTP '+pr.status));
+    // 2) PUT file thẳng lên cloud
+    const put=await fetch(pd.uploadUrl,{method:'PUT',headers:{'Content-Type':file.type||'video/mp4'},body:file});
+    if(!put.ok) throw new Error('upload thất bại (HTTP '+put.status+') — có thể do CORS của cloud');
+    // 3) đặt lịch
+    item.status='scheduling'; save(); renderDist();
+    const content=(item.caption||'')+(item.hashtags?'\n\n'+item.hashtags:'');
+    const body={ content, mediaItems:[{url:pd.publicUrl, type:(file.type||'').startsWith('image')?'image':'video'}],
+      platforms:map.platforms, scheduledFor:(item.at.length===16?item.at+':00':item.at), timezone:ZTZ };
+    const sr=await fetch(cfg.url+'/schedule',{method:'POST',headers:zHeaders({'Content-Type':'application/json'}),body:JSON.stringify(body)});
+    const sd=await sr.json(); if(!sr.ok) throw new Error(sd.error||('schedule HTTP '+sr.status));
+    item.status='scheduled'; item.zid=sd._id||sd.id||''; const purl=(sd.platforms&&sd.platforms.find(p=>p.platformPostUrl)); item.zurl=purl?purl.platformPostUrl:''; if(map.missing.length) item.zerr='Bỏ qua (chưa nối): '+map.missing.map(distPlatLabel).join(', ');
+    save(); renderDist();
+  }catch(e){ item.status='error'; item.zerr=e.message; save(); renderDist(); }
+}
+async function zPostAll(btn){
+  const list=((S.dna.dist&&S.dna.dist.schedule)||[]).filter(x=>_distFiles[x.id] && x.status!=='scheduled' && x.status!=='posted');
+  if(!list.length){ alert('Không có lịch nào ĐÃ GẮN FILE (trong phiên này) để đẩy. Thêm video kèm file, hoặc bấm 📤 Đăng từng dòng để chọn file.'); return; }
+  const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true;}
+  for(let i=0;i<list.length;i++){ if(btn)btn.innerHTML=`<span class="spin"></span>Đang đẩy ${i+1}/${list.length}`; await zPostOne(list[i].id); }
+  if(btn){btn.disabled=false; btn.innerHTML=old;}
+}
 function regenVPromptsAll(){ if(!confirm('Tạo lại TẤT CẢ prompt video (xoá bản hiện có)?')) return; S.dna.skuld.vprompts={}; save(); renderVPrompts(); genVPromptsAll(); }
 async function genVPromptsAll(){
   const btn=document.getElementById('vp-gen'), fb=document.getElementById('vp-fb');
