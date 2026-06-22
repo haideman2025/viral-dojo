@@ -589,6 +589,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
   <div class="sec">
     <h2>🗓 Lịch đã lên <span id="dist-count" class="pill"></span></h2>
     <div id="dist-list" class="mut">Chưa có lịch nào. Thêm video phía trên.</div>
+    <div id="dist-viral-detail" style="margin-top:10px"></div>
     <div id="dist-export" style="display:none;gap:10px;margin-top:12px;flex-wrap:wrap">
       <button class="btn" style="background:var(--blue)" onclick="zPostAll(this)">🚀 Đẩy tất cả (đã gắn file) lên Zernio</button>
       <button class="btn ghost sm" onclick="exportDist('csv')">⬇️ Tải lịch .csv</button>
@@ -1606,6 +1607,36 @@ function distDel(id){ if(!S.dna.dist)return; S.dna.dist.schedule=S.dna.dist.sche
 function distClear(){ if(!confirm('Xoá TOÀN BỘ lịch phân phối của dự án này?'))return; S.dna.dist={schedule:[]}; save(); renderDist(); }
 async function distAttach(id){ const f=await pickVideoFile(); if(!f)return; _distFiles[id]=f; const it=((S.dna.dist&&S.dna.dist.schedule)||[]).find(x=>x.id===id); if(it&&!it.video)it.video=f.name; save(); renderDist(); }
 
+/* ===== 🔥 CHẤM ĐIỂM VIRAL VIDEO CUỐI (Gemini xem video thật) ===== */
+function fileToBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=()=>rej(new Error('đọc file lỗi')); r.readAsDataURL(file); }); }
+async function scoreViral(id){
+  if(!S.keys.gemini){ alert('🔥 Chấm viral cần Gemini key — tab ⚡ Kết nối.'); return; }
+  const item=((S.dna.dist&&S.dna.dist.schedule)||[]).find(x=>x.id===id); if(!item) return;
+  let file=_distFiles[id]; if(!file){ file=await pickVideoFile(); if(!file) return; _distFiles[id]=file; if(!item.video)item.video=file.name; }
+  if(file.size>15*1048576 && !confirm('Video >15MB có thể vượt giới hạn AI (dễ lỗi). Nên dùng clip ngắn/nén. Vẫn thử chấm?')) return;
+  const detail=document.getElementById('dist-viral-detail');
+  item.viral={loading:true}; save(); renderDist();
+  if(detail)detail.innerHTML='<div class="fb"><span class="spin"></span>AI đang xem video & chấm khả năng viral… (clip nặng có thể mất ~30-60s)</div>';
+  try{
+    const b64=await fileToBase64(file);
+    const out=await geminiCall(
+`Bạn là giám khảo viral đã học toàn bộ COREVIRAL. XEM kỹ video sản phẩm CUỐI dưới đây (hình + nhịp + âm thanh + chữ) và chấm KHẢ NĂNG VIRAL THỰC TẾ — đánh giá thẳng thắn, không nịnh.
+THƯƠNG HIỆU: ${brandContext(1500)}
+CAPTION dự kiến: ${item.caption||'(chưa có)'}
+Chấm mỗi tiêu chí 0-10: hook_3s_dau, giu_chan (nhịp/độ cuốn), format_an_toan (thử thách/review/xếp hạng/chấm điểm), san_pham_xuat_hien_tu_nhien, cta_ro, am_thanh_nhac, chu_overlay, cam_xuc.
+Trả về DUY NHẤT JSON: {"score":<0-100 tổng>,"verdict":"1 câu tổng kết thẳng","breakdown":[{"tieuchi":"hook 3s đầu","diem":<0-10>,"nhanxet":"..."}, ...8 tiêu chí],"fixes":["3-6 đề xuất CHỈNH SỬA cụ thể, ưu tiên việc tăng viral làm ngay (sửa hook, cắt nhịp, thêm overlay, đổi CTA...)"],"nendang":<true nếu ≥70 đ và đáng đăng, false nếu nên sửa trước>}`,
+      {json:true, temp:0.3, images:[{mime:file.type||'video/mp4', data:b64}]});
+    item.viral={score:out.score, verdict:asText(out.verdict), breakdown:(out.breakdown||[]).map(b=>({tieuchi:asText(b.tieuchi),diem:b.diem,nhanxet:asText(b.nhanxet)})), fixes:(out.fixes||[]).map(asText), nendang:!!out.nendang, at:_today()};
+    save(); renderDist(); renderViralDetail(item);
+  }catch(e){ item.viral={error:e.message}; save(); renderDist(); if(detail)detail.innerHTML='<div class="fb bad">❌ Chấm viral lỗi: '+_escAttr(e.message)+' '+(/HTTP 4|too large|payload/i.test(e.message)?'(video có thể quá nặng — dùng clip ngắn/nén nhỏ hơn)':'')+'</div>'; }
+}
+function renderViralDetail(item){ const el=document.getElementById('dist-viral-detail'); if(!el||!item.viral||item.viral.error||item.viral.loading) return; const v=item.viral;
+  el.innerHTML=`<div class="cách"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:20px;color:${v.score>=70?'var(--ac)':v.score>=40?'var(--warn)':'var(--red)'}">🔥 ${v.score}/100</b> <span style="font-weight:700">${_escAttr(item.video)}</span> <span class="pill">${v.nendang?'✅ nên đăng':'⚠️ nên sửa trước khi đăng'}</span></div>`+
+    `<div class="mut" style="margin:6px 0">${_escAttr(v.verdict||'')}</div>`+
+    `<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">`+(v.breakdown||[]).map(b=>`<span title="${_escAttr(b.nhanxet||'')}" style="border:1px solid var(--bd);border-radius:10px;padding:2px 8px;font-size:12px;cursor:help">${_escAttr(b.tieuchi)}: <b style="color:${b.diem>=7?'var(--ac)':b.diem>=4?'var(--warn)':'var(--red)'}">${b.diem}/10</b></span>`).join('')+`</div>`+
+    `<b style="color:var(--warn);font-size:13px">🛠 Đề xuất nâng cấp trước khi đăng:</b><ul style="margin:4px 0 0;padding-left:18px;font-size:13px">`+(v.fixes||[]).map(f=>`<li style="margin-bottom:3px">${_escAttr(f)}</li>`).join('')+`</ul></div>`;
+}
+
 /* ===== ⚡ LÊN LỊCH HÀNG LOẠT — rải nội dung 30 ngày vào khung giờ vàng ===== */
 const GOLDEN={1:['20:00'],2:['12:00','20:00'],3:['07:30','12:30','20:00']};
 function _natNum(s){ const m=String(s).match(/\d+/); return m?parseInt(m[0],10):9999; }
@@ -1652,11 +1683,11 @@ function renderDist(){ const el=document.getElementById('dist-list'), ex=documen
     list.map(x=>{ const hasFile=!!_distFiles[x.id]; const done=x.status==='scheduled'||x.status==='posted';
       return `<tr style="border-top:1px solid var(--bd)${hasFile||done?'':';border-left:3px solid var(--red)'}">`+
         `<td style="padding:5px;white-space:nowrap">${_escAttr((x.at||'').replace('T',' '))}</td>`+
-        `<td style="word-break:break-all">${_escAttr(x.video)}<div style="font-size:10.5px;margin-top:2px">${hasFile?'<span style="color:var(--ac)">📎 đã có video</span>':(done?'<span class="mut">đã đăng</span>':'<span style="color:var(--red)">⚠️ chưa có video — </span><button class="btn ghost sm" style="padding:1px 7px;border-color:var(--red);color:var(--red)" onclick="distAttach(\''+x.id+'\')">📎 Gắn video</button>')}</div></td>`+
+        `<td style="word-break:break-all">${_escAttr(x.video)}<div style="font-size:10.5px;margin-top:2px">${hasFile?'<span style="color:var(--ac)">📎 đã có video</span>':(done?'<span class="mut">đã đăng</span>':'<span style="color:var(--red)">⚠️ chưa có video — </span><button class="btn ghost sm" style="padding:1px 7px;border-color:var(--red);color:var(--red)" onclick="distAttach(\''+x.id+'\')">📎 Gắn video</button>')}${x.viral&&x.viral.score!=null?` <span style="font-weight:800;color:${x.viral.score>=70?'var(--ac)':x.viral.score>=40?'var(--warn)':'var(--red)'}">🔥 ${x.viral.score}</span>`:''}</div></td>`+
         `<td style="white-space:nowrap">${x.platforms.map(distPlatLabel).join('<br>')}</td>`+
         `<td class="mut" style="max-width:240px">${_escAttr((x.caption||'').slice(0,90))}${(x.caption||'').length>90?'…':''}${x.hashtags?`<div style="color:var(--ac)">${_escAttr(x.hashtags)}</div>`:''}</td>`+
         `<td style="white-space:nowrap">${distStatusBadge(x)}</td>`+
-        `<td style="white-space:nowrap"><button class="btn ghost sm" style="border-color:var(--blue);color:var(--blue)" onclick="zPostOne('${x.id}')">📤 Đăng</button> <button class="del" onclick="distDel('${x.id}')">✕</button></td></tr>`;
+        `<td style="white-space:nowrap"><button class="btn ghost sm" style="border-color:var(--warn);color:var(--warn)" onclick="scoreViral('${x.id}')">🔥 Chấm</button> <button class="btn ghost sm" style="border-color:var(--blue);color:var(--blue)" onclick="zPostOne('${x.id}')">📤 Đăng</button> <button class="del" onclick="distDel('${x.id}')">✕</button></td></tr>`;
     }).join('')+'</table></div>'; }
 function distStatusBadge(x){ const s=x.status||'planned';
   const m={planned:['#8fa0b3','⏳ chờ'],uploading:['var(--warn)','⬆ đang upload'],scheduling:['var(--warn)','📅 đang đặt lịch'],scheduled:['var(--ac)','✅ đã lên lịch'],posted:['var(--ac)','✅ đã đăng'],error:['var(--red)','❌ lỗi']};
