@@ -1,0 +1,11 @@
+name = "dojo-sync"
+main = "worker.js"
+compatibility_date = "2026-06-01"
+
+# D1 — điền database_id sau khi chạy: wrangler d1 create dojo
+[[d1_databases]]
+binding = "DB"
+database_name = "dojo"
+database_id = "cfc5482a-56d3-404d-8b10-cc5bcdd712b1"
+
+# Secret (KHÔNG để ở đây): wrangler secret put ADMIN_TOKEN

@@ -86,6 +86,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <button class="tab" data-v="dna">🧬 Channel DNA</button>
   </div>
   <div id="xp-head"></div>
+  <div id="auth-head" style="display:flex;align-items:center;gap:6px;font-size:12.5px;flex-wrap:wrap"></div>
 </header>
 
 <div id="projbar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 12px">
@@ -520,6 +521,23 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <input type="file" id="k-xlsx" accept=".csv,.xlsx">
       <p class="mut">MVP: nhận CSV. (Bản full parse xlsx + Pipeboard Meta Ads + Google Sheets + Cloudflare deploy.)</p>
     </div>
+    <div class="cc">
+      <h3>☁️ Đồng bộ tài khoản <span class="st-dot no" id="st-sync">● chưa đăng nhập</span></h3>
+      <p class="mut">Đăng nhập bằng <b>mã admin cấp</b> để lưu workspace lên cloud và đồng bộ giữa nhiều thiết bị. API key vẫn local-only, không lên cloud.</p>
+      <div id="sync-conn-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>
+      <p class="mut" id="msg-sync"></p>
+      <div id="admin-panel" style="display:none;margin-top:10px;border-top:1px solid var(--bd);padding-top:10px">
+        <label>🛠 Admin token <span class="mut">(chỉ admin — lưu trong máy này)</span></label>
+        <input id="adm-token" type="password" placeholder="ADMIN_TOKEN">
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <input id="adm-name" placeholder="Tên khách / nhãn mã" style="flex:1;min-width:140px">
+          <button class="btn sm" onclick="adminCreateCode()">➕ Tạo mã</button>
+          <button class="btn ghost sm" onclick="adminListCodes()">↻ Danh sách</button>
+        </div>
+        <div id="adm-out" class="mut" style="font-size:12px;margin-top:8px"></div>
+      </div>
+      <p class="mut" style="font-size:11px;margin-top:8px"><a href="#" onclick="toggleAdmin();return false;" style="color:var(--mut)">⚙ Khu admin</a></p>
+    </div>
   </div>
 </div>
 
@@ -650,6 +668,172 @@ function projDuplicate(){ const src=activeProject(); const id=_pid();
 function projDelete(){ if(Object.keys(S.projects).length<=1){ alert('Không thể xoá dự án cuối cùng — tạo dự án khác trước.'); return; }
   const p=activeProject(); if(!confirm('Xoá dự án "'+p.name+'"? Không hồi lại được. Nên Tải DNA backup trước.')) return;
   delete S.projects[S.activeId]; S.activeId=Object.keys(S.projects)[0]; localStorage.setItem('dojo',JSON.stringify(S)); location.reload(); }
+
+/* ===================== ☁️ ĐĂNG NHẬP & ĐỒNG BỘ ĐA THIẾT BỊ ===================== */
+/* Đăng nhập bằng ACCESS CODE (admin cấp). Đồng bộ {v,activeId,projects} lên Cloudflare
+   Worker+D1. API key (S.keys) KHÔNG đồng bộ — local-only. */
+const SYNC_URL = 'https://dojo-sync.hai-cbe.workers.dev';   // worker dojo-sync (D1). Trống = tắt sync (chế độ local).
+let SESS     = JSON.parse(localStorage.getItem('dojo_session')||'null');  // {code,name}
+let SYNCMETA = JSON.parse(localStorage.getItem('dojo_sync')||'{}');       // {version}
+const ADMIN  = JSON.parse(localStorage.getItem('dojo_admin')||'{}');      // {token} — chỉ máy admin
+let _syncTimer=null, _syncing=false, _conflictOpen=false, _dirty=false;
+const _base = ()=> SYNC_URL.replace(/\/$/,'');
+const _origSet = localStorage.setItem.bind(localStorage);   // ghi 'dojo' KHÔNG kích sync (dùng khi nạp từ cloud)
+
+function syncOn(){ return !!(SYNC_URL && SESS && SESS.code); }
+function _saveSess(){ SESS ? _origSet('dojo_session',JSON.stringify(SESS)) : localStorage.removeItem('dojo_session'); }
+function _saveMeta(){ _origSet('dojo_sync',JSON.stringify(SYNCMETA)); }
+function cloudBlob(){ return { v:S.v, activeId:S.activeId, projects:S.projects }; }
+
+/* Mọi lần ghi key 'dojo' (save, project ops, xpTick…) → tự lên lịch đẩy cloud + đánh dấu dirty */
+localStorage.setItem = function(k,v){ _origSet(k,v); if(k==='dojo' && typeof scheduleSync==='function') scheduleSync(); };
+
+function setBadge(state,txt){
+  const el=document.getElementById('sync-badge'); if(!el) return;
+  const M={ off:['(local)','#8a8fa3'], synced:['☁️ Đã đồng bộ','var(--ac2,#39d98a)'],
+    saving:['⏳ Đang lưu…','var(--warn,#f5a623)'], conflict:['⚠️ Lệch bản','var(--warn,#f5a623)'],
+    offline:['🔌 Offline','var(--red,#e5484d)'] };
+  const m=M[state]||M.off; el.textContent=txt||m[0]; el.style.color=m[1];
+}
+
+async function authWith(code){
+  if(!SYNC_URL) throw new Error('Tính năng đồng bộ chưa được cấu hình (SYNC_URL trống).');
+  const r=await fetch(_base()+'/auth',{method:'POST',headers:{'x-dojo-code':code}});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||'Mã không hợp lệ.');
+  SESS={code,name:d.name}; _saveSess(); SYNCMETA={version:0}; _saveMeta();   // version 0 → ép pull
+  return d;
+}
+function logout(){ SESS=null; _saveSess(); SYNCMETA={}; _saveMeta(); _dirty=false; renderAuthUI(); }
+
+/* Nạp blob cloud vào S (GIỮ S.keys local), persist KHÔNG kích push */
+function applyBlob(blob){
+  if(!blob) return; S.v=blob.v||2; S.activeId=blob.activeId; S.projects=blob.projects||{};
+  if(!S.projects[S.activeId]) S.activeId=Object.keys(S.projects)[0];
+  _origSet('dojo',JSON.stringify(S));
+}
+
+async function pull(){
+  if(!syncOn()) return;
+  try{
+    const r=await fetch(_base()+'/pull',{headers:{'x-dojo-code':SESS.code}});
+    const d=await r.json().catch(()=>({}));
+    if(r.status===401){ logout(); return; }
+    if(!r.ok) throw new Error(d.error||'pull lỗi');
+    if(d.blob==null){ SYNCMETA={version:0}; _saveMeta(); await pushNow(true); return; } // TK mới → đẩy local làm gốc
+    if((d.version||0) > (SYNCMETA.version||0)){ applyBlob(d.blob); SYNCMETA={version:d.version}; _saveMeta(); }
+    setBadge('synced');
+  }catch(e){ setBadge('offline'); }
+}
+
+function scheduleSync(){ if(!syncOn()) return; _dirty=true; setBadge('saving');
+  clearTimeout(_syncTimer); _syncTimer=setTimeout(()=>pushNow(), 2500); }
+
+async function pushNow(silent){
+  if(!syncOn()||_syncing||_conflictOpen) return;
+  _syncing=true; if(!silent) setBadge('saving');
+  try{
+    const r=await fetch(_base()+'/push',{method:'POST',headers:{'x-dojo-code':SESS.code,'Content-Type':'application/json'},
+      body:JSON.stringify({blob:cloudBlob(), baseVersion:SYNCMETA.version||0})});
+    const d=await r.json().catch(()=>({}));
+    if(r.status===401){ logout(); return; }
+    if(r.status===409){ conflictModal(d.serverBlob, d.version); return; }
+    if(!r.ok) throw new Error(d.error||'push lỗi');
+    SYNCMETA={version:d.version}; _saveMeta(); _dirty=false; setBadge('synced');
+  }catch(e){ setBadge('offline'); }
+  finally{ _syncing=false; }
+}
+
+function conflictModal(serverBlob, serverVersion){
+  if(_conflictOpen) return; _conflictOpen=true; setBadge('conflict');
+  const ov=document.createElement('div'); ov.className='auth-ov';
+  ov.innerHTML='<div class="auth-box"><h3 style="margin:0 0 6px">⚠️ Lệch bản dữ liệu</h3>'+
+    '<p class="mut" style="font-size:13px;margin:0 0 12px">Bản trên cloud đã được cập nhật từ thiết bị khác. Chọn bản muốn giữ:</p>'+
+    '<div class="row" style="gap:8px"><button class="btn" id="cf-keep">Giữ bản máy này → ghi đè cloud</button>'+
+    '<button class="btn ghost" id="cf-cloud">Lấy bản cloud về → bỏ thay đổi đang sửa</button></div></div>';
+  document.body.appendChild(ov);
+  ov.querySelector('#cf-keep').onclick=async()=>{ SYNCMETA={version:serverVersion}; _saveMeta();
+    ov.remove(); _conflictOpen=false; await pushNow(); };
+  ov.querySelector('#cf-cloud').onclick=()=>{ applyBlob(serverBlob); SYNCMETA={version:serverVersion}; _saveMeta();
+    ov.remove(); _conflictOpen=false; location.reload(); };
+}
+
+/* Flush khi đóng tab/đổi dự án (best-effort beacon) — chỉ khi còn thay đổi chưa đẩy */
+window.addEventListener('beforeunload',()=>{
+  if(!syncOn()||!_dirty) return;
+  try{ const body=JSON.stringify({blob:cloudBlob(), baseVersion:SYNCMETA.version||0});
+    navigator.sendBeacon(_base()+'/push?code='+encodeURIComponent(SESS.code), new Blob([body],{type:'application/json'})); }catch(e){}
+});
+
+function openLogin(){
+  const ov=document.createElement('div'); ov.className='auth-ov';
+  ov.innerHTML='<div class="auth-box"><h3 style="margin:0 0 4px">☁️ Đăng nhập để đồng bộ</h3>'+
+    '<p class="mut" style="font-size:13px;margin:0 0 12px">Nhập <b>mã đăng nhập</b> admin cấp để lưu & đồng bộ dữ liệu giữa các thiết bị. Chưa có mã? Hỏi admin.</p>'+
+    '<input id="lg-code" placeholder="VD-XXXXX-XXXXX-…" style="padding:10px;font-family:monospace;letter-spacing:1px">'+
+    '<div id="lg-err" style="color:var(--red,#e5484d);font-size:12.5px;min-height:16px;margin:6px 0"></div>'+
+    '<div class="row" style="gap:8px"><button class="btn" id="lg-go">Đăng nhập</button>'+
+    '<button class="btn ghost" id="lg-cancel">Để sau (dùng local)</button></div></div>';
+  document.body.appendChild(ov);
+  const inp=ov.querySelector('#lg-code'), err=ov.querySelector('#lg-err'); inp.focus();
+  const go=async()=>{ const c=inp.value.trim().toUpperCase(); if(!c){err.textContent='Nhập mã.';return;}
+    err.textContent='Đang kiểm tra…';
+    try{ await authWith(c); await pull(); location.reload(); }catch(e){ err.textContent=e.message||'Mã không hợp lệ.'; } };
+  ov.querySelector('#lg-go').onclick=go;
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); });
+  ov.querySelector('#lg-cancel').onclick=()=>ov.remove();
+}
+
+function renderAuthUI(){
+  const el=document.getElementById('auth-head'); if(!el) return;
+  if(!SYNC_URL){ el.innerHTML='<span class="mut" style="font-size:11.5px">đồng bộ: chưa bật</span>'; return; }
+  if(SESS&&SESS.code){
+    el.innerHTML='<span title="'+_escAttr(SESS.code)+'">👤 '+_escAttr(SESS.name||'Tài khoản')+'</span>'+
+      ' · <span id="sync-badge" style="font-weight:700">(local)</span>'+
+      ' <button class="btn ghost sm" onclick="logout()">Đăng xuất</button>';
+  } else {
+    el.innerHTML='<button class="btn sm" onclick="openLogin()">☁️ Đăng nhập để đồng bộ</button>'+
+      ' <span id="sync-badge" style="color:#8a8fa3">(local)</span>';
+  }
+}
+
+/* ---- Tab Kết nối: trạng thái đồng bộ + khu admin cấp mã ---- */
+function renderAdminUI(){
+  const dot=document.getElementById('st-sync');
+  if(dot){ if(SESS&&SESS.code){ dot.textContent='● '+(SESS.name||'đã đăng nhập'); dot.className='st-dot ok'; }
+    else { dot.textContent='● chưa đăng nhập'; dot.className='st-dot no'; } }
+  const act=document.getElementById('sync-conn-actions');
+  if(act){ act.innerHTML = (SESS&&SESS.code)
+    ? '<button class="btn ghost sm" onclick="logout();renderAdminUI()">Đăng xuất</button> <span class="mut" style="align-self:center;font-size:12px">Mã: '+_escAttr(SESS.code)+'</span>'
+    : '<button class="btn sm" onclick="openLogin()">☁️ Đăng nhập</button>'; }
+  const at=document.getElementById('adm-token'); if(at&&ADMIN.token) at.value=ADMIN.token;
+  const pan=document.getElementById('admin-panel'); if(pan&&ADMIN.token) pan.style.display='';
+}
+function toggleAdmin(){ const p=document.getElementById('admin-panel'); if(p) p.style.display=(p.style.display==='none'?'':'none'); }
+function _admToken(){ const t=(document.getElementById('adm-token').value||'').trim(); if(t){ ADMIN.token=t; _origSet('dojo_admin',JSON.stringify(ADMIN)); } return t; }
+async function adminCreateCode(){
+  const out=document.getElementById('adm-out'); if(!SYNC_URL){ out.innerHTML='<span style="color:var(--red)">SYNC_URL chưa cấu hình.</span>'; return; }
+  const token=_admToken(); if(!token){ out.textContent='Nhập admin token.'; return; }
+  const name=(document.getElementById('adm-name').value||'').trim()||'Tài khoản mới'; out.textContent='Đang tạo…';
+  try{ const r=await fetch(_base()+'/admin/codes',{method:'POST',headers:{'x-admin-token':token,'Content-Type':'application/json'},body:JSON.stringify({name})});
+    const d=await r.json().catch(()=>({})); if(!r.ok) throw new Error(d.error||'lỗi');
+    out.innerHTML='✅ Mã cho <b>'+_escAttr(d.name)+'</b>: <code style="background:var(--card2);padding:2px 6px;border-radius:6px;user-select:all">'+_escAttr(d.code)+'</code> — copy gửi cho khách.';
+  }catch(e){ out.innerHTML='<span style="color:var(--red)">'+(e.message||'lỗi')+'</span>'; }
+}
+async function adminListCodes(){
+  const out=document.getElementById('adm-out'); const token=_admToken(); if(!token){ out.textContent='Nhập admin token.'; return; }
+  out.textContent='Đang tải…';
+  try{ const r=await fetch(_base()+'/admin/codes',{headers:{'x-admin-token':token}});
+    const d=await r.json().catch(()=>({})); if(!r.ok) throw new Error(d.error||'lỗi'); const list=d.accounts||[];
+    out.innerHTML = list.length ? '<table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="color:var(--mut)"><td>Tên</td><td>Mã</td><td>v</td><td>Sync gần nhất</td></tr>'+
+      list.map(a=>'<tr><td>'+_escAttr(a.name||'')+'</td><td style="font-family:monospace;user-select:all">'+_escAttr(a.code)+'</td><td>'+(a.version||0)+'</td><td>'+_escAttr((a.updatedAt||'').slice(0,16).replace('T',' '))+'</td></tr>').join('')+'</table>' : 'Chưa có mã nào.';
+  }catch(e){ out.innerHTML='<span style="color:var(--red)">'+(e.message||'lỗi')+'</span>'; }
+}
+
+(function injectAuthCSS(){ const s=document.createElement('style');
+  s.textContent='.auth-ov{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}'+
+    '.auth-box{background:var(--card,#16181d);border:1px solid var(--bd,#2a2d36);border-radius:14px;padding:22px;max-width:430px;width:100%;box-shadow:0 12px 44px rgba(0,0,0,.55)}'+
+    '.auth-box input{width:100%;box-sizing:border-box}';
+  document.head.appendChild(s); })();
 
 /* ================= GEMINI HELPER (dùng chung mọi trạm) ================= */
 const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -2545,6 +2729,7 @@ function ensureDynamic(){
   if(S.dna.xpSeen==null) S.dna.xpSeen=calcXP(); // không bắn toast cho tiến độ đã có
   renderProjBar(); renderDNA(); renderStations(); renderVault(); renderBioKit(); refreshGates(); renderOverview(); renderXP(); ensureDynamic();
   document.getElementById('grade-hint').textContent = S.keys.gemini ? 'Gemini đã kết nối — chấm sâu bằng AI.' : 'Chưa có Gemini key → chấm offline cơ bản. Vào tab ⚡ Kết nối để AI chấm thật.';
+  renderAuthUI(); renderAdminUI(); if(syncOn()){ setBadge('synced'); pull(); }
 })();
 </script>
 </body>
