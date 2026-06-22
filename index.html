@@ -555,7 +555,20 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div id="z-accounts" class="mut" style="font-size:12.5px;margin-top:10px"></div>
   </div>
   <div class="sec">
-    <h2>➕ Thêm video vào lịch</h2>
+    <h2>⚡ Lên lịch hàng loạt (tự động rải 30 ngày)</h2>
+    <p class="mut" style="font-size:12.5px;margin:0 0 8px">Tự rải TOÀN BỘ nội dung đã có (caption + hashtag lấy sẵn từ Bộ đăng bài) ra lịch theo mục tiêu của bạn, vào khung giờ vàng. Sau đó chỉ cần gắn video cho từng ngày (ngày thiếu video sẽ <span style="color:var(--red)">báo đỏ</span>).</p>
+    <div class="row">
+      <div><label>🎯 Số bài / ngày</label><select id="auto-perday"><option value="1">1 bài/ngày (20:00)</option><option value="2">2 bài/ngày (12:00 · 20:00)</option><option value="3">3 bài/ngày (07:30 · 12:30 · 20:00)</option></select></div>
+      <div><label>📅 Ngày bắt đầu</label><input type="date" id="auto-start"></div>
+    </div>
+    <div style="margin-top:8px"><label>📡 Nền tảng đăng (áp cho cả loạt)</label><div id="auto-plats" style="display:flex;gap:14px;flex-wrap:wrap;padding:4px 0"></div></div>
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" onclick="autoSchedule()">⚡ Tạo lịch hàng loạt</button>
+    </div>
+    <div id="auto-fb"></div>
+  </div>
+  <div class="sec">
+    <h2>➕ Thêm 1 video vào lịch (thủ công)</h2>
     <div class="row">
       <div><label>🎬 Chọn video (mp4/mov...)</label><input type="file" id="dist-file" accept="video/*" onchange="distPickFile(this.files)"></div>
       <div><label>Hoặc nhập tên video thủ công</label><input id="dist-name" placeholder="VD: N1-phan-tich-chuyen-sau.mp4"></div>
@@ -1560,7 +1573,7 @@ function copyBio(btn){ const p=btn.getAttribute('data-bio'), f=btn.getAttribute(
 const DIST_PLATS=[{key:'tiktok',label:'🎵 TikTok'},{key:'facebook',label:'📘 FB Page'},{key:'youtube',label:'▶️ YouTube'},{key:'instagram',label:'📸 Instagram'},{key:'threads',label:'🧵 Threads'}];
 let _distFile=null, _distFileObj=null; // {name,size} + File thật (giữ trong phiên, không persist)
 const _distFiles={}; // id lịch -> File (để đẩy lên Zernio không cần chọn lại trong cùng phiên)
-function distPlatsHtml(){ return DIST_PLATS.map(p=>`<label style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:5px;color:var(--tx)"><input type="checkbox" class="dist-plat" value="${p.key}" style="width:auto"> ${p.label}</label>`).join(''); }
+function distPlatsHtml(cls){ return DIST_PLATS.map(p=>`<label style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:5px;color:var(--tx)"><input type="checkbox" class="${cls||'dist-plat'}" value="${p.key}" style="width:auto"> ${p.label}</label>`).join(''); }
 function distPickFile(files){ const f=files&&files[0]; const info=document.getElementById('dist-file-info');
   if(!f){ _distFile=null; _distFileObj=null; if(info)info.textContent=''; return; }
   _distFile={name:f.name,size:f.size}; _distFileObj=f; if(info)info.textContent=`✅ ${f.name} · ${(f.size/1048576).toFixed(1)} MB (sẽ upload khi đẩy lên Zernio)`;
@@ -1591,17 +1604,59 @@ function distAdd(){ const fb=document.getElementById('dist-fb');
   save(); renderDist(); }
 function distDel(id){ if(!S.dna.dist)return; S.dna.dist.schedule=S.dna.dist.schedule.filter(x=>x.id!==id); save(); renderDist(); }
 function distClear(){ if(!confirm('Xoá TOÀN BỘ lịch phân phối của dự án này?'))return; S.dna.dist={schedule:[]}; save(); renderDist(); }
+async function distAttach(id){ const f=await pickVideoFile(); if(!f)return; _distFiles[id]=f; const it=((S.dna.dist&&S.dna.dist.schedule)||[]).find(x=>x.id===id); if(it&&!it.video)it.video=f.name; save(); renderDist(); }
+
+/* ===== ⚡ LÊN LỊCH HÀNG LOẠT — rải nội dung 30 ngày vào khung giờ vàng ===== */
+const GOLDEN={1:['20:00'],2:['12:00','20:00'],3:['07:30','12:30','20:00']};
+function _natNum(s){ const m=String(s).match(/\d+/); return m?parseInt(m[0],10):9999; }
+function _addDays(ymd,n){ const a=ymd.split('-').map(Number); const d=new Date(a[0],a[1]-1,a[2]+n); const p=x=>String(x).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function autoSchedule(){
+  const fb=document.getElementById('auto-fb');
+  const perday=parseInt(document.getElementById('auto-perday').value,10)||1;
+  const start=document.getElementById('auto-start').value;
+  const plats=[...document.querySelectorAll('.auto-plat:checked')].map(c=>c.value);
+  if(!start){ if(fb)fb.innerHTML='<div class="fb bad">Chọn ngày bắt đầu.</div>'; return; }
+  if(!plats.length){ if(fb)fb.innerHTML='<div class="fb bad">Chọn ít nhất 1 nền tảng.</div>'; return; }
+  const vp=(S.dna.skuld&&S.dna.skuld.vprompts)||{};
+  let titles=Object.keys(vp).sort((a,b)=>_natNum(a)-_natNum(b));
+  if(!titles.length){ if(fb)fb.innerHTML='<div class="fb bad">Chưa có nội dung video. Sang LÒ LUYỆN sinh prompt video + Bộ đăng bài trước.</div>'; return; }
+  const withCap=titles.filter(t=>vp[t].caption||(vp[t].hashtags&&vp[t].hashtags.length));
+  const list=withCap.length?withCap:titles;
+  S.dna.dist=S.dna.dist||{schedule:[]};
+  // xoá lịch auto cũ (giữ lịch thêm tay), tránh trùng
+  S.dna.dist.schedule=S.dna.dist.schedule.filter(x=>x.source!=='auto');
+  const slots=GOLDEN[perday];
+  list.forEach((t,i)=>{ const dayOffset=Math.floor(i/perday), slot=slots[i%perday];
+    const k=vp[t]||{};
+    S.dna.dist.schedule.push({ id:_pid(), source:'auto', day:t,
+      video: t.replace(/[^\w\-]+/g,'-').replace(/^-+|-+$/g,'')+'.mp4',
+      platforms:plats.slice(), caption:k.caption||'', hashtags:(k.hashtags||[]).join(' '),
+      at:_addDays(start,dayOffset)+'T'+slot, status:'planned' });
+  });
+  save(); renderDist();
+  const miss=list.length;
+  if(fb)fb.innerHTML=`<div class="fb">✅ Đã rải ${list.length} bài (${perday}/ngày) từ ${start}. Giờ gắn video cho từng ngày (ô đỏ) rồi bấm 🚀 Đẩy tất cả.</div>`;
+  const ls=document.getElementById('dist-list'); if(ls)ls.scrollIntoView({behavior:'smooth'});
+}
 function distPlatLabel(k){ const p=DIST_PLATS.find(x=>x.key===k); return p?p.label:k; }
 function renderDist(){ const el=document.getElementById('dist-list'), ex=document.getElementById('dist-export'), cnt=document.getElementById('dist-count');
-  const pc=document.getElementById('dist-plats'); if(pc&&!pc.children.length) pc.innerHTML=distPlatsHtml();
+  const pc=document.getElementById('dist-plats'); if(pc&&!pc.children.length) pc.innerHTML=distPlatsHtml('dist-plat');
+  const apc=document.getElementById('auto-plats'); if(apc&&!apc.children.length) apc.innerHTML=distPlatsHtml('auto-plat');
+  const as=document.getElementById('auto-start'); if(as&&!as.value){ const d=new Date(); as.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   const list=(((S.dna.dist&&S.dna.dist.schedule)||[]).slice()).sort((a,b)=>(a.at||'').localeCompare(b.at||''));
   if(cnt)cnt.textContent=list.length+' bài';
   if(!el)return;
   if(!list.length){ el.className='mut'; el.innerHTML='Chưa có lịch nào. Thêm video phía trên.'; if(ex)ex.style.display='none'; return; }
   el.className=''; if(ex)ex.style.display='flex';
   el.innerHTML='<div style="overflow:auto"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="text-align:left"><th style="padding:5px">🗓 Giờ đăng</th><th>🎬 Video</th><th>📡 Nền tảng</th><th>📝 Caption</th><th>Trạng thái</th><th></th></tr>'+
-    list.map(x=>{ const hasFile=!!_distFiles[x.id];
-      return `<tr style="border-top:1px solid var(--bd)"><td style="padding:5px;white-space:nowrap">${_escAttr((x.at||'').replace('T',' '))}</td><td style="word-break:break-all">${_escAttr(x.video)}<div style="font-size:10.5px" class="mut">${hasFile?'📎 đã gắn file':'⚠️ chưa gắn file'}</div></td><td style="white-space:nowrap">${x.platforms.map(distPlatLabel).join('<br>')}</td><td class="mut" style="max-width:240px">${_escAttr((x.caption||'').slice(0,90))}${(x.caption||'').length>90?'…':''}${x.hashtags?`<div style="color:var(--ac)">${_escAttr(x.hashtags)}</div>`:''}</td><td style="white-space:nowrap">${distStatusBadge(x)}</td><td style="white-space:nowrap"><button class="btn ghost sm" style="border-color:var(--blue);color:var(--blue)" onclick="zPostOne('${x.id}')">📤 Đăng</button> <button class="del" onclick="distDel('${x.id}')">✕</button></td></tr>`;
+    list.map(x=>{ const hasFile=!!_distFiles[x.id]; const done=x.status==='scheduled'||x.status==='posted';
+      return `<tr style="border-top:1px solid var(--bd)${hasFile||done?'':';border-left:3px solid var(--red)'}">`+
+        `<td style="padding:5px;white-space:nowrap">${_escAttr((x.at||'').replace('T',' '))}</td>`+
+        `<td style="word-break:break-all">${_escAttr(x.video)}<div style="font-size:10.5px;margin-top:2px">${hasFile?'<span style="color:var(--ac)">📎 đã có video</span>':(done?'<span class="mut">đã đăng</span>':'<span style="color:var(--red)">⚠️ chưa có video — </span><button class="btn ghost sm" style="padding:1px 7px;border-color:var(--red);color:var(--red)" onclick="distAttach(\''+x.id+'\')">📎 Gắn video</button>')}</div></td>`+
+        `<td style="white-space:nowrap">${x.platforms.map(distPlatLabel).join('<br>')}</td>`+
+        `<td class="mut" style="max-width:240px">${_escAttr((x.caption||'').slice(0,90))}${(x.caption||'').length>90?'…':''}${x.hashtags?`<div style="color:var(--ac)">${_escAttr(x.hashtags)}</div>`:''}</td>`+
+        `<td style="white-space:nowrap">${distStatusBadge(x)}</td>`+
+        `<td style="white-space:nowrap"><button class="btn ghost sm" style="border-color:var(--blue);color:var(--blue)" onclick="zPostOne('${x.id}')">📤 Đăng</button> <button class="del" onclick="distDel('${x.id}')">✕</button></td></tr>`;
     }).join('')+'</table></div>'; }
 function distStatusBadge(x){ const s=x.status||'planned';
   const m={planned:['#8fa0b3','⏳ chờ'],uploading:['var(--warn)','⬆ đang upload'],scheduling:['var(--warn)','📅 đang đặt lịch'],scheduled:['var(--ac)','✅ đã lên lịch'],posted:['var(--ac)','✅ đã đăng'],error:['var(--red)','❌ lỗi']};
