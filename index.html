@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>VIRAL DOJO — Học bằng cách ship kênh viral</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Pirata+One&family=Cabin:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Be+Vietnam+Pro:wght@500;600;700;800;900&display=swap');
 
-/* ====== 3 THEME: Hải Tặc / Hải Quân / Đại Dương ====== */
+/* ====== 3 THEME ====== */
 :root, html.theme-neon{
   --bg:#e3cd97; --card:#f4e7c5; --card2:#ecdbac; --bd:#7a5023;
-  --tx:#3a2710; --mut:#8a6c3e; --ac:#c8962f; --ac2:#9c6f18;
+  --tx:#241407; --mut:#6a4f20; --ac:#c8962f; --ac2:#9c6f18;
   --warn:#e0a92e; --red:#a3261f; --blue:#1f6f7a;
   --gold:#d9a93a; --orange:#c8631f; --purple:#6b3a1f; --pink:#a3261f;
   --line:#c9a868; --glass:#efe0bb; --px:#4a2f12; --hi:#fffaf0; --lo:#d4bd86;
@@ -18,7 +18,7 @@
 }
 html.theme-gb{
   --bg:#0e2440; --card:#173255; --card2:#1d3d66; --bd:#3a6ba5;
-  --tx:#e9f0fb; --mut:#9bb4d6; --ac:#3f8ed8; --ac2:#2867ac;
+  --tx:#f1f6ff; --mut:#aec4e0; --ac:#3f8ed8; --ac2:#2867ac;
   --warn:#e8c34a; --red:#d8493f; --blue:#5aa7e6;
   --gold:#e8c34a; --orange:#e0823a; --purple:#6f7bd0; --pink:#d8493f;
   --line:#2c5489; --glass:#173458; --px:#061427; --hi:#cfe2ff; --lo:#102a4d;
@@ -26,7 +26,7 @@ html.theme-gb{
 }
 html.theme-blue{
   --bg:#06262b; --card:#0d3a40; --card2:#114a52; --bd:#1f7a7f;
-  --tx:#e2faf4; --mut:#8fc7c2; --ac:#16c2a8; --ac2:#0d9a86;
+  --tx:#ecfdf8; --mut:#a3d4cf; --ac:#16c2a8; --ac2:#0d9a86;
   --warn:#e8c34a; --red:#e0584a; --blue:#2bb3c9;
   --gold:#e8c34a; --orange:#e0823a; --purple:#3aa0b0; --pink:#e0584a;
   --line:#1a6166; --glass:#0d3f45; --px:#021416; --hi:#bff5ec; --lo:#073035;
@@ -37,7 +37,7 @@ html.theme-blue{
 html{scroll-behavior:smooth}
 ::selection{background:var(--ac);color:var(--px)}
 body{
-  margin:0;color:var(--tx);font-family:'Cabin',sans-serif;font-size:17px;line-height:1.55;font-weight:600;
+  margin:0;color:var(--tx);font-family:'Be Vietnam Pro',sans-serif;font-size:17px;line-height:1.58;font-weight:600;
   background-color:var(--bg);
   background-image:
     radial-gradient(circle at 50% -10%, rgba(255,255,255,.18), transparent 55%),
@@ -51,12 +51,13 @@ body{
 
 .wrap{max-width:940px;margin:0 auto;padding:22px 18px 92px}
 
-h1,h2,h3,.big,.belt{font-family:'Pirata One',cursive;font-weight:400;letter-spacing:.02em}
-.tag,.st,.col-btn,.pill,.tab,.xpnum,.sc span,label{font-family:'Cabin',sans-serif;text-transform:uppercase;letter-spacing:.06em}
+h1,.big{font-family:'Bungee',sans-serif;font-weight:400;letter-spacing:.01em}
+h2,h3,.belt{font-family:'Be Vietnam Pro',sans-serif;font-weight:800;letter-spacing:.005em}
+.tag,.st,.col-btn,.pill,.tab,.xpnum,.sc span,label{font-family:'Be Vietnam Pro',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 
 header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:6px 0 22px}
 h1{font-size:42px;margin:0;line-height:1;color:var(--tx);display:flex;flex-direction:column;text-shadow:2px 2px 0 var(--hi),4px 4px 0 var(--sf)}
-h1 small{font-family:'Cabin';font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:var(--ac2);font-size:10px;display:block;margin-top:8px;text-shadow:none}
+h1 small{font-family:'Be Vietnam Pro',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:var(--ac2);font-size:10px;display:block;margin-top:8px;text-shadow:none}
 
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
 .tab{background:var(--card);border:2px solid var(--bd);color:var(--mut);border-radius:6px;padding:11px 14px;font-size:10px;font-weight:700;cursor:pointer;transition:.12s;box-shadow:3px 3px 0 var(--px)}
@@ -70,7 +71,7 @@ h1 small{font-family:'Cabin';font-weight:700;text-transform:uppercase;letter-spa
 .pill{display:inline-block;font-size:10px;font-weight:700;border:2px solid var(--px);border-radius:999px;padding:4px 11px;color:var(--hi);background:var(--blue);margin-left:6px;box-shadow:2px 2px 0 var(--px);vertical-align:middle}
 .tag{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:7px 12px;border-radius:4px;color:var(--hi);background:var(--red);margin-right:6px;box-shadow:2px 2px 0 var(--px);transform:rotate(-2deg);text-shadow:1px 1px 0 var(--sf)}
 
-.btn{background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:7px;padding:14px 20px;font-family:'Cabin';font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;transition:.09s;line-height:1.3;box-shadow:4px 4px 0 var(--px);text-shadow:1px 1px 0 var(--sf)}
+.btn{background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:7px;padding:14px 20px;font-family:'Be Vietnam Pro',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;transition:.09s;line-height:1.3;box-shadow:4px 4px 0 var(--px);text-shadow:1px 1px 0 var(--sf)}
 .btn:hover{filter:brightness(1.06);transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--px)}
 .btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--px)}
 .btn.sm{padding:9px 14px;font-size:12px;box-shadow:3px 3px 0 var(--px)}
@@ -78,7 +79,7 @@ h1 small{font-family:'Cabin';font-weight:700;text-transform:uppercase;letter-spa
 .btn.ghost{background:var(--card2);color:var(--tx);text-shadow:none}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:4px 4px 0 var(--px)}
 
-input,select,textarea{width:100%;background:var(--glass);border:2px solid var(--bd);border-radius:6px;color:var(--tx);padding:12px 14px;font:16px/1.5 'Cabin',sans-serif;font-weight:600;transition:.14s;box-shadow:inset 2px 2px 4px var(--sf)}
+input,select,textarea{width:100%;background:var(--glass);border:2px solid var(--bd);border-radius:6px;color:var(--tx);padding:12px 14px;font:600 16px/1.5 'Be Vietnam Pro',sans-serif;transition:.14s;box-shadow:inset 2px 2px 4px var(--sf)}
 input::placeholder,textarea::placeholder{color:var(--mut);opacity:.8}
 input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac);box-shadow:inset 2px 2px 4px var(--sf),0 0 0 3px var(--lo)}
 textarea{resize:vertical;min-height:46px}
@@ -102,7 +103,7 @@ label{font-size:10px;font-weight:700;color:var(--ac2);display:block;margin:0 0 7
 
 .score{display:flex;gap:13px;flex-wrap:wrap;margin:16px 0}
 .sc{flex:1;min-width:120px;background:var(--glass);border:2px solid var(--bd);border-radius:8px;padding:15px;text-align:center;box-shadow:3px 3px 0 var(--px),inset 0 0 0 2px var(--lo)}
-.sc b{font-family:'Pirata One';font-size:34px;font-weight:400;display:block;color:var(--ac2);margin-bottom:5px;line-height:1;text-shadow:1px 1px 0 var(--hi)}
+.sc b{font-family:'Bungee',sans-serif;font-size:30px;font-weight:400;display:block;color:var(--ac2);margin-bottom:5px;line-height:1;text-shadow:1px 1px 0 var(--hi)}
 .sc span{font-size:7px;font-weight:700;color:var(--mut);line-height:1.7;display:block}
 
 .fb{background:var(--glass);border:2px solid var(--ac);border-radius:8px;padding:16px;font-size:16px;font-weight:600;line-height:1.55;white-space:pre-wrap;margin:13px 0;color:var(--tx);box-shadow:4px 4px 0 var(--px),inset 0 0 0 2px var(--lo)}
@@ -112,26 +113,26 @@ label{font-size:10px;font-weight:700;color:var(--ac2);display:block;margin:0 0 7
 .cc{flex:1;min-width:240px;background:var(--card);border:3px solid var(--bd);border-radius:10px;padding:18px;transition:.12s;box-shadow:5px 5px 0 var(--px),inset 0 0 0 2px var(--lo)}
 .cc:hover{transform:translate(-1px,-1px)}
 .cc h3{margin:0 0 9px;font-size:24px;color:var(--tx);display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-shadow:1px 1px 0 var(--hi)}
-.cc .st-dot{font-family:'Cabin';font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.cc .st-dot{font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.08em}
 .ok{color:var(--ac2)}.no{color:var(--mut)}
 
 .note{background:var(--glass);border:2px dashed var(--bd);border-radius:8px;color:var(--tx);padding:15px 17px;font-size:16px;font-weight:600;line-height:1.55;margin:0 0 16px;box-shadow:4px 4px 0 var(--px)}
 
 .learn{border:2px solid var(--bd);border-radius:8px;padding:8px 16px;background:var(--glass);margin-top:6px;box-shadow:inset 0 0 0 2px var(--lo)}
-.learn summary{color:var(--ac2)!important;font-family:'Cabin';font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:12px;padding:8px 0;cursor:pointer}
+.learn summary{color:var(--ac2)!important;font-family:'Be Vietnam Pro',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:12px;padding:8px 0;cursor:pointer}
 .learn p{margin:10px 0;font-size:16px}.learn b{color:var(--ac2)}.learn a{color:var(--ac2);font-weight:700}
 
-.big{font-family:'Pirata One';font-size:64px;font-weight:400;text-align:center;margin:12px 0;color:var(--ac2);line-height:1;text-shadow:3px 3px 0 var(--hi),5px 5px 0 var(--sf)}
+.big{font-family:'Bungee',sans-serif;font-size:54px;font-weight:400;text-align:center;margin:12px 0;color:var(--ac2);line-height:1;text-shadow:3px 3px 0 var(--hi),5px 5px 0 var(--sf)}
 
 .lock{text-align:center;padding:34px 22px;color:var(--mut);font-size:16px;font-weight:600;line-height:1.6;background:var(--glass);border:2px dashed var(--bd);border-radius:8px}
-.lock b{color:var(--ac2);font-family:'Pirata One';font-size:22px;font-weight:400;display:inline-block;margin:6px 0}
+.lock b{color:var(--ac2);font-family:'Be Vietnam Pro',sans-serif;font-size:19px;font-weight:800;display:inline-block;margin:6px 0}
 
 footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weight:600}
 
 .spin{display:inline-block;width:15px;height:15px;border:3px solid var(--ac);border-top-color:transparent;border-radius:50%;animation:vdspin .7s linear infinite;vertical-align:-3px;margin-right:7px}
 @keyframes vdspin{to{transform:rotate(360deg)}}
 
-.xpw{display:flex;align-items:center;gap:10px;font-family:'Cabin';font-size:15px;font-weight:700;flex-wrap:wrap}
+.xpw{display:flex;align-items:center;gap:10px;font-family:'Be Vietnam Pro',sans-serif;font-size:15px;font-weight:700;flex-wrap:wrap}
 .belt{font-size:18px;white-space:nowrap;color:var(--ac2);text-shadow:1px 1px 0 var(--hi)}
 .xpbar{width:130px;height:18px;background:var(--lo);border:2px solid var(--px);border-radius:4px;overflow:hidden}
 .xpbar.b2{width:100%;height:24px;margin:11px 0}
@@ -144,7 +145,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
 .badge{font-size:24px;filter:grayscale(.9);opacity:.5;padding:10px;background:var(--glass);border:2px solid var(--bd);border-radius:8px;box-shadow:3px 3px 0 var(--px);transition:.15s}
 .badge.on{filter:none;opacity:1;background:var(--card2);border-color:var(--px);box-shadow:3px 3px 0 var(--px);animation:vdsway 2.2s ease-in-out infinite}
 
-.xptoast{position:fixed;right:20px;bottom:20px;background:var(--ac);color:var(--hi);font-family:'Pirata One';font-weight:400;font-size:24px;padding:14px 26px;border:3px solid var(--px);border-radius:8px;box-shadow:5px 5px 0 var(--px);transform:translateY(30px);opacity:0;transition:.25s;z-index:9999;text-align:center;text-shadow:1px 1px 0 var(--sf)}
+.xptoast{position:fixed;right:20px;bottom:20px;background:var(--ac);color:var(--hi);font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:18px;padding:14px 26px;border:3px solid var(--px);border-radius:8px;box-shadow:5px 5px 0 var(--px);transform:translateY(30px);opacity:0;transition:.25s;z-index:9999;text-align:center;text-shadow:1px 1px 0 var(--sf)}
 .xptoast.show{transform:translateY(0);opacity:1}
 
 .kbar{height:14px;background:var(--lo);border:2px solid var(--px);border-radius:4px;overflow:hidden;margin:6px 0}
@@ -154,17 +155,17 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
 .col-btn{float:right;background:var(--card2);border:2px solid var(--bd);color:var(--mut);border-radius:5px;padding:6px 11px;font-size:8px;font-weight:700;cursor:pointer;box-shadow:2px 2px 0 var(--px);transition:.09s}
 .col-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--px)}
 
-/* ===== Lớp mới: màn ra khơi + HUD ===== */
+/* ===== màn ra khơi + HUD ===== */
 #boot{position:fixed;inset:0;z-index:10000;background:var(--bg);
   background-image:radial-gradient(circle at 50% 30%, rgba(255,255,255,.2), transparent 55%),repeating-linear-gradient(45deg, rgba(0,0,0,.03) 0 2px, transparent 2px 12px);
   display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:opacity .4s}
 #boot.hide{opacity:0;pointer-events:none}
 #boot .sprite{font-size:88px;margin-bottom:14px;animation:vdsway 2s ease-in-out infinite;filter:drop-shadow(4px 8px 6px var(--sf))}
-#boot .logo{font-family:'Pirata One';font-weight:400;font-size:64px;color:var(--tx);line-height:1.05;margin-bottom:14px;text-shadow:3px 3px 0 var(--hi),6px 6px 0 var(--sf)}
-#boot .sub{font-family:'Cabin';font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:12px;color:var(--ac2);line-height:1.8;margin:0 0 40px}
-#boot .start{font-family:'Pirata One';font-weight:400;font-size:30px;color:var(--hi);background:var(--ac);border:3px solid var(--px);border-radius:8px;padding:14px 36px;cursor:pointer;box-shadow:6px 6px 0 var(--px);animation:vdsway 2s ease-in-out infinite;text-shadow:1px 1px 0 var(--sf)}
+#boot .logo{font-family:'Bungee',sans-serif;font-weight:400;font-size:54px;color:var(--tx);line-height:1.05;margin-bottom:14px;text-shadow:3px 3px 0 var(--hi),6px 6px 0 var(--sf)}
+#boot .sub{font-family:'Be Vietnam Pro',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:12px;color:var(--ac2);line-height:1.8;margin:0 0 40px}
+#boot .start{font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:23px;color:var(--hi);background:var(--ac);border:3px solid var(--px);border-radius:8px;padding:14px 36px;cursor:pointer;box-shadow:6px 6px 0 var(--px);animation:vdsway 2s ease-in-out infinite;text-shadow:1px 1px 0 var(--sf)}
 #boot .start:active{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--px)}
-#boot .hint{font-family:'Cabin';font-weight:600;font-size:16px;color:var(--mut);margin-top:30px}
+#boot .hint{font-family:'Be Vietnam Pro',sans-serif;font-weight:600;font-size:16px;color:var(--mut);margin-top:30px}
 
 #hud{position:fixed;right:14px;bottom:14px;z-index:9998;display:flex;gap:9px;align-items:center}
 .io-btn{width:52px;height:52px;border:3px solid var(--px);border-radius:8px;cursor:pointer;font-size:20px;color:var(--hi);background:var(--purple);box-shadow:4px 4px 0 var(--px);transition:.09s}
@@ -174,6 +175,18 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
 .th{width:44px;height:52px;border:3px solid var(--bd);border-radius:8px;cursor:pointer;font-size:20px;background:var(--card);box-shadow:4px 4px 0 var(--px);transition:.1s}
 .th:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--px)}
 .th.on{border-color:var(--px);background:var(--ac);transform:translate(-1px,-1px)}
+
+/* ===== Modal "chơi game lúc đợi AI" ===== */
+#vd-wait{position:fixed;inset:0;z-index:9990;display:none;align-items:center;justify-content:center;padding:16px;
+  background:rgba(0,0,0,.55)}
+#vd-wait.show{display:flex}
+#vd-wait .vw-box{background:var(--card);border:3px solid var(--bd);border-radius:12px;box-shadow:8px 8px 0 var(--px),inset 0 0 0 2px var(--lo);
+  padding:16px;max-width:468px;width:100%;max-height:92vh;overflow:auto}
+#vd-wait .vw-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+#vd-wait .vw-title{font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:16px;color:var(--tx);display:flex;align-items:center;gap:8px}
+#vd-wait .vw-x{background:var(--card2);border:2px solid var(--bd);color:var(--tx);border-radius:6px;padding:5px 11px;font-weight:800;cursor:pointer;box-shadow:2px 2px 0 var(--px)}
+#vd-wait .vw-status{font-size:13px;color:var(--mut);font-weight:700;margin-bottom:10px}
+#vd-wait .vw-swap{margin-top:10px;text-align:center}
 
 @media (max-width:760px){.wrap{padding:18px 13px 98px}.row>div,.cc{min-width:100%}}
 @media (max-width:560px){
@@ -240,6 +253,34 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
 
 <!-- ============ VIEW: HOME ============ -->
 <div id="v-home">
+<section class="sec" id="cap-nhat-ky">
+  <button class="col-btn" onclick="this.closest('.sec').classList.toggle('collapsed')">thu gọn</button>
+  <h2>📜 Nhật ký thuyền trưởng — Cách dùng</h2>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+    <div style="display:flex;gap:10px;align-items:flex-start"><span style="flex:0 0 auto;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:6px;font-weight:800;box-shadow:2px 2px 0 var(--px)">1</span><div><b>Đảo 1 · Nền móng</b> — chọn chiến lược + dựng ma trận ý tưởng.</div></div>
+    <div style="display:flex;gap:10px;align-items:flex-start"><span style="flex:0 0 auto;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:6px;font-weight:800;box-shadow:2px 2px 0 var(--px)">2</span><div><b>Đảo 2 · Đọc vị Series</b> — soi format lặp của 4 kênh mẫu.</div></div>
+    <div style="display:flex;gap:10px;align-items:flex-start"><span style="flex:0 0 auto;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:6px;font-weight:800;box-shadow:2px 2px 0 var(--px)">3</span><div><b>Đảo 3 · Keyword &amp; Insight</b> — thông điệp cốt lõi + 5 tầng tâm lý.</div></div>
+    <div style="display:flex;gap:10px;align-items:flex-start"><span style="flex:0 0 auto;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:6px;font-weight:800;box-shadow:2px 2px 0 var(--px)">4</span><div><b>Đảo 4 · Bộ từ khóa</b> — gom ≥30 keyword từ 8 danh mục.</div></div>
+    <div style="display:flex;gap:10px;align-items:flex-start"><span style="flex:0 0 auto;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:6px;font-weight:800;box-shadow:2px 2px 0 var(--px)">5</span><div><b>Đảo 5 · Research viral</b> — săn ≥20 video ≥500k view / 35k tim.</div></div>
+    <div style="display:flex;gap:10px;align-items:flex-start"><span style="flex:0 0 auto;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:6px;font-weight:800;box-shadow:2px 2px 0 var(--px)">6</span><div><b>Đảo 6 · Phân tích &amp; Nâng cấp</b> — bóc công thức → ý tưởng riêng.</div></div>
+    <div style="display:flex;gap:10px;align-items:flex-start"><span style="flex:0 0 auto;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--gold);color:var(--px);border:2px solid var(--px);border-radius:6px;font-weight:800;box-shadow:2px 2px 0 var(--px)">⚒</span><div><b>Xưởng tàu (Lò Luyện)</b> — dựng kịch bản chi tiết, chấm Scorecard.</div></div>
+    <div style="display:flex;gap:10px;align-items:flex-start"><span style="flex:0 0 auto;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--blue);color:var(--hi);border:2px solid var(--px);border-radius:6px;font-weight:800;box-shadow:2px 2px 0 var(--px)">📤</span><div><b>Phân phối</b> — xuất 30 ngày content sang Flow, lên lịch đăng.</div></div>
+  </div>
+  <details class="learn" open>
+    <summary>⚡ 3 bước để bắt đầu</summary>
+    <p><b>1. Kết nối La Bàn:</b> dán Gemini API key ở tab Kết nối (key lưu trong máy bạn).<br>
+    <b>2. Vượt 6 Đảo:</b> làm đảo 1→6, AI chấm <b>≥70đ</b> mới mở đảo sau.<br>
+    <b>3. GENERATE → Xưởng → Flow:</b> sinh 30 ngày content → Lò dựng kịch bản → xuất cho Flow.</p>
+  </details>
+  <details class="learn">
+    <summary>❓ Câu hỏi thường gặp</summary>
+    <p><b>Key của tôi lưu ở đâu?</b> Trong trình duyệt của bạn (localStorage) — không gửi đi đâu ngoài API chính chủ.<br><br>
+    <b>Đồng bộ nhiều thiết bị thế nào?</b> Đăng nhập để Channel DNA đồng bộ qua đám mây — mở máy nào cũng thấy tiến độ.<br><br>
+    <b>Xuất sang Flow ra sao?</b> Sau GENERATE/Lò, bấm Xuất → tải gói <code>.md/.json</code> để đẩy vào Flow dựng video.<br><br>
+    <b>Vì sao cần ≥70đ?</b> Mỗi đảo là input của đảo sau; đạt chuẩn mới đảm bảo chất lượng trước khi tốn công quay dựng.<br><br>
+    <b>Chưa có Apify được không?</b> Được — chỉ thiếu phần cào tự động ở đảo 2·3·5, bạn nhập tay vẫn chạy.</p>
+  </details>
+</section>
   <div class="station" id="stations"></div>
   <div class="sec" id="journey"></div>
   <div class="sec" id="overview" style="padding:14px 18px"></div>
@@ -1581,6 +1622,7 @@ function forgeFmt(){ return /kiến thức/i.test((S.dna.m1&&S.dna.m1.dinhdang)|
 const FORGE_SV='s1'; // phiên bản chấm-trên-kịch-bản; điểm cũ (chấm ý tưởng trống) sẽ tự chấm lại 1 lần
 function forgeProg(msg,spin){ // hiện tiến trình ở CẢ tab Lò lẫn cổng GENERATE
   ['forge-fb','gen-prog'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=`<div class="fb">${spin?'<span class=\"spin\"></span>':''}${msg}</div>`; });
+  if(window.vdOpenWait)vdOpenWait(msg);
 }
 function forgeReset(){
   if(!confirm('Làm lại từ đầu: xoá kịch bản + điểm của 30 ý tưởng để chạy lại sạch (xem AI chạy từng bước)? Ý tưởng giữ nguyên.')) return;
@@ -3050,7 +3092,7 @@ function ensureDynamic(){
   window.VDsfx=SFX;
 
   /* 🔔 Báo hoàn thành khi AI làm xong tác vụ dài: kèn thắng trận + toast nổi */
-  window.vdNotifyDone=function(msg){
+  window.vdNotifyDone=function(msg){ try{if(window.vdCloseWait)window.vdCloseWait();}catch(e){}
     try{ if(ready) SFX.win(); }catch(e){}
     var t=document.createElement('div'); t.className='xptoast'; t.textContent='✅ '+(msg||'AI đã làm xong!');
     document.body.appendChild(t); requestAnimationFrame(function(){ t.classList.add('show'); });
@@ -3093,5 +3135,304 @@ function ensureDynamic(){
   if(document.readyState!=='loading') bind(); else document.addEventListener('DOMContentLoaded',bind);
 })();
 </script>
+<!-- ===== Modal chơi game lúc đợi AI ===== -->
+<div id="vd-wait"><div class="vw-box">
+  <div class="vw-head"><div class="vw-title">⏳ AI đang ra khơi…</div>
+    <button class="vw-x" id="vw-x">✕ Đóng</button></div>
+  <div class="vw-status" id="vw-status">Chơi game trong lúc đợi AI nhé! 🏴‍☠️</div>
+  <div id="vd-game-host"></div>
+  <div class="vw-swap"><button class="btn ghost sm" id="vw-swap">🔀 Đổi game khác</button></div>
+</div></div>
+
+<!-- ===== GAME 1 · 🪙 Hứng vàng ===== -->
+<style>
+  .g1-wrap{background:var(--card);border:3px solid var(--bd);border-radius:10px;box-shadow:6px 6px 0 var(--px),inset 0 0 0 2px var(--lo);padding:14px;font-family:'Be Vietnam Pro',sans-serif}
+  .g1-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  .g1-title{font-weight:800;font-size:16px;color:var(--tx)}
+  .g1-stat{display:flex;gap:8px;font-size:13px;font-weight:700}
+  .g1-pill{background:var(--glass);border:2px solid var(--bd);border-radius:6px;padding:3px 9px;color:var(--tx)}
+  .g1-pill b{color:var(--ac2)}
+  .g1-stage{position:relative;width:100%;aspect-ratio:3/4;max-height:360px;background:linear-gradient(180deg,var(--glass),var(--lo));border:2px solid var(--px);border-radius:8px;overflow:hidden;touch-action:none}
+  .g1-cv{display:block;width:100%;height:100%}
+  .g1-over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(36,20,7,.66);color:var(--hi);text-align:center;padding:18px}
+  .g1-over.hide{display:none}
+  .g1-over .big{font-family:'Bungee',sans-serif;font-size:34px;line-height:1}
+  .g1-over .msg{font-size:15px;font-weight:600;max-width:240px}
+  .g1-btn{background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:7px;padding:12px 22px;font-family:'Be Vietnam Pro';font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;box-shadow:4px 4px 0 var(--px)}
+  .g1-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--px)}
+</style>
+<script>
+(function(){
+  "use strict";
+  var sfx=function(n){ try{ if(window.VDsfx&&window.VDsfx[n]) window.VDsfx[n](); }catch(e){} };
+  var root,cv,ctx,over,scoreEl,bestEl,W,H,raf,running=false;
+  var boat,coins,spawnT,score,misses,best,last;
+  var BEST_KEY='g1_best';
+  function html(){
+    return '<div class="g1-wrap">'
+      +'<div class="g1-top"><div class="g1-title">🪙 Hứng Vàng</div>'
+      +'<div class="g1-stat"><span class="g1-pill">Điểm <b class="g1-score">0</b></span>'
+      +'<span class="g1-pill">Kỷ lục <b class="g1-best">0</b></span>'
+      +'<span class="g1-pill g1-life">❤️❤️❤️</span></div></div>'
+      +'<div class="g1-stage"><canvas class="g1-cv"></canvas>'
+      +'<div class="g1-over"><div class="big">🪙</div><div class="msg g1-msg">Kéo thuyền hứng vàng rơi.<br>Để rơi 3 đồng là chìm tàu!</div>'
+      +'<button class="g1-btn g1-start">Bắt đầu</button></div></div></div>';
+  }
+  function mount(elId){
+    root=document.getElementById(elId)||document.getElementById('game-1');
+    root.innerHTML=html();
+    cv=root.querySelector('.g1-cv'); ctx=cv.getContext('2d');
+    over=root.querySelector('.g1-over');
+    scoreEl=root.querySelector('.g1-score'); bestEl=root.querySelector('.g1-best');
+    best=+(localStorage.getItem(BEST_KEY)||0); bestEl.textContent=best;
+    root.querySelector('.g1-start').addEventListener('click',start);
+    var stage=root.querySelector('.g1-stage');
+    function moveTo(clientX){ if(!boat)return; var r=cv.getBoundingClientRect(); boat.x=(clientX-r.left)/r.width*W; }
+    stage.addEventListener('mousemove',function(e){ if(running) moveTo(e.clientX); });
+    stage.addEventListener('touchmove',function(e){ if(running){ moveTo(e.touches[0].clientX); e.preventDefault(); } },{passive:false});
+    resize();
+  }
+  function resize(){ if(!cv)return; var r=cv.getBoundingClientRect(); W=cv.width=Math.round(r.width); H=cv.height=Math.round(r.height); }
+  function start(){
+    resize(); over.classList.add('hide');
+    boat={x:W/2,w:Math.max(56,W*0.22),h:20};
+    coins=[]; spawnT=0; score=0; misses=0; last=performance.now();
+    updateStat(); running=true; raf=requestAnimationFrame(loop);
+  }
+  function stop(){ running=false; if(raf) cancelAnimationFrame(raf); }
+  function isRunning(){ return running; }
+  function updateStat(){ if(scoreEl)scoreEl.textContent=score; var l=root.querySelector('.g1-life'); if(l)l.textContent='❤️'.repeat(Math.max(0,3-misses))+'🤍'.repeat(misses); }
+  function loop(now){
+    if(!running)return;
+    var dt=Math.min(40,now-last); last=now;
+    ctx.clearRect(0,0,W,H);
+    spawnT-=dt;
+    var rate=Math.max(420,900-score*16);
+    if(spawnT<=0){ spawnT=rate; coins.push({x:24+Math.random()*(W-48),y:-18,r:13,vy:0.12+Math.random()*0.06+score*0.0016,gold:Math.random()<0.82}); }
+    for(var i=coins.length-1;i>=0;i--){
+      var c=coins[i]; c.y+=c.vy*dt;
+      ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,7);
+      if(c.gold){ ctx.fillStyle=cssv('--gold','#d9a93a'); ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle=cssv('--px','#241407'); ctx.stroke(); ctx.fillStyle=cssv('--px','#241407'); ctx.font='bold 13px Be Vietnam Pro,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('₿',c.x,c.y+1); }
+      else { ctx.fillStyle=cssv('--red','#a3261f'); ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle=cssv('--px','#241407'); ctx.stroke(); ctx.fillStyle='#fff'; ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('☠',c.x,c.y+1); }
+      if(c.y+c.r>=H-26 && c.x>boat.x-boat.w/2 && c.x<boat.x+boat.w/2){
+        if(c.gold){ score++; sfx('coin'); } else { misses++; sfx('back'); }
+        coins.splice(i,1); updateStat();
+        if(misses>=3){ return gameOver(); }
+        continue;
+      }
+      if(c.y-c.r>H){ if(c.gold){ misses++; sfx('back'); updateStat(); if(misses>=3){ return gameOver(); } } coins.splice(i,1); }
+    }
+    var by=H-22;
+    ctx.fillStyle=cssv('--ac2','#9c6f18'); ctx.strokeStyle=cssv('--px','#241407'); ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(boat.x-boat.w/2,by); ctx.lineTo(boat.x+boat.w/2,by);
+    ctx.lineTo(boat.x+boat.w/2-12,by+boat.h); ctx.lineTo(boat.x-boat.w/2+12,by+boat.h);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=cssv('--red','#a3261f'); ctx.fillRect(boat.x-2,by-22,4,22);
+    ctx.fillStyle=cssv('--hi','#fffaf0'); ctx.beginPath(); ctx.moveTo(boat.x+2,by-20); ctx.lineTo(boat.x+18,by-12); ctx.lineTo(boat.x+2,by-6); ctx.closePath(); ctx.fill();
+    raf=requestAnimationFrame(loop);
+  }
+  function cssv(n,f){ try{ var v=getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v||f; }catch(e){ return f; } }
+  function gameOver(){
+    running=false; if(raf)cancelAnimationFrame(raf);
+    if(score>best){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; sfx('win'); }
+    over.classList.remove('hide');
+    over.querySelector('.big').textContent = score>=best?'🏆':'🏴‍☠️';
+    over.querySelector('.g1-msg').innerHTML='Chìm tàu! Bạn gom <b>'+score+'</b> đồng vàng.'+(score&&score>=best?'<br>⭐ Kỷ lục mới!':'');
+    over.querySelector('.g1-start').textContent='Chơi lại';
+  }
+  window.addEventListener('resize',function(){ if(cv) resize(); });
+  window.VDGame1={ mount:mount, start:start, stop:stop, isRunning:isRunning };
+})();
+</script>
+
+<!-- ===== GAME 2 · 🃏 Lật thẻ kho báu ===== -->
+<style>
+  .g2-wrap{background:var(--card);border:3px solid var(--bd);border-radius:10px;box-shadow:6px 6px 0 var(--px),inset 0 0 0 2px var(--lo);padding:14px;font-family:'Be Vietnam Pro',sans-serif}
+  .g2-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  .g2-title{font-weight:800;font-size:16px;color:var(--tx)}
+  .g2-stat{display:flex;gap:8px;font-size:13px;font-weight:700}
+  .g2-pill{background:var(--glass);border:2px solid var(--bd);border-radius:6px;padding:3px 9px;color:var(--tx)}
+  .g2-pill b{color:var(--ac2)}
+  .g2-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .g2-card{aspect-ratio:3/4;border:2px solid var(--px);border-radius:8px;background:var(--ac);box-shadow:3px 3px 0 var(--px);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;user-select:none;transition:transform .12s;color:var(--hi)}
+  .g2-card .face{display:none}
+  .g2-card .back{font-family:'Bungee',sans-serif;font-size:20px}
+  .g2-card.flip{background:var(--glass)}
+  .g2-card.flip .face{display:block}.g2-card.flip .back{display:none}
+  .g2-card.done{background:var(--lo);opacity:.65;cursor:default}
+  .g2-card:active{transform:scale(.96)}
+  .g2-foot{margin-top:12px;text-align:center}
+  .g2-btn{background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:7px;padding:11px 20px;font-family:'Be Vietnam Pro';font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;box-shadow:4px 4px 0 var(--px)}
+  .g2-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--px)}
+  .g2-msg{font-size:14px;font-weight:700;color:var(--ac2);margin-top:8px;min-height:18px}
+</style>
+<script>
+(function(){
+  "use strict";
+  var sfx=function(n){ try{ if(window.VDsfx&&window.VDsfx[n]) window.VDsfx[n](); }catch(e){} };
+  var ICONS=['🏴‍☠️','⚓','🗺️','💰','🦜','🧭','⚔️','💎'];
+  var root,grid,movesEl,bestEl,msg,first,lock,moves,matched,best,running=false;
+  var BEST_KEY='g2_best';
+  function html(){
+    return '<div class="g2-wrap">'
+      +'<div class="g2-top"><div class="g2-title">🃏 Lật Thẻ Kho Báu</div>'
+      +'<div class="g2-stat"><span class="g2-pill">Lượt <b class="g2-moves">0</b></span>'
+      +'<span class="g2-pill">Tốt nhất <b class="g2-best">—</b></span></div></div>'
+      +'<div class="g2-grid"></div>'
+      +'<div class="g2-foot"><button class="g2-btn g2-start">Chơi lại</button><div class="g2-msg"></div></div></div>';
+  }
+  function mount(elId){
+    root=document.getElementById(elId)||document.getElementById('game-2');
+    root.innerHTML=html();
+    grid=root.querySelector('.g2-grid'); movesEl=root.querySelector('.g2-moves');
+    bestEl=root.querySelector('.g2-best'); msg=root.querySelector('.g2-msg');
+    best=+(localStorage.getItem(BEST_KEY)||0); bestEl.textContent=best?best:'—';
+    root.querySelector('.g2-start').addEventListener('click',start);
+    start();
+  }
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function start(){
+    var deck=shuffle(ICONS.concat(ICONS));
+    grid.innerHTML=''; first=null; lock=false; moves=0; matched=0; running=true;
+    movesEl.textContent=0; msg.textContent='';
+    deck.forEach(function(ic){
+      var c=document.createElement('div'); c.className='g2-card';
+      c.innerHTML='<span class="back">?</span><span class="face">'+ic+'</span>'; c.dataset.ic=ic;
+      c.addEventListener('click',function(){ pick(c); });
+      grid.appendChild(c);
+    });
+  }
+  function stop(){ running=false; lock=true; }
+  function isRunning(){ return running; }
+  function pick(c){
+    if(lock||!running||c.classList.contains('flip')||c.classList.contains('done'))return;
+    c.classList.add('flip'); sfx('click');
+    if(!first){ first=c; return; }
+    moves++; movesEl.textContent=moves;
+    if(first.dataset.ic===c.dataset.ic){
+      first.classList.add('done'); c.classList.add('done'); first=null; matched++; sfx('coin');
+      if(matched===ICONS.length) win();
+    } else {
+      lock=true; var a=first,b=c; first=null;
+      setTimeout(function(){ a.classList.remove('flip'); b.classList.remove('flip'); lock=false; },680);
+    }
+  }
+  function win(){
+    running=false; sfx('win');
+    var rec=(!best||moves<best);
+    if(rec){ best=moves; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+    msg.innerHTML='🏆 Gom đủ kho báu trong <b>'+moves+'</b> lượt!'+(rec?' ⭐ Kỷ lục!':'');
+  }
+  window.VDGame2={ mount:mount, start:start, stop:stop, isRunning:isRunning };
+})();
+</script>
+
+<!-- ===== GAME 3 · 🎯 Bắn pháo hải tặc ===== -->
+<style>
+  .g3-wrap{background:var(--card);border:3px solid var(--bd);border-radius:10px;box-shadow:6px 6px 0 var(--px),inset 0 0 0 2px var(--lo);padding:14px;font-family:'Be Vietnam Pro',sans-serif}
+  .g3-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  .g3-title{font-weight:800;font-size:16px;color:var(--tx)}
+  .g3-stat{display:flex;gap:8px;font-size:13px;font-weight:700}
+  .g3-pill{background:var(--glass);border:2px solid var(--bd);border-radius:6px;padding:3px 9px;color:var(--tx)}
+  .g3-pill b{color:var(--ac2)}
+  .g3-stage{position:relative;width:100%;aspect-ratio:3/4;max-height:360px;background:linear-gradient(180deg,var(--glass),var(--lo));border:2px solid var(--px);border-radius:8px;overflow:hidden}
+  .g3-target{position:absolute;width:54px;height:54px;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;border:2px solid var(--px);border-radius:50%;background:var(--card);box-shadow:3px 3px 0 var(--px);transform:scale(0);transition:transform .12s;user-select:none}
+  .g3-target.show{transform:scale(1)}
+  .g3-target.bomb{background:var(--red)}
+  .g3-over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(36,20,7,.66);color:var(--hi);text-align:center;padding:18px}
+  .g3-over.hide{display:none}
+  .g3-over .big{font-family:'Bungee',sans-serif;font-size:34px;line-height:1}
+  .g3-over .msg{font-size:15px;font-weight:600;max-width:240px}
+  .g3-btn{background:var(--ac);color:var(--hi);border:2px solid var(--px);border-radius:7px;padding:12px 22px;font-family:'Be Vietnam Pro';font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;box-shadow:4px 4px 0 var(--px)}
+  .g3-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--px)}
+</style>
+<script>
+(function(){
+  "use strict";
+  var sfx=function(n){ try{ if(window.VDsfx&&window.VDsfx[n]) window.VDsfx[n](); }catch(e){} };
+  var GOOD=['☠️','🦜','💎','🦀','🐙'], BOMB='💣';
+  var root,stage,over,scoreEl,bestEl,timeEl,score,best,timeLeft,spawnId,tickId,running=false;
+  var BEST_KEY='g3_best';
+  function html(){
+    return '<div class="g3-wrap">'
+      +'<div class="g3-top"><div class="g3-title">🎯 Bắn Pháo Hải Tặc</div>'
+      +'<div class="g3-stat"><span class="g3-pill">Điểm <b class="g3-score">0</b></span>'
+      +'<span class="g3-pill">Kỷ lục <b class="g3-best">0</b></span>'
+      +'<span class="g3-pill">⏱ <b class="g3-time">30</b></span></div></div>'
+      +'<div class="g3-stage"><div class="g3-over"><div class="big">🎯</div>'
+      +'<div class="msg g3-msg">Chạm mục tiêu (☠ 🦜 💎) để ghi điểm trong 30 giây.<br>Tránh 💣 — trúng bom trừ 2 điểm!</div>'
+      +'<button class="g3-btn g3-start">Bắt đầu</button></div></div></div>';
+  }
+  function mount(elId){
+    root=document.getElementById(elId)||document.getElementById('game-3');
+    root.innerHTML=html();
+    stage=root.querySelector('.g3-stage'); over=root.querySelector('.g3-over');
+    scoreEl=root.querySelector('.g3-score'); bestEl=root.querySelector('.g3-best'); timeEl=root.querySelector('.g3-time');
+    best=+(localStorage.getItem(BEST_KEY)||0); bestEl.textContent=best;
+    root.querySelector('.g3-start').addEventListener('click',start);
+  }
+  function start(){
+    clearTimers(); over.classList.add('hide');
+    score=0; timeLeft=30; running=true; scoreEl.textContent=0; timeEl.textContent=30;
+    [].slice.call(stage.querySelectorAll('.g3-target')).forEach(function(t){t.remove();});
+    spawnId=setInterval(spawn,720);
+    tickId=setInterval(function(){ timeLeft--; if(timeEl)timeEl.textContent=timeLeft; if(timeLeft<=0) end(); },1000);
+    spawn();
+  }
+  function clearTimers(){ if(spawnId)clearInterval(spawnId); if(tickId)clearInterval(tickId); }
+  function stop(){ running=false; clearTimers(); }
+  function isRunning(){ return running; }
+  function spawn(){
+    if(!running)return;
+    var bomb=Math.random()<0.22;
+    var t=document.createElement('div'); t.className='g3-target'+(bomb?' bomb':'');
+    t.textContent=bomb?BOMB:GOOD[Math.floor(Math.random()*GOOD.length)];
+    var pad=8, w=stage.clientWidth-54-pad, h=stage.clientHeight-54-pad;
+    t.style.left=(pad+Math.random()*w)+'px'; t.style.top=(pad+Math.random()*h)+'px';
+    var gone=setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){t.remove();},120); },900);
+    t.addEventListener('click',function(){
+      if(!running||t.dataset.hit)return; t.dataset.hit=1; clearTimeout(gone);
+      if(bomb){ score=Math.max(0,score-2); sfx('back'); } else { score++; sfx('coin'); }
+      scoreEl.textContent=score;
+      t.classList.remove('show'); setTimeout(function(){t.remove();},120);
+    });
+    stage.appendChild(t); requestAnimationFrame(function(){ t.classList.add('show'); });
+  }
+  function end(){
+    running=false; clearTimers();
+    var rec=score>best; if(rec){ best=score; localStorage.setItem(BEST_KEY,best); bestEl.textContent=best; }
+    sfx('win');
+    over.classList.remove('hide');
+    over.querySelector('.big').textContent=rec?'🏆':'🏴‍☠️';
+    over.querySelector('.g3-msg').innerHTML='Hết giờ! Bạn ghi <b>'+score+'</b> điểm.'+(rec?'<br>⭐ Kỷ lục mới!':'');
+    over.querySelector('.g3-start').textContent='Chơi lại';
+  }
+  window.VDGame3={ mount:mount, start:start, stop:stop, isRunning:isRunning };
+})();
+</script>
+
+<!-- ===== Helper điều khiển modal chờ AI ===== -->
+<script>
+(function(){
+  "use strict";
+  var games=[window.VDGame1,window.VDGame2,window.VDGame3].filter(Boolean);
+  var modal,host,statusEl,cur=null,idx=0;
+  function grab(){ modal=document.getElementById('vd-wait'); host=document.getElementById('vd-game-host'); statusEl=document.getElementById('vw-status'); }
+  function mountGame(i){ if(!games.length||!host)return; idx=(i%games.length+games.length)%games.length; cur=games[idx]; host.innerHTML=''; try{ cur.mount('vd-game-host'); }catch(e){} }
+  window.vdOpenWait=function(msg){
+    grab(); if(!modal||!games.length) return;
+    if(statusEl) statusEl.textContent=msg||'AI đang ra khơi… chơi game trong lúc đợi! 🏴‍☠️';
+    modal.classList.add('show');
+    if(!cur) mountGame(Math.floor(Math.random()*games.length));
+  };
+  window.vdCloseWait=function(){ grab(); if(!modal)return; try{ if(cur&&cur.stop) cur.stop(); }catch(e){} modal.classList.remove('show'); };
+  document.addEventListener('click',function(e){
+    if(e.target.closest('#vw-x')) window.vdCloseWait();
+    else if(e.target.closest('#vw-swap')) mountGame(idx+1);
+  });
+})();
+</script>
+
 </body>
 </html>
