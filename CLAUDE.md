@@ -121,3 +121,13 @@ Thông điệp cốt lõi (≥3 keyword brand + ≥3 insight sale) 40 · Ý tư�
 | Pipeboard/Meta Ads · Google Sheets · Cloudflare Pages | sau tốt nghiệp / Generate | ⏳ phase sau |
 
 Triết lý: mỗi connector là 1 cổng dữ liệu độc lập, thêm nguồn mới không sửa core. Key lưu localStorage, app không giữ key trên server.
+
+---
+
+## 7. Phối hợp Design Claude ↔ Claude Code (2 AI cùng làm)
+
+Xem chi tiết: [HANDOFF-DESIGN.md](HANDOFF-DESIGN.md).
+
+- **Design Claude** sở hữu **lớp nhìn**: khối `<style>` + markup mới. **Claude Code** sở hữu **JS/logic + tích hợp + deploy**.
+- **Hợp đồng giao diện (bất biến)**: giữ nguyên tên **biến CSS** (`--bg --card --ac --ac2 --warn --red --tx --mut --bd --card2`), **class vocabulary** (`sec btn cc station st fb row pill tag lock learn cách note mut sc spin`), **tab `data-v`** (`home lib skuld ops dist conn dna`) + container `#v-*`, và **mọi `id` / `onclick` đang có** (JS bám vào). Restyle/đổi layout thoải mái, đừng đổi các tên này.
+- **Luồng**: Design xuất CSS/markup → Claude Code ráp trên nhánh `design-ui` → deploy preview → duyệt → merge `main`. Reskin = chỉ thay `<style>` (0 xung đột). Component mới = giữ id/onclick cũ, Claude Code nối dây.
