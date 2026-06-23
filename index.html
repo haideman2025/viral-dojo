@@ -371,7 +371,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div id="forge-export" style="display:none;gap:10px;margin-top:10px">
       <button class="btn ghost sm" onclick="exportScripts('md')">⬇️ Tải kịch bản .md</button>
       <button class="btn ghost sm" onclick="exportScripts('csv')">⬇️ Tải .csv</button>
-      <button class="btn ghost sm" id="flow-manifest" onclick="exportFlowManifest()" style="border-color:var(--blue);color:var(--blue)">📦 Xuất manifest (Flow)</button>
+      <button class="btn ghost sm" id="flow-manifest" onclick="exportFlowManifest()" style="border-color:var(--blue);color:var(--blue)">📦 Xuất cho Flow (.md)</button>
       <button class="btn ghost sm" onclick="exportFlowMd()" style="border-color:var(--blue);color:var(--blue)">📄 Plan .md (Flow)</button>
     </div>
   </div>
@@ -1661,13 +1661,20 @@ Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"nhan_vat":["tên NV xuất hiệ
         arc_cam_xuc:['Nỗi đau','Rào cản','Mong đợi','Tự hào','Thúc đẩy'], shots:shotsOut });
       save();
     }
-    const manifest={ _note:'Xuất từ VIRAL DOJO cho Lò Sản Xuất Video (Flow). Nạp bằng "Import manifest.json".',
+    const manifest={ schema:'flow-pack/v1',
       meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral' },
       characters:Object.values(charMap), products:Object.values(prodMap), scenes:Object.values(sceneMap), days:daysOut };
-    _dl('flow-manifest-'+_kenh().replace(/[^\w]+/g,'_')+'.json', JSON.stringify(manifest,null,2),'application/json');
-    if(fb)fb.innerHTML=`<div class="fb">✅ Xuất manifest cho Flow: ${daysOut.length} ngày · ${Object.keys(charMap).length} nhân vật · ${Object.keys(prodMap).length} sản phẩm · ${Object.keys(sceneMap).length} cảnh.${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'} Nạp vào Flow bằng "Import manifest.json".</div>`;
+    const nC=Object.keys(charMap).length, nP=Object.keys(prodMap).length, nS=Object.keys(sceneMap).length;
+    const nShot=daysOut.reduce((t,d)=>t+d.shots.length,0);
+    // .md NHÚNG khối ```json``` — Flow đọc thẳng khối JSON, KHÔNG cần AI phân tích
+    const md=`# Flow Pack — ${_kenh()}\n\n`+
+      `> Nạp file .md này vào "Lò Sản Xuất Video" (Flow). App đọc KHỐI JSON \`flow-pack/v1\` bên dưới để dựng Số thực thể (NV/SP/Cảnh) + danh sách shot. KHÔNG cần "Phân tích thông minh".\n\n`+
+      `## Tóm tắt\n- ${daysOut.length} ngày · ${nShot} shot\n- ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh\n- Mỗi nhân vật/sản phẩm/cảnh = 1 ID, upload 1 ảnh dùng lại. Shot có \`no_product:true\` thì KHÔNG đính ảnh sản phẩm.\n\n`+
+      '```json\n'+JSON.stringify(manifest,null,2)+'\n```\n';
+    _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.md', md, 'text/markdown');
+    if(fb)fb.innerHTML=`<div class="fb">✅ Xuất Flow Pack (.md có JSON nhúng): ${daysOut.length} ngày · ${nShot} shot · ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh.${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'} Nạp .md này vào Flow.</div>`;
   }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
-  if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất manifest (Flow)'; }
+  if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất cho Flow (.md)'; }
 }
 /* --- 🎥 Bộ prompt video Omni (Google Flow) — chuỗi 10s/script --- */
 /* ép mọi giá trị (string/array/object) thành chuỗi đọc được — AI đôi khi trả object */
