@@ -1785,18 +1785,21 @@ async function exportFlowManifest(){
         const body=src.map((s,k)=>`#${k+1} | Overlay:${s.onscreen||''} | Thoại:${s.voiceover||''} | EN:${(s.prompt_en||'').slice(0,160)}`).join('\n');
         const known=`Thực thể ĐÃ BIẾT (dùng lại ĐÚNG tên nếu trùng): NV[${Object.values(charMap).map(c=>c.ten).join(', ')}] · SP[${Object.values(prodMap).map(p=>p.ten).join(', ')}] · Cảnh[${Object.values(sceneMap).map(c=>c.ten).join(', ')}]`;
         try{
-          const raw=await geminiCall(`Bạn là giám sát sản xuất video cho kênh bán hàng. NHẬN DIỆN thực thể cho từng shot để máy gán ảnh tham chiếu.
+          const raw=await geminiCall(`Bạn là ĐẠO DIỄN kiêm giám sát sản xuất video TikTok. Với MỖI shot: nhận diện thực thể + viết prompt quay NHỊP NHANH, cảm xúc cao, CÓ VOICEOVER.
 BRAND (chứa tên sản phẩm/biến thể & nhân vật):\n${brandContext(1800)}
 ${ideaCtx}
 ${known}
-NHIỆM VỤ mỗi shot:
+NHIỆM VỤ mỗi shot — trả các trường:
 - nhan_vat: tên người xuất hiện. Không có tên riêng thì đặt tên mô tả ngắn ổn định (vd "Chàng trai chính"). LUÔN có ≥1 nhân vật nếu shot có người.
 - san_pham: tên sản phẩm/biến thể XUẤT HIỆN. Biến thể khác nhau = sản phẩm KHÁC (vd "ONIIZ Peachy","ONIIZ Fresh","ONIIZ Cool" là 3 SP). RỖNG nếu shot không khoe sản phẩm.
 - no_product: true nếu shot KHÔNG có sản phẩm; false nếu overlay/thoại/ý tưởng nhắc tới sản phẩm cụ thể.
-- canh: tên bối cảnh. cam_xuc: beat cảm xúc. goc_may: đa dạng (cỡ cảnh+góc+chuyển động), không lặp trực diện.
+- canh: MÔ TẢ bối cảnh do BẠN tự thiết kế phù hợp nội dung (1 câu) — AI Flow tự dựng cảnh, user KHÔNG upload ảnh cảnh.
+- cam_xuc: beat cảm xúc. goc_may: phong cách máy chủ đạo của shot.
+- voiceover: lời thoại TIẾNG VIỆT nhân vật nói trong shot (lấy từ Thoại, gọn ~10s; rỗng nếu không có).
+- prompt_en: 1 đoạn TIẾNG ANH cho Veo/Omni mô tả 1 CHUỖI 10 GIÂY gồm 6-8 CÚ CẮT NHANH, MỖI cú 1 GÓC MÁY SÁNG TẠO KHÁC NHAU (extreme close-up, low-angle, POV, overhead/top-down, whip-pan, tracking, macro insert, dutch tilt, snap-zoom) khớp diễn biến kịch bản; bối cảnh tự thiết kế; nhân vật & sản phẩm LẤY TỪ ẢNH THAM CHIẾU upload (đừng tả ngoại hình SP bằng chữ); LỒNG audio: 'Audio: the character speaks in Vietnamese: "<voiceover>" with clear lip-synced voiceover' + nhạc nền trend + SFX khớp từng cú cắt; chèn on-screen text từ overlay; dọc 9:16, fast-paced cho Gen Z. Nếu no_product=true thêm "No product appears; do not show any product/packaging/logo". Nếu false thêm "Use the uploaded product reference image as the SINGLE source of truth; do NOT recolor/relabel/restyle/redesign/replace it".
 Dùng TÊN NHẤT QUÁN giữa các shot & các ngày (cùng người/SP = cùng tên).
-DANH SÁCH SHOT:\n${body}
-Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,"nhan_vat":[],"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":""}]}`,{temp:0.3});
+DANH SÁCH SHOT (Overlay + Thoại + gợi ý EN):\n${body}
+Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,"nhan_vat":[],"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":"","voiceover":"","prompt_en":""}]}`,{temp:0.45});
           const out=_tryJson(raw); cls=(out&&_arr(out.shots))||null; if(!cls) _fail++;
         }catch(e){ _fail++; }   // ngày lỗi → bỏ qua, dùng mặc định, vẫn xuất tiếp
       }
@@ -1807,33 +1810,35 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
         const hasSP=spArr.filter(Boolean).length>0;
         const noProd = c.no_product===false ? false : !hasSP;
         const sp = noProd?[]:spArr.map(n=>_idFor(prodMap,'SP',n)).filter(Boolean);
-        const canh = c.canh?_idFor(sceneMap,'C',c.canh):null;
+        const canh = c.canh ? String(c.canh) : '';   // mô tả cảnh (AI tự dựng, KHÔNG upload)
         const tag=`N${x.day}-S${k+1}`;
-        nv.forEach(id=>_regAdd(charMap,id,tag)); sp.forEach(id=>_regAdd(prodMap,id,tag)); if(canh)_regAdd(sceneMap,canh,tag);
-        let pen=s.prompt_en||'';
-        if(!pen&&s._sc) pen=`${s._sc.phan||''}: ${s._sc.noidung||''}. Visual: ${s._sc.hinhanh||''}. Vertical 9:16, ~10s, cinematic, varied camera.`;
-        if(noProd) pen+=' No product appears in this shot; do not show, invent, imply, or place any product, packaging, bottle, or logo anywhere in the frame.';
-        return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:nv, san_pham:sp, no_product:noProd, canh:canh||'',
+        nv.forEach(id=>_regAdd(charMap,id,tag)); sp.forEach(id=>_regAdd(prodMap,id,tag));
+        const vo=(c.voiceover&&String(c.voiceover))||s.voiceover||'';
+        let pen=(c.prompt_en&&String(c.prompt_en))||s.prompt_en||'';
+        if(!pen&&s._sc) pen=`Fast-paced 10s sequence, 6-8 quick cuts with varied creative camera angles. ${s._sc.noidung||''}. Setting: ${s._sc.hinhanh||''}. Vertical 9:16, cinematic, dynamic.`;
+        if(vo && !/voiceover|speaks in vietnamese/i.test(pen)) pen+=` Audio: the character speaks in Vietnamese: "${vo}" with clear lip-synced voiceover, plus trending background music and SFX synced to each cut.`;
+        if(noProd && !/no product appears/i.test(pen)) pen+=' No product appears in this shot; do not show, invent, imply, or place any product, packaging, bottle, or logo anywhere in the frame.';
+        return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:nv, san_pham:sp, no_product:noProd, canh:canh,
           cam_xuc:c.cam_xuc||'', goc_may:c.goc_may||'', overlay:{ text:s.onscreen||'', do_hoa:'', sfx:'', nhac:'' },
-          ly_do_gan:'', prompt_en:pen, voiceover:s.voiceover||'' };
+          ly_do_gan:'', prompt_en:pen, voiceover:vo };
       });
       daysOut.push({ ngay:'N'+x.day, series:x.title.replace(/^N\d+:\s*/,''),
         arc_cam_xuc:['Nỗi đau','Rào cản','Mong đợi','Tự hào','Thúc đẩy'], shots:shotsOut });
       save();
     }
     const manifest={ schema:'flow-pack/v1',
-      meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral' },
+      meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters','products'] },
       characters:Object.values(charMap), products:Object.values(prodMap), scenes:Object.values(sceneMap), days:daysOut };
     const nC=Object.keys(charMap).length, nP=Object.keys(prodMap).length, nS=Object.keys(sceneMap).length;
     const nShot=daysOut.reduce((t,d)=>t+d.shots.length,0);
     // .md NHÚNG khối ```json``` — Flow đọc thẳng khối JSON, KHÔNG cần AI phân tích
     const md=`# Flow Pack — ${_kenh()}\n\n`+
       `> Nạp file .md này vào "Lò Sản Xuất Video" (Flow). App đọc KHỐI JSON \`flow-pack/v1\` bên dưới để dựng Số thực thể (NV/SP/Cảnh) + danh sách shot. KHÔNG cần "Phân tích thông minh".\n\n`+
-      `## Tóm tắt\n- ${daysOut.length} ngày · ${nShot} shot\n- ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh\n- Mỗi nhân vật/sản phẩm/cảnh = 1 ID, upload 1 ảnh dùng lại. Shot có \`no_product:true\` thì KHÔNG đính ảnh sản phẩm.\n\n`+
+      `## Tóm tắt\n- ${daysOut.length} ngày · ${nShot} shot · mỗi shot 6-8 cú cắt nhanh + voiceover tiếng Việt\n- ${nC} nhân vật · ${nP} sản phẩm (user CHỈ upload 2 nhóm này) · bối cảnh AI Flow tự dựng (không cần upload)\n- Mỗi nhân vật/sản phẩm = 1 ID, upload 1 ảnh dùng lại. Shot \`no_product:true\` thì KHÔNG đính ảnh sản phẩm.\n\n`+
       '```json\n'+JSON.stringify(manifest,null,2)+'\n```\n';
     S._flowManifest = manifest;   // lưu để nút ".json" tải mà KHÔNG chạy lại AI
     _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.md', md, 'text/markdown');
-    if(fb)fb.innerHTML=`<div class="fb">✅ Xuất Flow Pack (.md có JSON nhúng): ${daysOut.length} ngày · ${nShot} shot · ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh.${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'}${_fail?` ⚠️ ${_fail} ngày AI trả lỗi → giữ prompt + để mặc định no_product.`:''} Rồi bấm "🧩 Tải .json (Flow)" để lấy file nạp vào Flow.</div>`; if(typeof vdNotifyDone==='function')vdNotifyDone('Xuat Flow Pack xong!');
+    if(fb)fb.innerHTML=`<div class="fb">✅ Xuất Flow Pack: ${daysOut.length} ngày · ${nShot} shot (6-8 cú cắt + voiceover) · ${nC} nhân vật · ${nP} sản phẩm (cảnh AI tự dựng).${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'}${_fail?` ⚠️ ${_fail} ngày AI trả lỗi → giữ prompt + mặc định no_product.`:''} Rồi bấm "🧩 Tải .json (Flow)" để lấy file nạp vào Flow.</div>`; if(typeof vdNotifyDone==='function')vdNotifyDone('Xuat Flow Pack xong!');
   }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
   if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất cho Flow (.md)'; }
 }
