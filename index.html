@@ -372,6 +372,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <button class="btn ghost sm" onclick="exportScripts('md')">⬇️ Tải kịch bản .md</button>
       <button class="btn ghost sm" onclick="exportScripts('csv')">⬇️ Tải .csv</button>
       <button class="btn ghost sm" id="flow-manifest" onclick="exportFlowManifest()" style="border-color:var(--blue);color:var(--blue)">📦 Xuất cho Flow (.md)</button>
+      <button class="btn ghost sm" onclick="exportFlowJson()" style="border-color:var(--blue);color:var(--blue)">🧩 Tải .json (Flow)</button>
       <button class="btn ghost sm" onclick="exportFlowMd()" style="border-color:var(--blue);color:var(--blue)">📄 Plan .md (Flow)</button>
     </div>
   </div>
@@ -1671,12 +1672,16 @@ Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"nhan_vat":["tên NV xuất hiệ
       `> Nạp file .md này vào "Lò Sản Xuất Video" (Flow). App đọc KHỐI JSON \`flow-pack/v1\` bên dưới để dựng Số thực thể (NV/SP/Cảnh) + danh sách shot. KHÔNG cần "Phân tích thông minh".\n\n`+
       `## Tóm tắt\n- ${daysOut.length} ngày · ${nShot} shot\n- ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh\n- Mỗi nhân vật/sản phẩm/cảnh = 1 ID, upload 1 ảnh dùng lại. Shot có \`no_product:true\` thì KHÔNG đính ảnh sản phẩm.\n\n`+
       '```json\n'+JSON.stringify(manifest,null,2)+'\n```\n';
-    const fn='flow-pack-'+_kenh().replace(/[^\w]+/g,'_');
-    _dl(fn+'.md', md, 'text/markdown');                              // cho nút "Tải kịch bản (.md)"
-    _dl(fn+'.json', JSON.stringify(manifest,null,2), 'application/json'); // cho nút "Nhập manifest.json"
+    S._flowManifest = manifest;   // lưu để nút ".json" tải mà KHÔNG chạy lại AI
+    _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.md', md, 'text/markdown');
     if(fb)fb.innerHTML=`<div class="fb">✅ Xuất Flow Pack (.md có JSON nhúng): ${daysOut.length} ngày · ${nShot} shot · ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh.${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'} Nạp .md này vào Flow.</div>`;
   }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
   if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất cho Flow (.md)'; }
+}
+/* Tải manifest .json (cho nút "Nhập manifest.json" của Flow) — dùng lại kết quả đã phân loại, KHÔNG chạy lại AI */
+function exportFlowJson(){
+  if(!S._flowManifest){ alert('Bấm "📦 Xuất cho Flow (.md)" trước để phân loại, rồi mới tải .json.'); return; }
+  _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.json', JSON.stringify(S._flowManifest,null,2), 'application/json');
 }
 /* --- 🎥 Bộ prompt video Omni (Google Flow) — chuỗi 10s/script --- */
 /* ép mọi giá trị (string/array/object) thành chuỗi đọc được — AI đôi khi trả object */
