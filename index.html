@@ -1628,6 +1628,7 @@ async function exportFlowManifest(){
   const scripts=S.dna.skuld.scripts||{}, vps=S.dna.skuld.vprompts||{};
   const work=days.filter(x=>scripts[x.title]||(vps[x.title]&&(vps[x.title].shots||[]).length));
   if(!work.length){ if(fb)fb.innerHTML='<div class="fb">⚠️ Chưa có kịch bản/shot. Dựng kịch bản (🎬) + sinh prompt video (🎥) trước.</div>'; return; }
+  if(!S.keys.gemini && !confirm('⚠️ Chưa kết nối Gemini → KHÔNG tự nhận diện nhân vật/sản phẩm/cảnh (Số thực thể sẽ RỖNG, mọi shot để no_product). Nên vào ⚡ Kết nối bật key trước.\n\nVẫn xuất thô?')) return;
   const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}, daysOut=[]; let _fail=0;
   if(btn) btn.disabled=true;
   try{
@@ -1640,13 +1641,23 @@ async function exportFlowManifest(){
       if(aiOn){
         forgeProg(`📦 Phân loại Flow ${i+1}/${work.length}: ${x.title}`,1);
         if(btn) btn.innerHTML=`<span class="spin"></span>${i+1}/${work.length}`;
-        const body=src.map((s,k)=>`#${k+1} EN:${(s.prompt_en||'').slice(0,280)} | Thoại:${s.voiceover||''} | Overlay:${s.onscreen||''}`).join('\n');
+        // feed dữ liệu GIÀU: ý tưởng ngày + overlay (có tên SP) + thoại, không chỉ prompt EN chung chung
+        const ideaCtx=`Ý TƯỞNG NGÀY "${x.title}": ${(x.desc||'').slice(0,420)}`;
+        const body=src.map((s,k)=>`#${k+1} | Overlay:${s.onscreen||''} | Thoại:${s.voiceover||''} | EN:${(s.prompt_en||'').slice(0,160)}`).join('\n');
+        const known=`Thực thể ĐÃ BIẾT (dùng lại ĐÚNG tên nếu trùng): NV[${Object.values(charMap).map(c=>c.ten).join(', ')}] · SP[${Object.values(prodMap).map(p=>p.ten).join(', ')}] · Cảnh[${Object.values(sceneMap).map(c=>c.ten).join(', ')}]`;
         try{
-          const raw=await geminiCall(`Bạn là giám sát sản xuất video TikTok. Phân loại TỪNG SHOT thành thực thể để máy gán ảnh tham chiếu, bám BRAND.
-BRAND:\n${brandContext(1500)}
-Quy tắc: no_product MẶC ĐỊNH true, chỉ false khi shot rõ ràng có sản phẩm (hero/demo/cận nhãn/CTA cầm sản phẩm). Dùng TÊN nhất quán giữa các shot. goc_may đa dạng (cỡ cảnh+góc+chuyển động), không lặp trực diện.
+          const raw=await geminiCall(`Bạn là giám sát sản xuất video cho kênh bán hàng. NHẬN DIỆN thực thể cho từng shot để máy gán ảnh tham chiếu.
+BRAND (chứa tên sản phẩm/biến thể & nhân vật):\n${brandContext(1800)}
+${ideaCtx}
+${known}
+NHIỆM VỤ mỗi shot:
+- nhan_vat: tên người xuất hiện. Không có tên riêng thì đặt tên mô tả ngắn ổn định (vd "Chàng trai chính"). LUÔN có ≥1 nhân vật nếu shot có người.
+- san_pham: tên sản phẩm/biến thể XUẤT HIỆN. Biến thể khác nhau = sản phẩm KHÁC (vd "ONIIZ Peachy","ONIIZ Fresh","ONIIZ Cool" là 3 SP). RỖNG nếu shot không khoe sản phẩm.
+- no_product: true nếu shot KHÔNG có sản phẩm; false nếu overlay/thoại/ý tưởng nhắc tới sản phẩm cụ thể.
+- canh: tên bối cảnh. cam_xuc: beat cảm xúc. goc_may: đa dạng (cỡ cảnh+góc+chuyển động), không lặp trực diện.
+Dùng TÊN NHẤT QUÁN giữa các shot & các ngày (cùng người/SP = cùng tên).
 DANH SÁCH SHOT:\n${body}
-Trả về DUY NHẤT JSON hợp lệ (không markdown, không dấu phẩy thừa): {"shots":[{"seq":1,"nhan_vat":["tên NV xuất hiện"],"san_pham":["tên SP, RỖNG nếu không có"],"no_product":true,"canh":"tên bối cảnh","cam_xuc":"beat cảm xúc","goc_may":"gợi ý góc máy"}]}`,{temp:0.3});
+Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,"nhan_vat":[],"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":""}]}`,{temp:0.3});
           const out=_tryJson(raw); cls=(out&&_arr(out.shots))||null; if(!cls) _fail++;
         }catch(e){ _fail++; }   // ngày lỗi → bỏ qua, dùng mặc định, vẫn xuất tiếp
       }
