@@ -66,7 +66,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(227,205,151,.9);backdrop-f
 .bigscore{font-family:'Bungee',sans-serif;font-size:64px;color:var(--ac2);text-align:center;line-height:1;margin:auto 0;text-shadow:3px 3px 0 var(--hi)}
 .coin-rain span{position:absolute;font-size:26px;animation:fall 2.2s linear infinite}
 @keyframes fall{0%{transform:translateY(-40px) rotate(0);opacity:0}10%{opacity:1}100%{transform:translateY(440px) rotate(360deg);opacity:0}}
-.reel-dots{position:absolute;bottom:-26px;left:0;right:0;display:flex;gap:6px;justify-content:center}
+.reel-dots{position:absolute;bottom:-26px;left:0;right:0;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .reel-dots i{width:8px;height:8px;border-radius:50%;background:var(--lo);border:1px solid var(--px);cursor:pointer}
 .reel-dots i.on{background:var(--ac);width:20px;border-radius:5px}
 
@@ -136,6 +136,8 @@ footer{padding:30px 0;text-align:center;color:var(--mut);font-size:14px;border-t
 .faq summary::after{content:'+';font-family:'Bungee',sans-serif;color:var(--ac2);font-size:22px;transition:.2s}
 .faq[open] summary::after{transform:rotate(45deg)}
 .faq .ans{padding:0 18px 16px;color:var(--mut);font-size:15px;line-height:1.6}
+.creed{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:560px){.creed{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -145,6 +147,7 @@ footer{padding:30px 0;text-align:center;color:var(--mut);font-size:14px;border-t
   <div class="nav-links">
     <a href="#cach" class="hidem">Cách hoạt động</a>
     <a href="#dao" class="hidem">6 Đảo</a>
+    <a href="#triet-ly" class="hidem">Bí kíp</a>
     <a href="#gia" class="hidem">Bảng giá</a>
     <a href="#faq" class="hidem">FAQ</a>
     <a class="btn ghost" style="padding:10px 16px;font-size:14px;box-shadow:3px 3px 0 var(--px)" onclick="vdStart()">⚓ Bắt đầu</a>
@@ -198,8 +201,59 @@ footer{padding:30px 0;text-align:center;color:var(--mut);font-size:14px;border-t
         </div>
         <div class="sc-cap">Lịch + script + prompt ảnh/video</div>
       </div>
+      <div class="scene" data-s="4">
+        <div class="ttl">🔥 CHUỖI NGÀY LUYỆN</div>
+        <div style="margin:auto;text-align:center"><div style="font-size:64px">🔥</div><div style="font-family:'Bungee';color:var(--orange);font-size:30px;margin-top:4px">21 ngày</div><div style="font-size:12px;color:var(--mut);font-weight:700;margin-top:4px">Giữ lửa mỗi ngày — không đứt chuỗi!</div></div>
+        <div class="sc-cap">Thói quen đều đặn → kênh lên đều</div>
+      </div>
+      <div class="scene" data-s="5">
+        <div class="ttl">🏅 SƯU TẦM HUY HIỆU</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:auto 0">
+          <div class="mini-card" style="text-align:center;margin:0;font-size:24px">🏴‍☠️</div><div class="mini-card" style="text-align:center;margin:0;font-size:24px">🔥</div><div class="mini-card" style="text-align:center;margin:0;font-size:24px">🎯</div>
+          <div class="mini-card" style="text-align:center;margin:0;font-size:24px;opacity:.4">🏝️</div><div class="mini-card" style="text-align:center;margin:0;font-size:24px;opacity:.4">🧭</div><div class="mini-card" style="text-align:center;margin:0;font-size:24px;opacity:.4">👑</div>
+        </div>
+        <div class="sc-cap">Mở khoá thành tựu, khoe chiến tích</div>
+      </div>
+      <div class="scene" data-s="6">
+        <div class="ttl">⚒️ XƯỞNG TÀU · KỊCH BẢN</div>
+        <div class="mini-card"><div style="font-size:11px;font-weight:800;color:var(--ac2)">5-BEAT</div><div style="font-size:12px;font-weight:700;margin-top:4px;line-height:1.5">🪝 Hook → 🎬 Bối cảnh → 🔥 Cao trào → ✨ Twist → 📣 CTA</div></div>
+        <div class="mini-card"><div style="font-size:11px;font-weight:700;color:var(--ac2)">Scorecard 1000đ · ⭐ 920</div></div>
+        <div class="sc-cap">Dựng kịch bản chi tiết, chấm điểm</div>
+      </div>
+      <div class="scene" data-s="7">
+        <div class="ttl">📊 VẬN HÀNH · KPI</div>
+        <div class="mini-card"><div style="font-size:12px;font-weight:700">Video đăng <b style="color:var(--ac2);float:right">18/30</b></div><div class="bar"><i style="width:60%"></i></div></div>
+        <div class="mini-card"><div style="font-size:12px;font-weight:700">Tổng view <b style="color:var(--ac2);float:right">1.2M</b></div><div class="bar"><i style="width:60%"></i></div></div>
+        <div class="sc-cap">Theo dõi tiến độ &amp; lịch đăng thật</div>
+      </div>
+      <div class="scene" data-s="8">
+        <div class="ttl">🧬 CHANNEL DNA ĐẦY</div>
+        <div style="margin:auto;text-align:center"><div style="font-size:60px">🧬</div><div style="font-size:12px;color:var(--mut);font-weight:700;margin-top:6px">6/6 đảo — hồ sơ kênh hoàn chỉnh,<br>đồng bộ mọi thiết bị</div></div>
+        <div class="sc-cap">Bộ não kênh — càng dùng càng thông minh</div>
+      </div>
+      <div class="scene" data-s="9">
+        <div class="ttl">🎮 CHƠI TRONG LÚC CHỜ AI</div>
+        <div style="margin:auto;text-align:center"><div style="font-size:54px">🪙🎯🃏</div><div style="font-size:12px;color:var(--mut);font-weight:700;margin-top:8px">AI dựng nền? Chơi mini-game hải tặc<br>— xong có âm báo!</div></div>
+        <div class="sc-cap">Vừa làm việc vừa giải trí</div>
+      </div>
+      <div class="scene" data-s="10">
+        <div class="ttl">🗺️ NHẬP VAI CƯỚP ĐẢO</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:auto 0">
+          <div class="mini-card" style="margin:0;text-align:center;font-size:18px;padding:8px">🏴‍☠️</div><div class="mini-card" style="margin:0;text-align:center;font-size:18px;padding:8px">🏴‍☠️</div><div class="mini-card" style="margin:0;text-align:center;font-size:18px;padding:8px">🏰</div><div class="mini-card" style="margin:0;text-align:center;font-size:18px;padding:8px;opacity:.5">💰</div>
+        </div>
+        <div style="text-align:center;font-family:'Bungee';color:var(--ac2);font-size:16px;margin-top:8px">💰 340.000</div>
+        <div class="sc-cap">Chiến thuật chiếm đảo, gom kho báu</div>
+      </div>
+      <div class="scene" data-s="11">
+        <div style="margin:auto;text-align:center">
+          <div style="font-size:60px">⚓</div>
+          <div style="font-family:'Bungee';color:var(--tx);font-size:22px;margin-top:6px;line-height:1.1">Sẵn sàng<br>ra khơi?</div>
+          <div style="font-size:12px;color:var(--mut);font-weight:700;margin-top:8px">Miễn phí · bắt đầu trong 1 phút</div>
+        </div>
+        <div class="sc-cap">Bấm "Bắt đầu ra khơi" bên cạnh →</div>
+      </div>
     </div></div>
-    <div class="reel-dots"><i class="on" data-g="0"></i><i data-g="1"></i><i data-g="2"></i><i data-g="3"></i></div>
+    <div class="reel-dots"></div>
   </div>
 </header>
 
@@ -218,6 +272,23 @@ footer{padding:30px 0;text-align:center;color:var(--mut);font-size:14px;border-t
     <div class="card"><h3>Kết nối La Bàn</h3><p>Dán Gemini API key (miễn phí). Mọi thứ lưu trong máy bạn — bắt đầu trong 1 phút.</p></div>
     <div class="card"><h3>Vượt 6 Đảo</h3><p>Mỗi đảo một kỹ năng: chiến lược, series, keyword, research… AI chấm ≥70đ mới mở đảo sau.</p></div>
     <div class="card"><h3>Sinh &amp; xuất content</h3><p>Channel DNA đầy → GENERATE 30 ngày → Xưởng dựng kịch bản → xuất sang Flow dựng video.</p></div>
+  </div>
+</div></section>
+
+<section id="triet-ly"><div class="wrap">
+  <div class="sec-h"><span class="eyebrow">Bí kíp đi biển</span><h2>Công thức viral bạn sẽ thành thạo</h2><p>Không học lý thuyết suông — đây là tư duy cốt lõi bạn dùng ở từng đảo.</p></div>
+  <div class="grid g3">
+    <div class="card"><div class="ic">🧭</div><h3>Tư duy 2 lớp</h3><p><b>Chủ đề × Cách thể hiện.</b> Mỗi video viral = một chủ đề ghép một format (thử thách, review, xếp hạng…). Nắm 2 trục là có cả ma trận ý tưởng vô hạn.</p></div>
+    <div class="card"><div class="ic">📚</div><h3>Series là vũ khí</h3><p>Nội dung bền vững đi theo <b>series</b> — cùng format lặp lại. Khán giả nhớ format → quay lại → kênh lên đều thay vì viral một lần rồi tịt.</p></div>
+    <div class="card"><div class="ic">💰</div><h3>Insight Sale 5 tầng</h3><p><b>Nỗi đau → Rào cản → Mong đợi → Tự hào → Thúc đẩy.</b> Mỗi video gắn đúng một tầng tâm lý để biến view thành đơn, không chỉ để vui.</p></div>
+  </div>
+  <div class="card" style="margin-top:18px;background:var(--px);color:var(--hi);border-color:var(--px);text-align:center">
+    <div style="font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--gold);margin-bottom:10px">⚓ 3 câu thần chú COREVIRAL</div>
+    <div class="creed">
+      <div><div style="font-size:26px">🚫➡️⬆️</div><p style="color:#e3d4b4;font-size:14px;margin:6px 0 0;font-weight:600">Đừng sáng tạo — hãy nâng cấp cái đã viral.</p></div>
+      <div><div style="font-size:26px">🧩</div><p style="color:#e3d4b4;font-size:14px;margin:6px 0 0;font-weight:600">Mỗi video = Chủ đề × Cách thể hiện.</p></div>
+      <div><div style="font-size:26px">💸</div><p style="color:#e3d4b4;font-size:14px;margin:6px 0 0;font-weight:600">Viral phải gắn Insight Sale, không thì chỉ là vui.</p></div>
+    </div>
   </div>
 </div></section>
 
@@ -346,6 +417,8 @@ footer{padding:30px 0;text-align:center;color:var(--mut);font-size:14px;border-t
 /* Promo reel auto-play */
 (function(){
   var scenes=[].slice.call(document.querySelectorAll('.scene'));
+  var dotbox=document.querySelector('.reel-dots');
+  dotbox.innerHTML=scenes.map(function(s,k){ return '<i data-g="'+k+'"'+(k===0?' class="on"':'')+'></i>'; }).join('');
   var dots=[].slice.call(document.querySelectorAll('.reel-dots i'));
   var i=0,timer;
   function go(n){ i=(n+scenes.length)%scenes.length; scenes.forEach(function(s,k){ s.classList.toggle('on',k===i); }); dots.forEach(function(d,k){ d.classList.toggle('on',k===i); }); }
