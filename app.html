@@ -211,7 +211,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
 </head>
 <body>
 <div id="boot">
-  <div class="sprite">🏴‍☠️</div>
+  <div class="sprite">🥋</div>
   <div class="logo">Viral Dojo</div>
   <div class="sub">⚓ Grand Line Edition ⚓</div>
   <div class="start" id="startBtn">⛵ Giương buồm ra khơi</div>
@@ -520,10 +520,10 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
 <!-- ============ VIEW: LIBRARY (map tri thức gốc) ============ -->
 <div id="v-lib" style="display:none">
   <div class="sec">
-    <h2>📚 Tri thức COREVIRAL gốc <span class="pill">lý thuyết + bài tập + 13 case study + toolkit</span></h2>
+    <h2>📚 Tri thức VIRAL DOJO gốc <span class="pill">lý thuyết + bài tập + 13 case study + toolkit</span></h2>
     <p class="mut">Toàn bộ giáo trình gốc nằm trong file <b>coreviral-tri-thuc.html</b> (cùng thư mục với app). Mỗi trạm trong Dojo map thẳng tới phần tương ứng — học sâu ở đó, quay lại đây nộp bài.</p>
     <div class="conn">
-      <div class="cc"><h3>🧭 Tổng quan & Khái niệm gốc</h3><p class="mut">COREVIRAL là gì · tư duy 2 lớp · 5 khái niệm phải thuộc (Chiến lược · Định dạng · Keyword Brand · Insight Sale 5 tầng · Bộ từ khóa).</p><a href="coreviral-tri-thuc.html#khainiem" target="_blank"><button class="btn sm">Mở phần này ↗</button></a></div>
+      <div class="cc"><h3>🧭 Tổng quan & Khái niệm gốc</h3><p class="mut">VIRAL DOJO là gì · tư duy 2 lớp · 5 khái niệm phải thuộc (Chiến lược · Định dạng · Keyword Brand · Insight Sale 5 tầng · Bộ từ khóa).</p><a href="coreviral-tri-thuc.html#khainiem" target="_blank"><button class="btn sm">Mở phần này ↗</button></a></div>
       <div class="cc"><h3>🛤 Lộ trình 6 bước (lý thuyết + bài tập + rubric)</h3><p class="mut">Module 1→6 đầy đủ: mục tiêu, việc cần làm, ví dụ mẫu, rubric 100đ, sản phẩm nộp. Đây là phần Trạm 1–6 của Dojo map tới.</p><a href="coreviral-tri-thuc.html#lotrinh" target="_blank"><button class="btn sm">Mở phần này ↗</button></a></div>
       <div class="cc"><h3>🎬 13 Case study đã dịch</h3><p class="mut">Video viral nước ngoài đã dịch + phân tích — nguyên liệu mẫu cho Trạm 5–6.</p><a href="coreviral-tri-thuc.html#case" target="_blank"><button class="btn sm">Mở phần này ↗</button></a></div>
       <div class="cc"><h3>🛠 Bộ công cụ AI + Thư viện link</h3><p class="mut">20+ công cụ & mẫu, thư viện link đầy đủ từ file Lark gốc, và hướng dẫn cách thực hành.</p><a href="coreviral-tri-thuc.html#toolkit" target="_blank"><button class="btn sm">Toolkit ↗</button></a> <a href="coreviral-tri-thuc.html#thuvien" target="_blank"><button class="btn sm ghost">Thư viện ↗</button></a> <a href="coreviral-tri-thuc.html#thuchanh" target="_blank"><button class="btn sm ghost">Cách thực hành ↗</button></a></div>
@@ -532,7 +532,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
   </div>
 </div>
 
-<!-- ============ VIEW: SKULD (Nhà máy vận hành 9 bước) ============ -->
+<!-- ============ VIEW: VIRAL DOJO (Nhà máy vận hành 9 bước) ============ -->
 <div id="v-skuld" style="display:none">
   <div class="note">🥋 <b>LÒ LUYỆN KỊCH BẢN = xưởng thực thi</b> sau 6 trạm tư duy: kế hoạch nội dung được <b>chấm điểm</b> rồi rèn thành <b>kịch bản chi tiết chất lượng cao</b> để sản xuất. Vũ khí: <b>Dây chuyền 30 ngày</b> (nạp từ GENERATE → chấm cả loạt → dựng kịch bản) · <b>Scorecard 1000đ</b> · <b>Phân tích sâu 18 câu</b> · <b>Liên kết ý tưởng</b>.</div>
 
@@ -802,7 +802,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
   </div>
 </div>
 
-<footer>VIRAL DOJO MVP v0.1 · Giáo trình COREVIRAL 6 module · AI grading by Gemini · Key lưu local · © EcomLegend 2026</footer>
+<footer>VIRAL DOJO MVP v0.1 · Giáo trình VIRAL DOJO 6 module · AI grading by Gemini · Key lưu local · © EcomLegend 2026</footer>
 </div>
 
 <script>
@@ -1116,7 +1116,7 @@ async function runGrade(o){
   let out;
   try{
     if(S.keys.gemini){
-      const prompt = `Bạn là giám khảo khóa COREVIRAL, chấm bài Trạm ${o.num} "${o.title}" CHẶT TAY, đúng rubric dưới (giữ NGUYÊN tiêu chí & thang điểm).\n${o.rubric}\n\nBỐI CẢNH THƯƠNG HIỆU (chấm "thực tiễn/bám insight" phải đối chiếu dữ liệu này):\n${brandContext(3500)}\n\nBÀI NỘP:\n${o.baiText}\n\nTrả về DUY NHẤT JSON (không markdown): {"scores":[${o.scoresShape}],"total":n,"feedback":"3-6 câu tiếng Việt: điểm mạnh, điểm trừ cụ thể ở mục nào, 2 gợi ý nâng điểm hành động được"}`;
+      const prompt = `Bạn là giám khảo khóa VIRAL DOJO, chấm bài Trạm ${o.num} "${o.title}" CHẶT TAY, đúng rubric dưới (giữ NGUYÊN tiêu chí & thang điểm).\n${o.rubric}\n\nBỐI CẢNH THƯƠNG HIỆU (chấm "thực tiễn/bám insight" phải đối chiếu dữ liệu này):\n${brandContext(3500)}\n\nBÀI NỘP:\n${o.baiText}\n\nTrả về DUY NHẤT JSON (không markdown): {"scores":[${o.scoresShape}],"total":n,"feedback":"3-6 câu tiếng Việt: điểm mạnh, điểm trừ cụ thể ở mục nào, 2 gợi ý nâng điểm hành động được"}`;
       out = await geminiCall(prompt,{json:true,temp:0.2});
       out.total = out.total!=null ? out.total : (out.scores||[]).reduce((a,s)=>a+(s.diem||0),0);
     } else { out = o.local(); }
@@ -1369,7 +1369,7 @@ async function autoFill(){
   if(!(S.dna.onboard&&S.dna.onboard.nganh)){ res.innerHTML='<div class="fb bad">⚠️ Điền Bước 0 (ngành hàng) trước đã.</div>'; return; }
   btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang làm bài...';
   try{
-    const prompt = `Bạn là chuyên gia COREVIRAL. Dựa trên DỮ LIỆU THƯƠNG HIỆU dưới đây, làm TRỌN bài Trạm 1: chọn chiến lược kênh (Thương hiệu/Ẩn thương hiệu/Nhân hiệu), định dạng (Kiến thức/Hình thức/Kết hợp), 1 chủ đề chính, và ma trận ĐÚNG 6 cách thể hiện × 3 ý tưởng/cách. Mỗi ý tưởng là TIÊU ĐỀ VIDEO cụ thể quay được ngay (ai, làm gì, bối cảnh), bám đúng sản phẩm & khách hàng trong dữ liệu.\n\nDỮ LIỆU THƯƠNG HIỆU:\n${brandContext()}\n\nTrả về DUY NHẤT JSON: {"chienluoc":"...","dinhdang":"...","chude":"...","matrix":[{"cach":"...","ytuong":["...","...","..."]}],"giai_thich":"2-3 câu vì sao chọn chiến lược này"}`;
+    const prompt = `Bạn là chuyên gia VIRAL DOJO. Dựa trên DỮ LIỆU THƯƠNG HIỆU dưới đây, làm TRỌN bài Trạm 1: chọn chiến lược kênh (Thương hiệu/Ẩn thương hiệu/Nhân hiệu), định dạng (Kiến thức/Hình thức/Kết hợp), 1 chủ đề chính, và ma trận ĐÚNG 6 cách thể hiện × 3 ý tưởng/cách. Mỗi ý tưởng là TIÊU ĐỀ VIDEO cụ thể quay được ngay (ai, làm gì, bối cảnh), bám đúng sản phẩm & khách hàng trong dữ liệu.\n\nDỮ LIỆU THƯƠNG HIỆU:\n${brandContext()}\n\nTrả về DUY NHẤT JSON: {"chienluoc":"...","dinhdang":"...","chude":"...","matrix":[{"cach":"...","ytuong":["...","...","..."]}],"giai_thich":"2-3 câu vì sao chọn chiến lược này"}`;
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.7, responseMimeType:'application/json'}})
@@ -1387,7 +1387,7 @@ async function coach(){
   if(!key){ res.innerHTML='<div class="fb bad">💬 AI hướng dẫn cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang xem bài...';
   try{
-    const prompt = `Bạn là mentor COREVIRAL, KHÔNG chấm điểm — chỉ hướng dẫn ngắn gọn. Học viên đang làm dở Trạm 1.\n\nDỮ LIỆU THƯƠNG HIỆU:\n${brandContext(5000)}\n\nBÀI ĐANG LÀM:\nChiến lược: ${bai.chienluoc||'(chưa chọn)'} | Định dạng: ${bai.dinhdang||'(chưa chọn)'} | Chủ đề: ${bai.chude||'(chưa có)'}\nMa trận:\n${bai.matrix.map((x,i)=>`${i+1}. ${x.cach}: ${x.ytuong.join(' · ')||'(trống)'}`).join('\n')||'(trống)'}\n\nTrả lời tiếng Việt ≤180 từ: (1) đang ổn chỗ nào, (2) đang yếu/thiếu chỗ nào theo rubric, (3) gợi ý CỤ THỂ 2-3 việc làm tiếp ngay (kèm 1-2 ví dụ ý tưởng mẫu bám thương hiệu).`;
+    const prompt = `Bạn là mentor VIRAL DOJO, KHÔNG chấm điểm — chỉ hướng dẫn ngắn gọn. Học viên đang làm dở Trạm 1.\n\nDỮ LIỆU THƯƠNG HIỆU:\n${brandContext(5000)}\n\nBÀI ĐANG LÀM:\nChiến lược: ${bai.chienluoc||'(chưa chọn)'} | Định dạng: ${bai.dinhdang||'(chưa chọn)'} | Chủ đề: ${bai.chude||'(chưa có)'}\nMa trận:\n${bai.matrix.map((x,i)=>`${i+1}. ${x.cach}: ${x.ytuong.join(' · ')||'(trống)'}`).join('\n')||'(trống)'}\n\nTrả lời tiếng Việt ≤180 từ: (1) đang ổn chỗ nào, (2) đang yếu/thiếu chỗ nào theo rubric, (3) gợi ý CỤ THỂ 2-3 việc làm tiếp ngay (kèm 1-2 ví dụ ý tưởng mẫu bám thương hiệu).`;
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.5}})
@@ -1524,7 +1524,7 @@ function gradeLocal(b){
 }
 
 async function gradeGemini(b, key){
-  const prompt = `Bạn là giám khảo khoá COREVIRAL, chấm bài Trạm 1 "Xác định Chiến lược & Định dạng kênh" CHẶT TAY theo rubric.\n${RUBRIC}\n\nBỐI CẢNH HỌC VIÊN (chấm "thực tiễn" phải đối chiếu dữ liệu thương hiệu này):\n${brandContext(4000)}\n\nBÀI NỘP:\nChiến lược: ${b.chienluoc}\nĐịnh dạng: ${b.dinhdang}\nChủ đề: ${b.chude}\nMa trận:\n${b.matrix.map((x,i)=>`${i+1}. ${x.cach}\n${x.ytuong.map(y=>'   - '+y).join('\n')}`).join('\n')}\n\nTrả về DUY NHẤT JSON (không markdown): {"scores":[{"tieuchi":"Cấu trúc","diem":n,"max":20},{"tieuchi":"Sáng tạo","diem":n,"max":20},{"tieuchi":"Thực tiễn","diem":n,"max":30},{"tieuchi":"Số lượng","diem":n,"max":10},{"tieuchi":"Đa dạng","diem":n,"max":20}],"total":n,"feedback":"3-6 câu tiếng Việt: điểm mạnh, điểm trừ cụ thể ở ô nào, và 2 gợi ý nâng điểm hành động được"}`;
+  const prompt = `Bạn là giám khảo khoá VIRAL DOJO, chấm bài Trạm 1 "Xác định Chiến lược & Định dạng kênh" CHẶT TAY theo rubric.\n${RUBRIC}\n\nBỐI CẢNH HỌC VIÊN (chấm "thực tiễn" phải đối chiếu dữ liệu thương hiệu này):\n${brandContext(4000)}\n\nBÀI NỘP:\nChiến lược: ${b.chienluoc}\nĐịnh dạng: ${b.dinhdang}\nChủ đề: ${b.chude}\nMa trận:\n${b.matrix.map((x,i)=>`${i+1}. ${x.cach}\n${x.ytuong.map(y=>'   - '+y).join('\n')}`).join('\n')}\n\nTrả về DUY NHẤT JSON (không markdown): {"scores":[{"tieuchi":"Cấu trúc","diem":n,"max":20},{"tieuchi":"Sáng tạo","diem":n,"max":20},{"tieuchi":"Thực tiễn","diem":n,"max":30},{"tieuchi":"Số lượng","diem":n,"max":10},{"tieuchi":"Đa dạng","diem":n,"max":20}],"total":n,"feedback":"3-6 câu tiếng Việt: điểm mạnh, điểm trừ cụ thể ở ô nào, và 2 gợi ý nâng điểm hành động được"}`;
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.2, responseMimeType:'application/json'}})
@@ -1537,7 +1537,7 @@ async function gradeGemini(b, key){
   return out;
 }
 
-/* ================= SKULD ================= */
+/* ================= VIRAL DOJO ================= */
 S.dna.skuld = S.dna.skuld || {scored:[], deep:{}, links:[]};
 S.dna.skuld.scripts = S.dna.skuld.scripts || {};
 S.dna.skuld.vref = S.dna.skuld.vref || {character:'',product:'',style:''};
@@ -1609,7 +1609,7 @@ async function skAIScore(){
   if(!title&&!desc){ fb.innerHTML='<div class="fb bad">Nhập tiêu đề + mô tả ý tưởng để AI chấm.</div>'; return; }
   btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang chấm...';
   try{
-    const prompt=`Bạn là giám khảo SKULD/COREVIRAL. Chấm ý tưởng video TikTok theo 19 câu checklist (trả lời ĐẠT=true / KHÔNG ĐẠT=false cho TỪNG câu, chấm chặt — chỉ true khi mô tả có bằng chứng rõ).\nBỐI CẢNH BRAND:\n${brandContext(3000)}\nÝ TƯỞNG: "${title}"\nMÔ TẢ: ${desc}\n19 CÂU:\n${SK_Q.map((q,i)=>`${i+1}. ${q[1]}`).join('\n')}\nTrả về DUY NHẤT JSON: {"checks":[true/false x19],"giai_thich":"3-5 câu: ý tưởng mạnh nhóm nào, rớt điểm nhóm nào, 2 gợi ý nâng điểm cụ thể"}`;
+    const prompt=`Bạn là giám khảo VIRAL DOJO. Chấm ý tưởng video TikTok theo 19 câu checklist (trả lời ĐẠT=true / KHÔNG ĐẠT=false cho TỪNG câu, chấm chặt — chỉ true khi mô tả có bằng chứng rõ).\nBỐI CẢNH BRAND:\n${brandContext(3000)}\nÝ TƯỞNG: "${title}"\nMÔ TẢ: ${desc}\n19 CÂU:\n${SK_Q.map((q,i)=>`${i+1}. ${q[1]}`).join('\n')}\nTrả về DUY NHẤT JSON: {"checks":[true/false x19],"giai_thich":"3-5 câu: ý tưởng mạnh nhóm nào, rớt điểm nhóm nào, 2 gợi ý nâng điểm cụ thể"}`;
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:'application/json'}})});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const out=JSON.parse((await r.json()).candidates[0].content.parts[0].text);
@@ -1698,7 +1698,7 @@ async function scoreForgeBatch(){
       const chunk=L.slice(s,s+6);
       btn.innerHTML=`<span class="spin"></span>Chấm ${Math.min(s+6,L.length)}/${L.length}...`; forgeProg(`🧠 Chấm + xếp hạng kịch bản ${Math.min(s+6,L.length)}/${L.length}...`,1);
       const list=chunk.map((x,i)=>{ const body=((sc[x.title].scenes)||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình: ${c.hinhanh||''}; trám: ${c.tram||''}]`).join(' ').slice(0,800); return `#${i+1} "${x.title}" — KỊCH BẢN: ${body}`; }).join('\n');
-      const out=await geminiCall(`Bạn là giám khảo SKULD/COREVIRAL. Chấm 19 câu checklist cho MỖI KỊCH BẢN video (ĐẠT=true/false từng câu). Giờ chấm trên KỊCH BẢN CHI TIẾT đã dàn dựng — có bằng chứng từ cảnh/hình ảnh/trám/âm thanh, hãy chấm dựa trên các chi tiết đó.\nBỐI CẢNH BRAND:\n${brandContext(2500)}\n19 CÂU:\n${SK_Q.map((q,i)=>`${i+1}. ${q[1]}`).join('\n')}\nDANH SÁCH KỊCH BẢN:\n${list}\nTrả về DUY NHẤT JSON: {"rows":[{"i":1,"checks":[19 giá trị true/false]}]}.`,{json:true,temp:0.2});
+      const out=await geminiCall(`Bạn là giám khảo VIRAL DOJO. Chấm 19 câu checklist cho MỖI KỊCH BẢN video (ĐẠT=true/false từng câu). Giờ chấm trên KỊCH BẢN CHI TIẾT đã dàn dựng — có bằng chứng từ cảnh/hình ảnh/trám/âm thanh, hãy chấm dựa trên các chi tiết đó.\nBỐI CẢNH BRAND:\n${brandContext(2500)}\n19 CÂU:\n${SK_Q.map((q,i)=>`${i+1}. ${q[1]}`).join('\n')}\nDANH SÁCH KỊCH BẢN:\n${list}\nTrả về DUY NHẤT JSON: {"rows":[{"i":1,"checks":[19 giá trị true/false]}]}.`,{json:true,temp:0.2});
       (out.rows||[]).forEach(o=>{ const x=chunk[o.i-1]; if(!x||!Array.isArray(o.checks)) return; x.checks=o.checks.map(Boolean); x.score=x.checks.reduce((t,c,i)=>t+(c?(W[i]||0):0),0); x._sc=true; x._scv=FORGE_SV; });
       save(); renderForgePlan(); renderBoard();
     }
@@ -1716,7 +1716,7 @@ async function buildScriptsTop(){
   try{
     for(let i=0;i<L.length;i++){
       const x=L[i]; btn.innerHTML=`<span class="spin"></span>Dựng ${i+1}/${L.length}...`; forgeProg(`🎬 Dựng kịch bản chi tiết ${i+1}/${L.length}: ${x.title}`,1);
-      const out=await geminiCall(`Bạn là biên kịch COREVIRAL. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6});
+      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6});
       S.dna.skuld.scripts[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
       save(); renderForgePlan(); renderScripts();
     }
@@ -1747,7 +1747,7 @@ async function regenWeakScripts(){
       const fix=failed.length
         ? 'Kịch bản CŨ bị giám khảo đánh TRƯỢT các tiêu chí sau — viết lại để ĐẠT bằng được:\n- '+failed.join('\n- ')
         : 'Kịch bản cũ điểm thấp — nâng cấp mạnh độ viral: hook sắc hơn, cụ thể hơn, có bằng chứng & cao trào.';
-      const out=await geminiCall(`Bạn là biên kịch COREVIRAL. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6});
+      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6});
       sc[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
       x._sc=false; x._scv=null; x.score=0; x.checks=[];   // reset điểm → buộc chấm lại ở bước sau
       save(); renderForgePlan(); renderScripts();
@@ -2019,7 +2019,7 @@ async function genVPrompts(title){
   const prodName=(v.product||'').trim();
   const PRODUCT_RULE = `- PRODUCT = ĐÚNG sản phẩm trong ẢNH SẢN PHẨM ĐÍNH KÈM (uploaded product reference image) — đây là NGUỒN SỰ THẬT DUY NHẤT về ngoại hình sản phẩm. TUYỆT ĐỐI KHÔNG mô tả / sáng tạo / đổi màu / đổi bao bì / đổi nhãn / đổi logo / đổi hình dạng sản phẩm bằng chữ. Mọi shot CHỈ gọi sản phẩm là "the exact product from the uploaded product reference image"${prodName?` (nhận biết nội bộ: ${prodName} — KHÔNG tả lại ngoại hình)`:''}; chỉ tả CÁCH cầm/đặt/dùng/đặt sản phẩm ở đâu trong khung, KHÔNG tả ngoại hình.`;
   const MANDATORY = `"Use the uploaded product reference image as the SINGLE source of truth for the product — render the product EXACTLY as shown in that image; do NOT recolor, relabel, restyle, redesign, or replace it, and do NOT invent any packaging, color, or logo. Use the uploaded character reference image for the person. Keep both identical across all shots."`;
-  const o=await geminiCall(`Bạn là ĐẠO DIỄN đã học toàn bộ COREVIRAL — hiểu chuẩn video viral (hook 3 giây đầu, nhịp nhanh, format an toàn, sản phẩm xuất hiện tự nhiên). Nhiệm vụ: chuyển KỊCH BẢN text thành chuỗi SHOT 10 GIÂY để tạo bằng Omni/Veo trên Google Flow; khi ghép các shot 10s lại phải thành 1 video HOÀN CHỈNH, MƯỢT, LIỀN MẠCH, đúng nhịp độ/bối cảnh/trang phục/nhân vật/sản phẩm của kịch bản.${v.productImg?'\n\n(Ảnh sản phẩm thật được đính kèm bên dưới — hãy NHÌN ảnh để hiểu sản phẩm, nhưng KHÔNG mô tả ngoại hình nó bằng chữ trong prompt.)':''}
+  const o=await geminiCall(`Bạn là ĐẠO DIỄN đã học toàn bộ VIRAL DOJO — hiểu chuẩn video viral (hook 3 giây đầu, nhịp nhanh, format an toàn, sản phẩm xuất hiện tự nhiên). Nhiệm vụ: chuyển KỊCH BẢN text thành chuỗi SHOT 10 GIÂY để tạo bằng Omni/Veo trên Google Flow; khi ghép các shot 10s lại phải thành 1 video HOÀN CHỈNH, MƯỢT, LIỀN MẠCH, đúng nhịp độ/bối cảnh/trang phục/nhân vật/sản phẩm của kịch bản.${v.productImg?'\n\n(Ảnh sản phẩm thật được đính kèm bên dưới — hãy NHÌN ảnh để hiểu sản phẩm, nhưng KHÔNG mô tả ngoại hình nó bằng chữ trong prompt.)':''}
 
 KHOÁ NHẤT QUÁN — nhắc lại NGUYÊN VĂN trong MỌI shot prompt:
 - CHARACTER (giữ y hệt mọi shot, dùng ảnh tham chiếu): ${v.character||'(theo brand)'}
@@ -2048,7 +2048,7 @@ function cleanTags(h){ const arr=Array.isArray(h)?h:asText(h).split(/[\s,]+/); r
 async function genPostKit(title){
   const sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | trám: ${c.tram||''}`).join('\n');
-  const o=await geminiCall(`Bạn là content creator TikTok/Reels chuyên bán hàng, đã học COREVIRAL. Từ KỊCH BẢN video + thương hiệu, tạo BỘ ĐĂNG BÀI sẵn để copy đăng page.
+  const o=await geminiCall(`Bạn là content creator TikTok/Reels chuyên bán hàng, đã học VIRAL DOJO. Từ KỊCH BẢN video + thương hiệu, tạo BỘ ĐĂNG BÀI sẵn để copy đăng page.
 BRAND:
 ${brandContext(2000)}
 KỊCH BẢN ("${title}"):
@@ -2185,7 +2185,7 @@ async function scoreViral(id){
   try{
     const b64=await fileToBase64(file);
     const out=await geminiCall(
-`Bạn là giám khảo viral đã học toàn bộ COREVIRAL. XEM kỹ video sản phẩm CUỐI dưới đây (hình + nhịp + âm thanh + chữ) và chấm KHẢ NĂNG VIRAL THỰC TẾ — đánh giá thẳng thắn, không nịnh.
+`Bạn là giám khảo viral đã học toàn bộ VIRAL DOJO. XEM kỹ video sản phẩm CUỐI dưới đây (hình + nhịp + âm thanh + chữ) và chấm KHẢ NĂNG VIRAL THỰC TẾ — đánh giá thẳng thắn, không nịnh.
 THƯƠNG HIỆU: ${brandContext(1500)}
 CAPTION dự kiến: ${item.caption||'(chưa có)'}
 Chấm mỗi tiêu chí 0-10: hook_3s_dau, giu_chan (nhịp/độ cuốn), format_an_toan (thử thách/review/xếp hạng/chấm điểm), san_pham_xuat_hien_tu_nhien, cta_ro, am_thanh_nhac, chu_overlay, cam_xuc.
@@ -2434,7 +2434,7 @@ async function dpAI(){
   fb.innerHTML='<div class="fb">🤖 AI đang phân tích...</div>';
   try{
     const sct=(typeof scriptText==='function'?scriptText(t):'');
-    const prompt=`Bạn là chuyên gia SKULD. Điền 18 câu phân tích chuyên sâu cho video, bám DỮ LIỆU BRAND. Trả lời NGẮN mỗi câu (chọn từ gợi ý nếu có + 1 câu lý do).\nBRAND:\n${brandContext(3500)}\nÝ TƯỞNG: "${t}" — ${v?v.desc:''}${sct?`\nKỊCH BẢN CHI TIẾT:\n${sct.slice(0,1200)}`:''}\n18 CÂU:\n${DP_Q.map((q,i)=>`${i+1}. ${q[1]} (gợi ý: ${q[2]||'tự do'})`).join('\n')}\nTrả về DUY NHẤT JSON: {"answers":["..." x18]}`;
+    const prompt=`Bạn là chuyên gia VIRAL DOJO. Điền 18 câu phân tích chuyên sâu cho video, bám DỮ LIỆU BRAND. Trả lời NGẮN mỗi câu (chọn từ gợi ý nếu có + 1 câu lý do).\nBRAND:\n${brandContext(3500)}\nÝ TƯỞNG: "${t}" — ${v?v.desc:''}${sct?`\nKỊCH BẢN CHI TIẾT:\n${sct.slice(0,1200)}`:''}\n18 CÂU:\n${DP_Q.map((q,i)=>`${i+1}. ${q[1]} (gợi ý: ${q[2]||'tự do'})`).join('\n')}\nTrả về DUY NHẤT JSON: {"answers":["..." x18]}`;
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.5,responseMimeType:'application/json'}})});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const out=JSON.parse((await r.json()).candidates[0].content.parts[0].text);
@@ -2450,7 +2450,7 @@ async function lkAI(){
   if(!goc){ fb.innerHTML='<div class="fb bad">Nhập ý tưởng ban đầu (từ video viral).</div>'; return; }
   fb.innerHTML='<div class="fb">🤖 AI đang liên kết...</div>';
   try{
-    const prompt=`Bạn là chuyên gia SKULD bước 3 "Liên kết ý tưởng". Từ ý tưởng viral gốc + điểm thành công, đề xuất biến thể theo 4 hướng (mỗi hướng 2-3 ý cụ thể, bám brand) rồi chốt 1 Ý TƯỞNG NÂNG CẤP tốt nhất.\nBRAND:\n${brandContext(3000)}\nTỆP KHÁCH: ${tep}\nÝ TƯỞNG GỐC: ${goc}\nĐIỂM THÀNH CÔNG: ${diem}\nTrả về DUY NHẤT JSON: {"thuthach":"...","thunghiem":"...","xephang":"...","tuongphan":"...","nangcap":"1 ý tưởng chốt — tiêu đề video cụ thể + 1 câu vì sao win"}`;
+    const prompt=`Bạn là chuyên gia VIRAL DOJO bước 3 "Liên kết ý tưởng". Từ ý tưởng viral gốc + điểm thành công, đề xuất biến thể theo 4 hướng (mỗi hướng 2-3 ý cụ thể, bám brand) rồi chốt 1 Ý TƯỞNG NÂNG CẤP tốt nhất.\nBRAND:\n${brandContext(3000)}\nTỆP KHÁCH: ${tep}\nÝ TƯỞNG GỐC: ${goc}\nĐIỂM THÀNH CÔNG: ${diem}\nTrả về DUY NHẤT JSON: {"thuthach":"...","thunghiem":"...","xephang":"...","tuongphan":"...","nangcap":"1 ý tưởng chốt — tiêu đề video cụ thể + 1 câu vì sao win"}`;
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.8,responseMimeType:'application/json'}})});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const o=JSON.parse((await r.json()).candidates[0].content.parts[0].text);
@@ -2513,7 +2513,7 @@ async function coachGeneric(num, baiText, btn, res){
   if(!S.keys.gemini){ res.innerHTML='<div class="fb bad">💬 AI hướng dẫn cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   const old=btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang xem bài...';
   try{
-    const txt=await geminiCall(`Bạn là mentor COREVIRAL, KHÔNG chấm điểm — chỉ hướng dẫn ngắn gọn. Học viên đang làm Trạm ${num}.\nDỮ LIỆU THƯƠNG HIỆU:\n${brandContext(3000)}\nBÀI ĐANG LÀM:\n${baiText}\n\nTrả lời tiếng Việt ≤180 từ: (1) đang ổn chỗ nào, (2) yếu/thiếu chỗ nào theo rubric, (3) gợi ý CỤ THỂ 2-3 việc làm tiếp ngay kèm 1-2 ví dụ bám thương hiệu.`,{temp:0.5});
+    const txt=await geminiCall(`Bạn là mentor VIRAL DOJO, KHÔNG chấm điểm — chỉ hướng dẫn ngắn gọn. Học viên đang làm Trạm ${num}.\nDỮ LIỆU THƯƠNG HIỆU:\n${brandContext(3000)}\nBÀI ĐANG LÀM:\n${baiText}\n\nTrả lời tiếng Việt ≤180 từ: (1) đang ổn chỗ nào, (2) yếu/thiếu chỗ nào theo rubric, (3) gợi ý CỤ THỂ 2-3 việc làm tiếp ngay kèm 1-2 ví dụ bám thương hiệu.`,{temp:0.5});
     res.innerHTML=`<div class="fb">💬 MENTOR:\n${txt}</div>`;
   }catch(e){ res.innerHTML=`<div class="fb bad">❌ Lỗi: ${e.message}</div>`; }
   btn.disabled=false; btn.textContent=old;
@@ -2586,7 +2586,7 @@ async function autoFill2(){
   btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang làm bài...';
   try{
     const scraped=S._scrape2?JSON.stringify(S._scrape2).slice(0,3000):'(chưa cào kênh nào)';
-    const out=await geminiCall(`Bạn là chuyên gia COREVIRAL. Trạm 2: "đọc vị series" của 4 kênh TikTok mẫu (@maxklymenko, @tussalty, @bradyyourtutor, @davidcohen). Mỗi kênh tìm ĐÚNG 3 series (chuỗi video CÙNG format lặp lại). Nếu có DỮ LIỆU CÀO thì bám vào.\nDỮ LIỆU CÀO:\n${scraped}\n\nTrả về DUY NHẤT JSON: {"channels":[{"name":"@...","series":[{"link":"link đại diện","chude":"chủ đề","cach":"cách thể hiện/format"}]}]}`,{json:true,temp:0.6});
+    const out=await geminiCall(`Bạn là chuyên gia VIRAL DOJO. Trạm 2: "đọc vị series" của 4 kênh TikTok mẫu (@maxklymenko, @tussalty, @bradyyourtutor, @davidcohen). Mỗi kênh tìm ĐÚNG 3 series (chuỗi video CÙNG format lặp lại). Nếu có DỮ LIỆU CÀO thì bám vào.\nDỮ LIỆU CÀO:\n${scraped}\n\nTrả về DUY NHẤT JSON: {"channels":[{"name":"@...","series":[{"link":"link đại diện","chude":"chủ đề","cach":"cách thể hiện/format"}]}]}`,{json:true,temp:0.6});
     setM2(out); res.innerHTML='<div class="fb">🤖 AI đã điền 4 kênh × 3 series — đây là NHẬN ĐỊNH, hãy mở link kiểm chứng, sửa rồi "Nộp bài".</div>';
   }catch(e){ res.innerHTML=`<div class="fb bad">❌ Lỗi: ${e.message}</div>`; }
   btn.disabled=false; btn.textContent='🤖 AI tự làm hết';
@@ -2655,7 +2655,7 @@ async function autoFill3(){
   if(!S.keys.gemini){ res.innerHTML='<div class="fb bad">🤖 Cần Gemini key.</div>'; return; }
   btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang làm...';
   try{
-    const out=await geminiCall(`Chuyên gia COREVIRAL. Làm trọn Trạm 3 dựa trên dữ liệu thương hiệu:\n${brandContext()}\nTrả DUY NHẤT JSON: {"kwbrand":["≥3 keyword brand ngắn dễ nhớ"],"insight":[{"tang":"Nỗi đau","noidung":"..."},{"tang":"Rào cản","noidung":"..."},{"tang":"Mong đợi","noidung":"..."},{"tang":"Tự hào","noidung":"..."},{"tang":"Thúc đẩy","noidung":"..."}],"proof":[{"kw":"keyword brand","ytuong":["≥5 ý tưởng video chứng minh cụ thể"]}],"signature":"dấu ấn riêng"}`,{json:true,temp:0.6});
+    const out=await geminiCall(`Chuyên gia VIRAL DOJO. Làm trọn Trạm 3 dựa trên dữ liệu thương hiệu:\n${brandContext()}\nTrả DUY NHẤT JSON: {"kwbrand":["≥3 keyword brand ngắn dễ nhớ"],"insight":[{"tang":"Nỗi đau","noidung":"..."},{"tang":"Rào cản","noidung":"..."},{"tang":"Mong đợi","noidung":"..."},{"tang":"Tự hào","noidung":"..."},{"tang":"Thúc đẩy","noidung":"..."}],"proof":[{"kw":"keyword brand","ytuong":["≥5 ý tưởng video chứng minh cụ thể"]}],"signature":"dấu ấn riêng"}`,{json:true,temp:0.6});
     setM3(out); res.innerHTML='<div class="fb">🤖 AI đã điền — review/sửa rồi "Nộp bài".</div>';
   }catch(e){ res.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
   btn.disabled=false; btn.textContent='🤖 AI tự làm hết';
@@ -2698,7 +2698,7 @@ async function autoFill4(){
   btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang làm...';
   try{
     const dna=`Chủ đề:${(S.dna.m1&&S.dna.m1.chude)||''} | Keyword brand:${((S.dna.m3&&S.dna.m3.kwbrand)||[]).join(',')}`;
-    const out=await geminiCall(`Chuyên gia COREVIRAL. Sinh bộ từ khóa Trạm 4: 8 danh mục, mỗi danh mục ≥5 keyword, bám thương hiệu.\nThương hiệu:\n${brandContext(4000)}\nĐịnh hướng: ${dna}\nDanh mục: Sản phẩm / Dịch vụ; Phân khúc giá; Nhóm sở thích; Ngành hàng; Nghề nghiệp; Nhóm nhu cầu; Mục đích sử dụng cuối; Hình thức thể hiện.\nTrả DUY NHẤT JSON: {"cats":[{"danhmuc":"Sản phẩm / Dịch vụ","keywords":["k1","k2","k3","k4","k5"]}, ... đủ 8 danh mục]}`,{json:true,temp:0.6});
+    const out=await geminiCall(`Chuyên gia VIRAL DOJO. Sinh bộ từ khóa Trạm 4: 8 danh mục, mỗi danh mục ≥5 keyword, bám thương hiệu.\nThương hiệu:\n${brandContext(4000)}\nĐịnh hướng: ${dna}\nDanh mục: Sản phẩm / Dịch vụ; Phân khúc giá; Nhóm sở thích; Ngành hàng; Nghề nghiệp; Nhóm nhu cầu; Mục đích sử dụng cuối; Hình thức thể hiện.\nTrả DUY NHẤT JSON: {"cats":[{"danhmuc":"Sản phẩm / Dịch vụ","keywords":["k1","k2","k3","k4","k5"]}, ... đủ 8 danh mục]}`,{json:true,temp:0.6});
     (out.cats||[]).forEach(c=>{ const t=[...document.querySelectorAll('#m4-cats .cat')].find(e=>e.dataset.t===c.danhmuc); if(t) t.value=(c.keywords||[]).join(', '); }); countKw();
     res.innerHTML='<div class="fb">🤖 AI đã sinh keyword — review/bổ sung rồi "Nộp bài".</div>';
   }catch(e){ res.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
@@ -2838,7 +2838,7 @@ async function scoreRowsAI(rows){
   for(let s=0;s<todo.length;s+=40){
     const chunk=todo.slice(s,s+40);
     const items=chunk.map((r,i)=>`${i+1}. view=${+r.querySelector('.v-view').value||0} like=${+r.querySelector('.v-like').value||0} | ${(r.querySelector('.v-cap').value.trim()||r.querySelector('.v-trans').value.trim()).replace(/\n/g,' ')}`).join('\n');
-    const out=await geminiCall(`Bạn lọc video TikTok cho học viên làm Trạm 5 COREVIRAL — tìm video ĐÃ viral DỄ NHÂN BẢN bằng AI để học & clone công thức.
+    const out=await geminiCall(`Bạn lọc video TikTok cho học viên làm Trạm 5 VIRAL DOJO — tìm video ĐÃ viral DỄ NHÂN BẢN bằng AI để học & clone công thức.
 NGÀNH & THƯƠNG HIỆU HỌC VIÊN:
 ${brandContext(2500)}
 Định dạng kênh: ${dd}.
@@ -2885,7 +2885,7 @@ async function huntSmart(){
       if(!(S.dna._m5queries&&S.dna._m5queries.length)){
         setp('Tạo bộ query săn video theo FORMAT chuẩn...');
         try{
-          const o=await geminiCall(`Tạo bộ TỪ KHÓA TÌM KIẾM TikTok cho học viên COREVIRAL Trạm 5. MỤC TIÊU: tìm video viral DẠNG SERIES thuộc chủ đề "an toàn để viral" — Thử nghiệm / Thử thách / Xếp hạng (ranking/top list) / Chấm điểm (rating) — vì đây là tiêu chí ĂN 50/100đ của Trạm 5 và dễ NHÂN BẢN bằng AI.
+          const o=await geminiCall(`Tạo bộ TỪ KHÓA TÌM KIẾM TikTok cho học viên VIRAL DOJO Trạm 5. MỤC TIÊU: tìm video viral DẠNG SERIES thuộc chủ đề "an toàn để viral" — Thử nghiệm / Thử thách / Xếp hạng (ranking/top list) / Chấm điểm (rating) — vì đây là tiêu chí ĂN 50/100đ của Trạm 5 và dễ NHÂN BẢN bằng AI.
 NGÀNH & THƯƠNG HIỆU:
 ${brandContext(1500)}
 Định dạng kênh: ${dd}.
@@ -2986,7 +2986,7 @@ async function genPart(part){
   prog.innerHTML=`<div class="fb"><span class="spin"></span>Đang sinh ${labels[part]}...</div>`;
   S._pack=S._pack||{};
   try{
-    const base=`Bạn là execution engine COREVIRAL. Dựa trên CHANNEL DNA (JSON) của học viên:\n${dnaSummary()}\n\n`;
+    const base=`Bạn là execution engine VIRAL DOJO. Dựa trên CHANNEL DNA (JSON) của học viên:\n${dnaSummary()}\n\n`;
     if(part==='calendar'){ const o=await geminiCall(base+`Sinh LỊCH 30 NGÀY content TikTok bám series & insight trong DNA. Trả JSON {"calendar":[{"ngay":1,"series":"...","hook":"hook 3s đầu","format":"...","cta":"..."}]} đúng 30 phần tử.`,{json:true,temp:0.6}); S._pack.calendar=o.calendar; }
     else if(part==='scripts'){ const o=await geminiCall(base+`Viết 10 SCRIPT 5-BEAT (Hook · Vấn đề · Giải pháp · Bằng chứng · CTA) cho 10 video đầu. Trả JSON {"scripts":[{"tieu_de":"...","beats":{"hook":"...","van_de":"...","giai_phap":"...","bang_chung":"...","cta":"..."}}]}.`,{json:true,temp:0.7}); S._pack.scripts=o.scripts; }
     else { const o=await geminiCall(base+`Sinh 10 PROMPT ẢNH (English, cho Nano Banana) + 10 PROMPT VIDEO (English, cho Veo 3 dạng chuỗi cảnh). Trả JSON {"prompts":[{"tieu_de":"...","image_prompt_en":"...","video_prompt_en":"..."}]} đúng 10 phần tử.`,{json:true,temp:0.7}); S._pack.prompts=o.prompts; }
