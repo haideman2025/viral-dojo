@@ -1760,16 +1760,63 @@ async function regenWeakScripts(){
   btn.disabled=false; btn.innerHTML='♻️ Tạo lại kịch bản yếu → chấm lại';
 }
 function renderScripts(){
-  const el=document.getElementById('forge-scripts'), ex=document.getElementById('forge-export'); if(!el) return;
   healScripts(); // tự chữa kịch bản cũ bị lưu dạng object
-  const sc=S.dna.skuld.scripts||{}, keys=Object.keys(sc);
-  if(!keys.length){ el.innerHTML=''; if(ex)ex.style.display='none'; return; }
-  if(ex)ex.style.display='flex';
-  el.innerHTML='<h3 style="color:var(--warn);margin-top:14px">🎬 Kịch bản chi tiết ('+keys.length+')</h3>'+
-    keys.map(t=>{const s=sc[t];
-      return `<div class="cách"><b>${t}</b><div style="overflow:auto"><table style="font-size:12px;width:100%"><tr><th>Phần</th><th>Nội dung</th><th>Hình ảnh</th><th>TRÁM</th><th>Note</th></tr>`+
-        (s.scenes||[]).map(c=>`<tr><td><b>${c.phan||''}</b></td><td>${c.noidung||''}</td><td>${c.hinhanh||''}</td><td>${c.tram||''}</td><td class="mut">${c.note||''}</td></tr>`).join('')+`</table></div></div>`;}).join('');
+  const ex=document.getElementById('forge-export'); const keys=Object.keys(S.dna.skuld.scripts||{});
+  if(ex) ex.style.display = keys.length?'flex':'none';
+  renderForgeDayBox();
 }
+/* ===== 🗂 HỘP NỘI DUNG THEO NGÀY — chọn 1 ngày, xem gọn + Copy nhanh ===== */
+let _fDay=null;
+function _fDayList(){
+  const sc=S.dna.skuld.scripts||{}, vp=S.dna.skuld.vprompts||{}, set={};
+  Object.keys(sc).forEach(t=>set[t]=1); Object.keys(vp).forEach(t=>set[t]=1);
+  return Object.keys(set).map(t=>({ title:t, day:+(((t.match(/^N(\d+)/)||[])[1])||999),
+    hasS:!!(sc[t]&&(sc[t].scenes||[]).length), hasV:!!(vp[t]&&(vp[t].shots||[]).length),
+    hasK:!!(vp[t]&&(vp[t].caption||vp[t].music||(vp[t].hashtags||[]).length)) })).sort((a,b)=>a.day-b.day);
+}
+function selectForgeDayIdx(i){ const L=_fDayList(); if(L[i]){ _fDay=L[i].title; renderForgeDayBox(); const d=document.getElementById('forge-day-detail'); if(d) d.scrollIntoView({behavior:'smooth',block:'nearest'}); } }
+function renderForgeDayBox(){
+  const el=document.getElementById('forge-scripts'); if(!el) return;
+  const L=_fDayList(); if(!L.length){ el.innerHTML=''; return; }
+  let idx=L.findIndex(x=>x.title===_fDay); if(idx<0){ idx=0; _fDay=L[0].title; }
+  const chips=L.map((x,i)=>`<button class="btn ${i===idx?'':'ghost'} sm" onclick="selectForgeDayIdx(${i})" style="white-space:nowrap;padding:7px 11px">N${x.day}${x.hasS?' 🎬':''}${x.hasV?' 🎥':''}${x.hasK?' 📋':''}</button>`).join('');
+  el.innerHTML=`<h3 style="color:var(--warn);margin-top:12px">🗂 Nội dung theo ngày <span class="mut" style="font-size:12px;font-weight:600">(${L.length} ngày · chọn ngày để xem + Copy)</span></h3>`+
+    `<div style="display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px">${chips}</div>`+
+    `<div id="forge-day-detail">${_fDetail(idx,L)}</div>`;
+}
+function _fNav(idx,L){ return `<div style="display:flex;gap:8px;margin:6px 0 12px;flex-wrap:wrap">`+
+  (idx>0?`<button class="btn ghost sm" onclick="selectForgeDayIdx(${idx-1})">◀ N${L[idx-1].day}</button>`:'')+
+  (idx<L.length-1?`<button class="btn ghost sm" onclick="selectForgeDayIdx(${idx+1})">N${L[idx+1].day} ▶</button>`:'')+`</div>`; }
+function _fDetail(idx,L){
+  const x=L[idx], t=x.title;
+  const sc=(S.dna.skuld.scripts||{})[t], vp=(S.dna.skuld.vprompts||{})[t]||{};
+  let h=`<div style="font-weight:800;font-size:16px">${_escAttr(t)}</div>`+_fNav(idx,L);
+  if(sc&&(sc.scenes||[]).length){
+    h+=`<div class="cách"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:var(--warn)">🎬 Kịch bản chi tiết</b><button class="btn ghost sm" onclick="forgeCopy('script',${idx},this)">📋 Copy kịch bản</button></div>`+
+      `<div style="overflow:auto;margin-top:6px"><table style="font-size:12px;width:100%"><tr><th>Phần</th><th>Nội dung</th><th>Hình ảnh</th><th>TRÁM</th><th>Note</th></tr>`+
+      (sc.scenes||[]).map(c=>`<tr><td><b>${c.phan||''}</b></td><td>${c.noidung||''}</td><td>${c.hinhanh||''}</td><td>${c.tram||''}</td><td class="mut">${c.note||''}</td></tr>`).join('')+`</table></div></div>`;
+  } else h+=`<div class="fb">Chưa có kịch bản cho ngày này — bấm "🎬 Dựng kịch bản (cả loạt)".</div>`;
+  if((vp.shots||[]).length){
+    h+=`<div class="cách"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:var(--ac)">🎥 Prompt video (${vp.shots.length} shot)</b><button class="btn ghost sm" onclick="forgeCopy('shots',${idx},this)">📋 Copy tất cả shot</button></div>`+
+      vp.shots.map(sh=>`<div style="border-top:1px solid var(--bd);margin-top:6px;padding-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:var(--ac)">Shot ${sh.seq} · 10s</b><button class="btn ghost sm" onclick="forgeCopyShot(${idx},${sh.seq},this)">📋 Copy</button></div><div class="mut" style="white-space:pre-wrap;font-size:12px;margin-top:3px">${sh.prompt||''}</div>${sh.voiceover?`<div style="font-size:12px;margin-top:3px"><b style="color:var(--warn)">🎙 VO:</b> ${sh.voiceover}</div>`:''}${sh.onscreen?`<div class="mut" style="font-size:11px;margin-top:2px">▦ ${sh.onscreen}</div>`:''}</div>`).join('')+`</div>`;
+  }
+  if(vp.caption||vp.music||(vp.hashtags||[]).length){
+    h+=`<div class="cách"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px"><b style="color:var(--blue)">📋 Bộ đăng bài</b><button class="btn ghost sm" data-vk="post" data-vk-title="${_escAttr(t)}" onclick="copyVKit(this)">📋 Caption+hashtag</button><button class="btn ghost sm" data-vk="music" data-vk-title="${_escAttr(t)}" onclick="copyVKit(this)">🎵 Nhạc</button></div>`+
+      (vp.caption?`<div style="white-space:pre-wrap;font-size:12.5px">${_escAttr(vp.caption)}</div>`:'')+
+      (vp.hashtags&&vp.hashtags.length?`<div style="font-size:12px;margin-top:5px;color:var(--ac)">${_escAttr(vp.hashtags.join(' '))}</div>`:'')+
+      (vp.music?`<div style="font-size:12px;margin-top:7px;border-top:1px dashed var(--bd);padding-top:6px"><b style="color:var(--warn)">🎵 Nhạc:</b> <span class="mut" style="white-space:pre-wrap">${_escAttr(vp.music)}</span></div>`:'')+`</div>`;
+  }
+  return h;
+}
+function _fScriptMd(t){ const sc=(S.dna.skuld.scripts||{})[t]; if(!sc) return ''; return `## ${t}\n\n| Phần | Nội dung | Hình ảnh | TRÁM | Note |\n|---|---|---|---|---|\n`+(sc.scenes||[]).map(c=>`| ${c.phan||''} | ${(c.noidung||'').replace(/\|/g,'/')} | ${(c.hinhanh||'').replace(/\|/g,'/')} | ${(c.tram||'').replace(/\|/g,'/')} | ${(c.note||'').replace(/\|/g,'/')} |`).join('\n'); }
+function _fShotText(sh){ return `Shot ${sh.seq} (10s):\n${sh.prompt||''}`+(sh.voiceover?`\nVO: ${sh.voiceover}`:'')+(sh.onscreen?`\nOverlay: ${sh.onscreen}`:''); }
+function _clip(text,btn){ if(!text) return; const done=()=>{ if(btn){ const o=btn.innerHTML; btn.innerHTML='✅ Đã copy'; setTimeout(()=>btn.innerHTML=o,1300); } }; if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done)); } else fallbackCopy(text,done); }
+function forgeCopy(kind,idx,btn){ const L=_fDayList(), x=L[idx]; if(!x) return; const t=x.title;
+  let text=''; if(kind==='script') text=_fScriptMd(t);
+  else if(kind==='shots'){ const vp=(S.dna.skuld.vprompts||{})[t]||{}; text=`# ${t} — prompt video\n\n`+(vp.shots||[]).map(_fShotText).join('\n\n---\n\n'); }
+  _clip(text,btn);
+}
+function forgeCopyShot(idx,seq,btn){ const L=_fDayList(), x=L[idx]; if(!x) return; const vp=(S.dna.skuld.vprompts||{})[x.title]||{}; const sh=(vp.shots||[]).find(s=>s.seq===seq); if(sh) _clip(_fShotText(sh),btn); }
 function exportScripts(fmt){
   const sc=S.dna.skuld.scripts||{}, keys=Object.keys(sc); if(!keys.length) return;
   const kenh=(S.dna.onboard&&S.dna.onboard.kenh)||'Kênh'; let data;
@@ -2308,23 +2355,13 @@ function genVPromptDay(day){ const x=forgeFind(day); if(!x) return; const fb=doc
     const o=document.getElementById('vp-out'); if(o)o.scrollIntoView({behavior:'smooth'}); })();
 }
 function renderVPrompts(){
-  const el=document.getElementById('vp-out'), ex=document.getElementById('vp-export'); if(!el) return;
+  const el=document.getElementById('vp-out'), ex=document.getElementById('vp-export');
   const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp);
-  if(!keys.length){ el.className='mut'; el.innerHTML='Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".'; if(ex)ex.style.display='none'; return; }
-  el.className=''; if(ex)ex.style.display='flex';
-  el.innerHTML='<h3 style="color:var(--warn);margin-top:12px">🎥 Prompt video Omni ('+keys.length+' kịch bản · 10s/shot)</h3>'+
-    keys.map(t=>{const s=vp[t];
-      const hasKit=s.caption||s.music||(s.hashtags&&s.hashtags.length);
-      const kit=hasKit?`<div style="border:1px solid var(--blue);border-radius:10px;padding:8px 10px;margin:8px 0;background:rgba(109,179,255,.06)">`+
-        `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><b style="color:var(--blue)">📋 Bộ đăng bài</b>`+
-        `<button class="btn ghost sm" data-vk="post" data-vk-title="${_escAttr(t)}" onclick="copyVKit(this)">📋 Copy caption + hashtag</button>`+
-        `<button class="btn ghost sm" data-vk="music" data-vk-title="${_escAttr(t)}" onclick="copyVKit(this)">🎵 Copy prompt nhạc</button></div>`+
-        (s.caption?`<div style="white-space:pre-wrap;font-size:12.5px">${_escAttr(s.caption)}</div>`:'')+
-        (s.hashtags&&s.hashtags.length?`<div style="font-size:12px;margin-top:5px;color:var(--ac)">${_escAttr(s.hashtags.join(' '))}</div>`:'')+
-        (s.music?`<div style="font-size:12px;margin-top:7px;border-top:1px dashed var(--bd);padding-top:6px"><b style="color:var(--warn)">🎵 Nhạc nền (Suno/Udio):</b> <span class="mut" style="white-space:pre-wrap">${_escAttr(s.music)}</span></div>`:'')+
-        `</div>`:'';
-      return `<div class="cách"><b>${t}</b> <span class="mut">· ${(s.shots||[]).length} shot × 10s</span>`+kit+
-        (s.shots||[]).map(sh=>`<div style="border-top:1px solid var(--bd);margin-top:6px;padding-top:6px"><b style="color:var(--ac)">Shot ${sh.seq} · 10s</b><div class="mut" style="white-space:pre-wrap;font-size:12px;margin-top:3px">${sh.prompt||''}</div>${sh.voiceover?`<div style="font-size:12px;margin-top:3px"><b style="color:var(--warn)">🎙 VO:</b> ${sh.voiceover}</div>`:''}${sh.onscreen?`<div class="mut" style="font-size:11px;margin-top:2px">▦ overlay: ${sh.onscreen}</div>`:''}</div>`).join('')+`</div>`;}).join('');
+  if(ex) ex.style.display = keys.length?'flex':'none';
+  if(el){ el.className='mut'; el.innerHTML = keys.length
+    ? '👉 Xem prompt video + caption theo TỪNG NGÀY ở khung <b>🗂 Nội dung theo ngày</b> phía trên (mục Dây chuyền) — có nút Copy từng shot / cả loạt.'
+    : 'Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".'; }
+  renderForgeDayBox();
 }
 function exportVPrompts(fmt){
   const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp); if(!keys.length) return;
