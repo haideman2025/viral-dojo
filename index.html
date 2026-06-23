@@ -5,67 +5,186 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>VIRAL DOJO — Học bằng cách ship kênh viral</title>
 <style>
-:root{--bg:#0c0f14;--card:#151b24;--card2:#1c242f;--bd:#2a3442;--tx:#e9eef4;--mut:#8fa0b3;--ac:#1fd1a8;--ac2:#16b894;--warn:#ffcf6b;--red:#ff6b6b;--blue:#6db3ff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 -apple-system,Segoe UI,Roboto,Arial,sans-serif}
-.wrap{max-width:860px;margin:0 auto;padding:20px}
-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:6px 0 16px}
-h1{font-size:20px;margin:0}h1 small{color:var(--ac);font-size:12px;display:block;font-weight:600}
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tab{background:var(--card);border:1px solid var(--bd);color:var(--mut);border-radius:9px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer}
-.tab.act{background:var(--ac);color:#0c0f14;border-color:var(--ac)}
-.sec{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin:0 0 16px}
-.sec h2{font-size:16px;margin:0 0 10px}
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap');
+
+/* ── Tokens (giữ tên, chỉ đổi giá trị) ── */
+:root{
+  --bg:#080b10; --card:#121821; --card2:#1a222d; --bd:#283341;
+  --tx:#eaf0f6; --mut:#8794a6; --ac:#1fd1a8; --ac2:#16b894;
+  --warn:#ffc23c; --red:#ff6b6b; --blue:#6db3ff;
+  --gold:#ffc23c; --orange:#ff9f5b; --r:16px; --r-sm:11px;
+  --sh:0 14px 34px rgba(0,0,0,.45); --sh-sm:0 6px 16px rgba(0,0,0,.35);
+  --line:rgba(255,255,255,.07); --glass:rgba(255,255,255,.04);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+::selection{background:rgba(31,209,168,.3)}
+body{
+  margin:0; color:var(--tx);
+  background:
+    radial-gradient(120% 70% at 50% -8%, #11202a 0%, rgba(10,14,20,0) 52%),
+    radial-gradient(90% 60% at 90% 110%, rgba(31,209,168,.07) 0%, rgba(0,0,0,0) 60%),
+    var(--bg);
+  background-attachment:fixed;
+  font:15px/1.62 'Be Vietnam Pro',-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#243040;border-radius:8px;border:2px solid var(--bg)}
+
+.wrap{max-width:880px;margin:0 auto;padding:22px 20px 60px}
+
+/* ── Header / brand ── */
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:4px 0 20px}
+h1{font-size:21px;margin:0;font-weight:900;letter-spacing:.01em;display:flex;flex-direction:column}
+h1 small{color:var(--ac);font-size:11px;display:block;font-weight:700;letter-spacing:.04em;margin-top:2px;text-transform:uppercase}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:7px;flex-wrap:wrap}
+.tab{
+  background:var(--glass);border:1px solid var(--line);color:var(--mut);
+  border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:800;cursor:pointer;
+  transition:.18s;letter-spacing:.01em;
+}
+.tab:hover{color:var(--tx);border-color:rgba(31,209,168,.4)}
+.tab.act{
+  background:linear-gradient(135deg,var(--ac),var(--ac2));color:#05201a;border-color:transparent;
+  box-shadow:0 6px 18px rgba(31,209,168,.32);
+}
+
+/* ── Section card ── */
+.sec{
+  position:relative;background:linear-gradient(158deg,rgba(28,36,47,.92),rgba(17,22,30,.92));
+  border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:0 0 16px;
+  box-shadow:var(--sh-sm);
+}
+.sec::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;border-radius:var(--r) var(--r) 0 0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)}
+.sec h2{font-size:16.5px;margin:0 0 12px;font-weight:800;letter-spacing:.01em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
 .mut{color:var(--mut);font-size:13px}
-.pill{display:inline-block;font-size:11px;border:1px solid var(--bd);border-radius:20px;padding:1px 10px;color:var(--mut);margin-left:6px}
-.btn{background:var(--ac);color:#0c0f14;border:0;border-radius:9px;padding:10px 18px;font-size:14px;font-weight:800;cursor:pointer}
-.btn:hover{background:var(--ac2)}.btn.sm{padding:6px 12px;font-size:12px}.btn.ghost{background:var(--card2);color:var(--tx);border:1px solid var(--bd)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--bd);border-radius:9px;color:var(--tx);padding:9px 11px;font:14px/1.5 inherit}
-textarea{resize:vertical;min-height:38px}
-label{font-size:12.5px;color:var(--mut);font-weight:700;display:block;margin:0 0 4px}
-.row{display:flex;gap:10px;flex-wrap:wrap}.row>div{flex:1;min-width:180px}
-.prog{height:8px;background:var(--card2);border-radius:6px;overflow:hidden;margin:8px 0 2px}
-.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--blue));transition:width .5s}
-.station{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
-.st{flex:1;min-width:110px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--mut);text-align:center}
-.st.done{border-color:var(--ac);color:var(--ac)}.st.cur{border-color:var(--warn);color:var(--warn)}
-.cách{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:0 0 12px}
-.cách h3{font-size:14px;margin:0 0 8px;color:var(--warn)}
-.idea{display:flex;gap:8px;margin:0 0 8px}.idea textarea{flex:1}
-.del{background:none;border:0;color:var(--red);cursor:pointer;font-size:16px}
-.score{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
-.sc{flex:1;min-width:120px;background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:10px;text-align:center}
-.sc b{font-size:22px;display:block}.sc span{font-size:11px;color:var(--mut)}
-.fb{background:#10261f;border:1px solid #1c4a3c;border-radius:10px;padding:12px;font-size:13.5px;white-space:pre-wrap;margin:10px 0}
-.fb.bad{background:#261515;border-color:#4a2424}
-.conn{display:flex;gap:12px;flex-wrap:wrap}
-.cc{flex:1;min-width:230px;background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:14px}
-.cc h3{margin:0 0 4px;font-size:14px}.cc .st-dot{font-size:11px;font-weight:700}
+
+/* ── Pill / tag ── */
+.pill{display:inline-block;font-size:10.5px;border:1px solid var(--line);border-radius:999px;
+  padding:3px 11px;color:var(--mut);margin-left:6px;font-weight:700;background:var(--glass);vertical-align:middle}
+.tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  padding:4px 11px;border-radius:999px;color:#05201a;background:linear-gradient(135deg,var(--ac),var(--ac2));margin-right:6px}
+
+/* ── Buttons ── */
+.btn{
+  background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04201a;border:0;border-radius:var(--r-sm);
+  padding:11px 19px;font:800 14px/1 'Be Vietnam Pro',inherit;cursor:pointer;transition:.16s;
+  box-shadow:0 8px 20px rgba(31,209,168,.26);
+}
+.btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 12px 26px rgba(31,209,168,.34)}
+.btn:active{transform:translateY(0)}
+.btn.sm{padding:7px 13px;font-size:12px;border-radius:9px;box-shadow:none}
+.btn.ghost{background:var(--glass);color:var(--tx);border:1px solid var(--bd);box-shadow:none}
+.btn.ghost:hover{border-color:var(--ac);color:#fff;filter:none;background:rgba(31,209,168,.08)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none;box-shadow:none}
+
+/* ── Form fields ── */
+input,select,textarea{
+  width:100%;background:var(--glass);border:1px solid var(--bd);border-radius:var(--r-sm);
+  color:var(--tx);padding:11px 13px;font:14px/1.5 'Be Vietnam Pro',inherit;transition:.15s;
+}
+input::placeholder,textarea::placeholder{color:#5d6b7d}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 3px rgba(31,209,168,.14);background:rgba(31,209,168,.04)}
+textarea{resize:vertical;min-height:40px}
+label{font-size:12px;color:var(--mut);font-weight:700;display:block;margin:0 0 5px;letter-spacing:.01em}
+
+/* ── Rows ── */
+.row{display:flex;gap:11px;flex-wrap:wrap}.row>div{flex:1;min-width:180px}
+
+/* ── Progress ── */
+.prog{height:9px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:9px 0 2px}
+.prog i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--ac));transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+/* ── Stations (thanh trạm = đai) ── */
+.station{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 18px}
+.st{
+  flex:1;min-width:104px;background:var(--glass);border:1px solid var(--bd);border-radius:13px;
+  padding:11px 10px;font-size:12px;color:var(--mut);text-align:center;font-weight:700;transition:.18s;position:relative;
+}
+.st.done{border-color:rgba(31,209,168,.55);color:var(--ac);background:linear-gradient(135deg,rgba(31,209,168,.12),var(--glass));box-shadow:0 0 0 1px rgba(31,209,168,.1)}
+.st.cur{border-color:var(--gold);color:var(--gold);background:linear-gradient(135deg,rgba(255,194,60,.12),var(--glass));animation:vdpulse 2.1s ease-in-out infinite}
+@keyframes vdpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,194,60,.45)}50%{box-shadow:0 0 0 7px rgba(255,194,60,0)}}
+
+/* ── Idea card ── */
+.cách{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:14px;margin:0 0 12px}
+.cách h3{font-size:14px;margin:0 0 9px;color:var(--gold);font-weight:800}
+.idea{display:flex;gap:9px;margin:0 0 9px;align-items:flex-start}.idea textarea{flex:1}
+.del{background:none;border:0;color:var(--red);cursor:pointer;font-size:18px;line-height:1;padding:4px;border-radius:7px;transition:.15s}
+.del:hover{background:rgba(255,107,107,.12)}
+
+/* ── Score / stat cards ── */
+.score{display:flex;gap:11px;flex-wrap:wrap;margin:14px 0}
+.sc{flex:1;min-width:118px;background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:13px;text-align:center}
+.sc b{font-size:24px;display:block;font-weight:900;color:var(--ac)}
+.sc span{font-size:10.5px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+/* ── Feedback box ── */
+.fb{background:linear-gradient(135deg,rgba(31,209,168,.1),rgba(17,22,30,.6));border:1px solid rgba(31,209,168,.32);
+  border-radius:13px;padding:14px 15px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;margin:12px 0;color:#cfe9e1}
+.fb.bad{background:linear-gradient(135deg,rgba(255,107,107,.1),rgba(17,22,30,.6));border-color:rgba(255,107,107,.32);color:#f3d2d2}
+
+/* ── Connection cards ── */
+.conn{display:flex;gap:13px;flex-wrap:wrap}
+.cc{flex:1;min-width:230px;background:linear-gradient(158deg,rgba(28,36,47,.85),rgba(17,22,30,.85));
+  border:1px solid var(--line);border-radius:15px;padding:16px;transition:.18s}
+.cc:hover{border-color:rgba(31,209,168,.35)}
+.cc h3{margin:0 0 5px;font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.cc .st-dot{font-size:10.5px;font-weight:800}
 .ok{color:var(--ac)}.no{color:var(--mut)}
-.note{background:#221d12;border:1px solid #4a3d1c;color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin:0 0 14px}
-.learn p{margin:0 0 10px}.learn b{color:var(--warn)}
-.big{font-size:38px;font-weight:900;text-align:center;margin:6px 0}
-.lock{text-align:center;padding:30px;color:var(--mut)}
-footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid #0c0f14;border-top-color:transparent;border-radius:50%;animation:r .7s linear infinite;vertical-align:-2px;margin-right:6px}
+
+/* ── Note / callout ── */
+.note{background:linear-gradient(135deg,rgba(255,194,60,.1),rgba(17,22,30,.5));border:1px solid rgba(255,194,60,.3);
+  color:#ffdf9e;border-radius:13px;padding:12px 15px;font-size:13px;line-height:1.55;margin:0 0 15px}
+
+/* ── Learn (học nhanh) ── */
+.learn{border:1px solid var(--line);border-radius:13px;padding:6px 15px 4px;background:var(--glass);margin-top:4px}
+.learn summary{color:var(--ac)!important}
+.learn p{margin:10px 0}.learn b{color:var(--gold)}
+.learn a{color:var(--ac)}
+
+/* ── Big number ── */
+.big{font-size:42px;font-weight:900;text-align:center;margin:8px 0;letter-spacing:-.01em;
+  background:linear-gradient(135deg,var(--gold),var(--ac));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ── Lock panel ── */
+.lock{text-align:center;padding:34px 24px;color:var(--mut);border:1px dashed var(--bd);border-radius:15px;background:rgba(255,255,255,.015)}
+.lock b{color:var(--tx)}
+
+footer{color:#5d6b7d;font-size:12px;text-align:center;padding:24px}
+
+/* ── Spinner ── */
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:r .7s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes r{to{transform:rotate(360deg)}}
-/* --- gamification + vận hành layer --- */
-.xpw{display:flex;align-items:center;gap:7px;font-size:12px}
-.belt{font-weight:800;white-space:nowrap}
-.xpbar{width:90px;height:8px;background:var(--card2);border:1px solid var(--bd);border-radius:6px;overflow:hidden}
-.xpbar.b2{width:100%;height:10px;margin:8px 0}
-.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#ffc23c,var(--ac));transition:width .5s}
-.xpnum{font-weight:800;color:#ffc23c}
-#journey{padding:14px 18px}
-.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.badge{font-size:18px;filter:grayscale(1);opacity:.32;border:1px solid var(--bd);border-radius:10px;padding:4px 9px;background:var(--card2)}
-.badge.on{filter:none;opacity:1;border-color:#ffc23c;box-shadow:0 0 8px rgba(255,194,60,.3)}
-.xptoast{position:fixed;right:18px;bottom:18px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#08110d;font-weight:900;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.45);transform:translateY(20px);opacity:0;transition:.35s;z-index:9999;text-align:center;font-size:15px}
+
+/* ──── Gamification layer (giữ tên) ──── */
+.xpw{display:flex;align-items:center;gap:8px;font-size:12px}
+.belt{font-weight:800;white-space:nowrap;color:var(--gold)}
+.xpbar{width:96px;height:9px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.xpbar.b2{width:100%;height:12px;margin:9px 0}
+.xpbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--ac));position:relative;overflow:hidden}
+.xpbar i::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.5) 50%,transparent 70%);animation:vdshine 2.6s ease-in-out infinite}
+@keyframes vdshine{0%{transform:translateX(-120%)}60%,100%{transform:translateX(240%)}}
+.xpnum{font-weight:900;color:var(--gold)}
+
+#journey{padding:16px 18px}
+
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.badge{font-size:19px;filter:grayscale(1);opacity:.34;border:1px solid var(--bd);border-radius:12px;padding:7px 11px;background:var(--glass);transition:.2s}
+.badge.on{filter:none;opacity:1;border-color:rgba(255,194,60,.5);background:linear-gradient(135deg,rgba(255,194,60,.16),var(--glass));box-shadow:0 0 14px rgba(255,194,60,.25)}
+
+.xptoast{position:fixed;right:20px;bottom:20px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04201a;font-weight:900;
+  padding:13px 20px;border-radius:13px;box-shadow:0 14px 34px rgba(0,0,0,.5);transform:translateY(20px);opacity:0;transition:.35s;z-index:9999;text-align:center;font-size:15px}
 .xptoast.show{transform:translateY(0);opacity:1}
-.kbar{height:9px;background:var(--card2);border:1px solid var(--bd);border-radius:6px;overflow:hidden;margin:4px 0}
-.kbar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--blue))}
+
+.kbar{height:9px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:5px 0}
+.kbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--ac),var(--blue))}
+
 .sec.collapsed>*:not(h2){display:none}
-.col-btn{float:right;background:var(--card2);border:1px solid var(--bd);color:var(--mut);border-radius:7px;padding:2px 9px;font-size:11px;font-weight:700;cursor:pointer}
+.col-btn{float:right;background:var(--glass);border:1px solid var(--bd);color:var(--mut);border-radius:8px;padding:3px 10px;font-size:11px;font-weight:800;cursor:pointer;transition:.15s}
 .col-btn:hover{color:var(--tx);border-color:var(--ac)}
 </style>
 <!-- Thống kê truy cập (GoatCounter) -->
