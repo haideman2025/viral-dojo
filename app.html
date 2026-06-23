@@ -976,9 +976,31 @@ function renderAuthUI(){
       ' · <span id="sync-badge" style="font-weight:700">(local)</span>'+
       ' <button class="btn ghost sm" onclick="logout()">Đăng xuất</button>';
   } else {
-    el.innerHTML='<button class="btn sm" onclick="openLogin()">☁️ Đăng nhập để đồng bộ</button>'+
-      ' <span id="sync-badge" style="color:#8a8fa3">(local)</span>';
+    el.innerHTML='<button class="btn sm" style="background:var(--gold);color:var(--px)" onclick="openUpgrade()">💎 Mở khoá Trọn đời</button>'+
+      ' <button class="btn ghost sm" onclick="openLogin()">🔑 Nhập mã</button>'+
+      ' <span id="sync-badge" style="color:#8a8fa3">(bản free)</span>';
   }
+}
+
+/* ===== 💎 PREMIUM (Trọn đời) — MÃ ĐĂNG NHẬP = LICENSE. Sửa VD_BUY cho số/QR/liên hệ thật ===== */
+const VD_BUY = { name:'VIRAL DOJO Trọn Đời', price:'599.000đ', contact:'Zalo: 09xx.xxx.xxx', qr:'' };
+function vdPremium(){ return !!(SESS && SESS.code); }
+function requirePremium(feat){ if(vdPremium()) return true; openUpgrade(feat); return false; }
+function openUpgrade(feat){
+  const ov=document.createElement('div'); ov.className='auth-ov';
+  ov.innerHTML='<div class="auth-box"><h3 style="margin:0 0 4px">🔓 Mở khoá '+_escAttr(VD_BUY.name)+'</h3>'+
+    '<p class="mut" style="font-size:13px;margin:0 0 10px">'+(feat?('Tính năng <b>'+_escAttr(feat)+'</b> thuộc gói trả phí. '):'')+'Mua 1 lần — dùng <b>trọn đời</b>: 🚀 GENERATE 30 ngày · 🥋 Lò dựng kịch bản · 📦 Xuất Flow · ☁️ Đồng bộ đa thiết bị.</p>'+
+    '<div style="background:var(--glass);border:2px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:10px;text-align:center">'+
+      '<div style="font-family:Bungee,sans-serif;font-size:26px;color:var(--ac2)">'+_escAttr(VD_BUY.price)+'</div>'+
+      '<div class="mut" style="font-size:12px">trọn đời · '+_escAttr(VD_BUY.contact)+'</div>'+
+      (VD_BUY.qr?'<img src="'+_escAttr(VD_BUY.qr)+'" alt="QR" style="max-width:170px;margin-top:8px;border-radius:8px">':'')+
+    '</div>'+
+    '<p class="mut" style="font-size:12px;margin:0 0 12px">Cách mua: chuyển khoản → nhắn '+_escAttr(VD_BUY.contact)+' → nhận <b>mã kích hoạt</b> → bấm "Tôi có mã".</p>'+
+    '<div class="row" style="gap:8px"><button class="btn" id="up-code">🔑 Tôi có mã — Kích hoạt</button>'+
+    '<button class="btn ghost" id="up-cancel">Để sau</button></div></div>';
+  document.body.appendChild(ov);
+  ov.querySelector('#up-code').onclick=function(){ ov.remove(); openLogin(); };
+  ov.querySelector('#up-cancel').onclick=function(){ ov.remove(); };
 }
 
 /* ---- Tab Kết nối: trạng thái đồng bộ + khu admin cấp mã ---- */
@@ -1683,7 +1705,7 @@ function renderForgePlan(){
       const tools=`<button class="btn sm ghost" title="Soi & sửa điểm (Lò A)" onclick="forgeEditDay(${x.day})" style="padding:3px 7px">✏</button> <button class="btn sm ghost" title="Phân tích sâu 18 câu (Lò B)" onclick="forgeDeepDay(${x.day})" style="padding:3px 7px">🔎</button> <button class="btn sm ghost" title="Nâng cấp ý tưởng (Lò C)" onclick="forgeUpgradeDay(${x.day})" style="padding:3px 7px">⬆</button> <button class="btn sm ghost" title="Sinh prompt video Omni 10s" onclick="genVPromptDay(${x.day})" style="padding:3px 7px">🎥</button>`;
       return `<tr><td>N${x.day}</td><td>${x.title}</td><td>${has?'✅':'<span class="mut">—</span>'}</td><td>${done?x.score:'—'}</td><td>${badge}</td><td style="white-space:nowrap">${tools}</td></tr>`;}).join('')+'</table></div>';
 }
-async function scoreForgeBatch(){
+async function scoreForgeBatch(){ if(!requirePremium('Chấm kịch bản'))return;
   const btn=document.getElementById('forge-score'), fb=document.getElementById('forge-fb');
   if(!S.keys.gemini){ fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   const sc=S.dna.skuld.scripts||{};
@@ -1706,7 +1728,7 @@ async function scoreForgeBatch(){
   }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
   btn.disabled=false; btn.innerHTML='🧠 Chấm + xếp hạng kịch bản';
 }
-async function buildScriptsTop(){
+async function buildScriptsTop(){ if(!requirePremium('Dựng kịch bản'))return;
   const btn=document.getElementById('forge-script'), fb=document.getElementById('forge-fb');
   if(!S.keys.gemini){ fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   S.dna.skuld.scripts=S.dna.skuld.scripts||{};
@@ -1726,7 +1748,7 @@ async function buildScriptsTop(){
 }
 /* ♻️ Tạo lại HÀNG LOẠT kịch bản chưa đủ điều kiện sản xuất (<60%) rồi tự chấm lại.
    Viết lại TRÚNG chỗ yếu: nhồi các tiêu chí đã trượt (từ checks[]) + kịch bản cũ vào prompt. */
-async function regenWeakScripts(){
+async function regenWeakScripts(){ if(!requirePremium('Tạo lại kịch bản yếu'))return;
   const btn=document.getElementById('forge-regen'), fb=document.getElementById('forge-fb');
   if(!S.keys.gemini){ fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   const sc=S.dna.skuld.scripts=S.dna.skuld.scripts||{};
@@ -1817,7 +1839,7 @@ function forgeCopy(kind,idx,btn){ const L=_fDayList(), x=L[idx]; if(!x) return; 
   _clip(text,btn);
 }
 function forgeCopyShot(idx,seq,btn){ const L=_fDayList(), x=L[idx]; if(!x) return; const vp=(S.dna.skuld.vprompts||{})[x.title]||{}; const sh=(vp.shots||[]).find(s=>s.seq===seq); if(sh) _clip(_fShotText(sh),btn); }
-function exportScripts(fmt){
+function exportScripts(fmt){ if(!requirePremium('Tải kịch bản'))return;
   const sc=S.dna.skuld.scripts||{}, keys=Object.keys(sc); if(!keys.length) return;
   const kenh=(S.dna.onboard&&S.dna.onboard.kenh)||'Kênh'; let data;
   if(fmt==='csv'){ data='Ý tưởng,Phần,Nội dung,Hình ảnh,TRÁM,Note\n'+keys.flatMap(t=>(sc[t].scenes||[]).map(c=>[t,c.phan,c.noidung,c.hinhanh,c.tram,c.note].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
@@ -1832,7 +1854,7 @@ function _pf(desc,label){ const m=new RegExp(label+':\\s*([^|]*)').exec(desc||''
 function _kenh(){ return (S.dna.onboard&&(S.dna.onboard.kenh||S.dna.onboard.nganh))||'Kênh'; }
 
 /* a) Plan .md — ĐÚNG format Flow "Tải kịch bản (.md)" đọc (bảng Ngày|Series|Hook|Format|CTA) */
-function exportFlowMd(){
+function exportFlowMd(){ if(!requirePremium('Xuất cho Flow'))return;
   let cal=(S._pack&&S._pack.calendar)||null;
   if(!cal){ const days=_genDays(); if(!days.length){ alert('Chưa có kế hoạch 30 ngày — sinh ở 🚀 GENERATE trước.'); return; }
     cal=days.map(x=>({ngay:x.day, series:_pf(x.desc,'Series')||x.title.replace(/^N\d+:\s*/,''), hook:_pf(x.desc,'Hook'), format:_pf(x.desc,'Format'), cta:_pf(x.desc,'CTA')})); }
@@ -1851,7 +1873,7 @@ function _arr(x){ if(Array.isArray(x)) return x; if(x==null||x==='') return []; 
 function _tryJson(s){ if(!s) return null; let t=String(s).replace(/```json/gi,'').replace(/```/g,'').trim();
   const a=t.indexOf('{'), b=t.lastIndexOf('}'); if(a>=0&&b>a) t=t.slice(a,b+1);
   t=t.replace(/,\s*([}\]])/g,'$1'); try{ return JSON.parse(t); }catch(e){ return null; } }
-async function exportFlowManifest(){
+async function exportFlowManifest(){ if(!requirePremium('Xuất cho Flow'))return;
   const btn=document.getElementById('flow-manifest'), fb=document.getElementById('forge-fb');
   const days=_genDays(); if(!days.length){ alert('Chưa có kế hoạch — sinh 30 ngày ở 🚀 GENERATE trước.'); return; }
   const scripts=S.dna.skuld.scripts||{}, vps=S.dna.skuld.vprompts||{};
@@ -1933,7 +1955,7 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
   if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất cho Flow (.md)'; }
 }
 /* Tải manifest .json (cho nút "Nhập manifest.json" của Flow) — dùng lại kết quả đã phân loại, KHÔNG chạy lại AI */
-function exportFlowJson(){
+function exportFlowJson(){ if(!requirePremium('Xuất cho Flow'))return;
   if(!S._flowManifest){ alert('Bấm "📦 Xuất cho Flow (.md)" trước để phân loại, rồi mới tải .json.'); return; }
   _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.json', JSON.stringify(S._flowManifest,null,2), 'application/json');
 }
@@ -2061,7 +2083,7 @@ Trả về DUY NHẤT JSON:
   vp[title].hashtags=cleanTags(o.hashtags);
   vp[title].music=asText(o.music);
 }
-async function genPostKitAll(){
+async function genPostKitAll(){ if(!requirePremium('Sinh bộ đăng bài'))return;
   const fb=document.getElementById('vp-fb'), btn=document.getElementById('vp-kit');
   if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   healScripts();
@@ -2327,8 +2349,8 @@ async function zPostAll(btn){
   for(let i=0;i<list.length;i++){ if(btn)btn.innerHTML=`<span class="spin"></span>Đang đẩy ${i+1}/${list.length}`; await zPostOne(list[i].id); }
   if(btn){btn.disabled=false; btn.innerHTML=old;}
 }
-function regenVPromptsAll(){ if(!confirm('Tạo lại TẤT CẢ prompt video (xoá bản hiện có)?')) return; S.dna.skuld.vprompts={}; save(); renderVPrompts(); genVPromptsAll(); }
-async function genVPromptsAll(){
+function regenVPromptsAll(){ if(!requirePremium('Tạo lại prompt video'))return; if(!confirm('Tạo lại TẤT CẢ prompt video (xoá bản hiện có)?')) return; S.dna.skuld.vprompts={}; save(); renderVPrompts(); genVPromptsAll(); }
+async function genVPromptsAll(){ if(!requirePremium('Sinh prompt video'))return;
   const btn=document.getElementById('vp-gen'), fb=document.getElementById('vp-fb');
   if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   healScripts(); await ensureVRef();
@@ -2363,7 +2385,7 @@ function renderVPrompts(){
     : 'Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".'; }
   renderForgeDayBox();
 }
-function exportVPrompts(fmt){
+function exportVPrompts(fmt){ if(!requirePremium('Tải prompt video'))return;
   const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp); if(!keys.length) return;
   const v=vref(), kenh=(S.dna.onboard&&S.dna.onboard.kenh)||'Kênh'; let data;
   if(fmt==='csv'){ data='Kịch bản,Shot,Thời lượng,Prompt (Omni EN),Voice-over VN,Overlay VN\n'+keys.flatMap(t=>(vp[t].shots||[]).map(s=>[t,s.seq,s.dur+'s',s.prompt,s.voiceover,s.onscreen].map(x=>`"${(x||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
@@ -2371,7 +2393,7 @@ function exportVPrompts(fmt){
   const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt-video-omni.'+fmt; document.body.appendChild(a); a.click(); a.remove();
 }
 /* Xuất prompt ĐẦY ĐỦ (hình + thoại VO + overlay) cho Veo/Omni Flash, mỗi shot tách bằng "---" */
-function exportVForFlow(){
+function exportVForFlow(){ if(!requirePremium('Xuất cho Flow'))return;
   const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp); if(!keys.length){ alert('Chưa có prompt video. Sinh prompt trước đã.'); return; }
   const blocks=[];
   keys.forEach(t=>{ (vp[t].shots||[]).forEach(s=>{ const p=(s.prompt||'').trim(); if(!p) return;
@@ -2979,7 +3001,7 @@ function grade6(){
 
 /* ===================== CỔNG GENERATE ===================== */
 function dnaSummary(){ const c={onboard:S.dna.onboard,m1:S.dna.m1,m2:S.dna.m2,m3:S.dna.m3,m4:S.dna.m4,m5:(S.dna.m5&&S.dna.m5.videos||[]).slice(0,12),m6:S.dna.m6}; return JSON.stringify(c).slice(0,12000); }
-async function genPart(part){
+async function genPart(part){ if(!requirePremium('GENERATE 30 ngày'))return;
   const out=document.getElementById('gen-out'), prog=document.getElementById('gen-prog');
   if(!S.keys.gemini){ out.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   const labels={calendar:'Lịch 30 ngày',scripts:'10 script 5-beat',prompts:'10 prompt ảnh + video'};
@@ -2993,7 +3015,7 @@ async function genPart(part){
     prog.innerHTML=`<div class="fb">✅ Xong ${labels[part]}.</div>`; renderPack();
   }catch(e){ prog.innerHTML=`<div class="fb bad">❌ ${labels[part]} lỗi: ${e.message}</div>`; }
 }
-async function generateAll(){
+async function generateAll(){ if(!requirePremium('GENERATE 30 ngày'))return;
   document.getElementById('gen-out').innerHTML=''; S._pack={};
   const btn=document.getElementById('gen-all'); btn.disabled=true;
   await genPart('calendar'); await genPart('scripts'); await genPart('prompts');
@@ -3002,7 +3024,7 @@ async function generateAll(){
   btn.disabled=false;
 }
 /* ===== ⚡ AUTO-PIPELINE: GENERATE → Lò (dựng→chấm→xếp hạng) → Vận hành ===== */
-async function runFullPipeline(){
+async function runFullPipeline(){ if(!requirePremium('GENERATE 30 ngày'))return;
   const auto=document.getElementById('gen-auto');
   if(!S.keys.gemini){ if(document.getElementById('gen-prog'))document.getElementById('gen-prog').innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   const note=m=>{ ['gen-prog','forge-fb'].forEach(id=>{const e=document.getElementById(id); if(e)e.innerHTML=`<div class="fb">${m}</div>`;}); };
