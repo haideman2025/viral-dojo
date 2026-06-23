@@ -1671,7 +1671,9 @@ Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"nhan_vat":["tên NV xuất hiệ
       `> Nạp file .md này vào "Lò Sản Xuất Video" (Flow). App đọc KHỐI JSON \`flow-pack/v1\` bên dưới để dựng Số thực thể (NV/SP/Cảnh) + danh sách shot. KHÔNG cần "Phân tích thông minh".\n\n`+
       `## Tóm tắt\n- ${daysOut.length} ngày · ${nShot} shot\n- ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh\n- Mỗi nhân vật/sản phẩm/cảnh = 1 ID, upload 1 ảnh dùng lại. Shot có \`no_product:true\` thì KHÔNG đính ảnh sản phẩm.\n\n`+
       '```json\n'+JSON.stringify(manifest,null,2)+'\n```\n';
-    _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.md', md, 'text/markdown');
+    const fn='flow-pack-'+_kenh().replace(/[^\w]+/g,'_');
+    _dl(fn+'.md', md, 'text/markdown');                              // cho nút "Tải kịch bản (.md)"
+    _dl(fn+'.json', JSON.stringify(manifest,null,2), 'application/json'); // cho nút "Nhập manifest.json"
     if(fb)fb.innerHTML=`<div class="fb">✅ Xuất Flow Pack (.md có JSON nhúng): ${daysOut.length} ngày · ${nShot} shot · ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh.${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'} Nạp .md này vào Flow.</div>`;
   }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
   if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất cho Flow (.md)'; }
