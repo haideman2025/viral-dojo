@@ -1615,7 +1615,9 @@ function exportFlowMd(){
 
 /* b) manifest.json — phân loại sẵn NV/SP/Cảnh theo ID + per-shot + no_product (Flow "Import manifest.json") */
 function _regAdd(map,id,tag){ const e=Object.values(map).find(v=>v.id===id); if(e&&!e.xuat_hien_o.includes(tag)) e.xuat_hien_o.push(tag); }
-function _idFor(map,pre,name){ const k=(name||'').toLowerCase().trim(); if(!k) return null; if(!map[k]) map[k]={id:pre+(Object.keys(map).length+1), ten:name, mo_ta:'', upload_huong_dan:'', xuat_hien_o:[]}; return map[k].id; }
+function _idFor(map,pre,name){ const k=(name||'').toString().toLowerCase().trim(); if(!k) return null; if(!map[k]) map[k]={id:pre+(Object.keys(map).length+1), ten:String(name), mo_ta:'', upload_huong_dan:'', xuat_hien_o:[]}; return map[k].id; }
+/* ép mọi kiểu (mảng/chuỗi/null/object) về MẢNG tên — AI đôi khi trả chuỗi "Nam A, Nam B" hoặc 1 giá trị */
+function _arr(x){ if(Array.isArray(x)) return x; if(x==null||x==='') return []; if(typeof x==='string') return x.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean); if(typeof x==='object') return Object.values(x).map(v=>String(v)); return [x]; }
 async function exportFlowManifest(){
   const btn=document.getElementById('flow-manifest'), fb=document.getElementById('forge-fb');
   const days=_genDays(); if(!days.length){ alert('Chưa có kế hoạch — sinh 30 ngày ở 🚀 GENERATE trước.'); return; }
@@ -1644,10 +1646,11 @@ Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"nhan_vat":["tên NV xuất hiệ
       }
       const shotsOut=src.map((s,k)=>{
         const c=(cls&&cls[k])||{};
-        const nv=(c.nhan_vat||[]).map(n=>_idFor(charMap,'NV',n)).filter(Boolean);
-        const hasSP=Array.isArray(c.san_pham)&&c.san_pham.filter(Boolean).length>0;
+        const nv=_arr(c.nhan_vat).map(n=>_idFor(charMap,'NV',n)).filter(Boolean);
+        const spArr=_arr(c.san_pham);
+        const hasSP=spArr.filter(Boolean).length>0;
         const noProd = c.no_product===false ? false : !hasSP;
-        const sp = noProd?[]:(c.san_pham||[]).map(n=>_idFor(prodMap,'SP',n)).filter(Boolean);
+        const sp = noProd?[]:spArr.map(n=>_idFor(prodMap,'SP',n)).filter(Boolean);
         const canh = c.canh?_idFor(sceneMap,'C',c.canh):null;
         const tag=`N${x.day}-S${k+1}`;
         nv.forEach(id=>_regAdd(charMap,id,tag)); sp.forEach(id=>_regAdd(prodMap,id,tag)); if(canh)_regAdd(sceneMap,canh,tag);
