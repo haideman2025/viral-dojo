@@ -371,6 +371,8 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
     <div id="forge-export" style="display:none;gap:10px;margin-top:10px">
       <button class="btn ghost sm" onclick="exportScripts('md')">⬇️ Tải kịch bản .md</button>
       <button class="btn ghost sm" onclick="exportScripts('csv')">⬇️ Tải .csv</button>
+      <button class="btn ghost sm" id="flow-manifest" onclick="exportFlowManifest()" style="border-color:var(--blue);color:var(--blue)">📦 Xuất manifest (Flow)</button>
+      <button class="btn ghost sm" onclick="exportFlowMd()" style="border-color:var(--blue);color:var(--blue)">📄 Plan .md (Flow)</button>
     </div>
   </div>
 
@@ -1591,6 +1593,81 @@ function exportScripts(fmt){
   if(fmt==='csv'){ data='Ý tưởng,Phần,Nội dung,Hình ảnh,TRÁM,Note\n'+keys.flatMap(t=>(sc[t].scenes||[]).map(c=>[t,c.phan,c.noidung,c.hinhanh,c.tram,c.note].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','))).join('\n'); }
   else { data=`# Kịch bản chi tiết — ${kenh}\n\n`+keys.map(t=>`## ${t}\n\n| Phần | Nội dung | Hình ảnh | TRÁM | Note |\n|---|---|---|---|---|\n`+(sc[t].scenes||[]).map(c=>`| ${c.phan||''} | ${(c.noidung||'').replace(/\|/g,'/')} | ${(c.hinhanh||'').replace(/\|/g,'/')} | ${(c.tram||'').replace(/\|/g,'/')} | ${(c.note||'').replace(/\|/g,'/')} |`).join('\n')).join('\n\n'); }
   const blob=new Blob([data],{type:fmt==='csv'?'text/csv':'text/markdown'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='kich-ban-chi-tiet.'+fmt; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ===================== 📦 XUẤT CHO FLOW (Lò Sản Xuất Video) ===================== */
+function _dl(name,data,type){ const b=new Blob([data],{type:type||'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+function _genDays(){ return (S.dna.skuld.scored||[]).filter(x=>x.from==='gen').sort((a,b)=>(a.day||0)-(b.day||0)); }
+function _pf(desc,label){ const m=new RegExp(label+':\\s*([^|]*)').exec(desc||''); return m?m[1].trim():''; }
+function _kenh(){ return (S.dna.onboard&&(S.dna.onboard.kenh||S.dna.onboard.nganh))||'Kênh'; }
+
+/* a) Plan .md — ĐÚNG format Flow "Tải kịch bản (.md)" đọc (bảng Ngày|Series|Hook|Format|CTA) */
+function exportFlowMd(){
+  let cal=(S._pack&&S._pack.calendar)||null;
+  if(!cal){ const days=_genDays(); if(!days.length){ alert('Chưa có kế hoạch 30 ngày — sinh ở 🚀 GENERATE trước.'); return; }
+    cal=days.map(x=>({ngay:x.day, series:_pf(x.desc,'Series')||x.title.replace(/^N\d+:\s*/,''), hook:_pf(x.desc,'Hook'), format:_pf(x.desc,'Format'), cta:_pf(x.desc,'CTA')})); }
+  const esc=s=>String(s||'').replace(/\|/g,'/').replace(/\n/g,' ').trim();
+  let md=`# 30-Day Content Pack — ${_kenh()}\n\n## 📅 Lịch 30 ngày\n\n| Ngày | Series | Hook | Format | CTA |\n|---|---|---|---|---|\n`+
+    cal.map(d=>`| ${d.ngay} | ${esc(d.series)} | ${esc(d.hook)} | ${esc(d.format)} | ${esc(d.cta)} |`).join('\n')+'\n';
+  _dl('flow-content-pack.md', md, 'text/markdown');
+}
+
+/* b) manifest.json — phân loại sẵn NV/SP/Cảnh theo ID + per-shot + no_product (Flow "Import manifest.json") */
+function _regAdd(map,id,tag){ const e=Object.values(map).find(v=>v.id===id); if(e&&!e.xuat_hien_o.includes(tag)) e.xuat_hien_o.push(tag); }
+function _idFor(map,pre,name){ const k=(name||'').toLowerCase().trim(); if(!k) return null; if(!map[k]) map[k]={id:pre+(Object.keys(map).length+1), ten:name, mo_ta:'', upload_huong_dan:'', xuat_hien_o:[]}; return map[k].id; }
+async function exportFlowManifest(){
+  const btn=document.getElementById('flow-manifest'), fb=document.getElementById('forge-fb');
+  const days=_genDays(); if(!days.length){ alert('Chưa có kế hoạch — sinh 30 ngày ở 🚀 GENERATE trước.'); return; }
+  const scripts=S.dna.skuld.scripts||{}, vps=S.dna.skuld.vprompts||{};
+  const work=days.filter(x=>scripts[x.title]||(vps[x.title]&&(vps[x.title].shots||[]).length));
+  if(!work.length){ if(fb)fb.innerHTML='<div class="fb">⚠️ Chưa có kịch bản/shot. Dựng kịch bản (🎬) + sinh prompt video (🎥) trước.</div>'; return; }
+  const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}, daysOut=[];
+  if(btn) btn.disabled=true;
+  try{
+    for(let i=0;i<work.length;i++){
+      const x=work[i];
+      const src=(vps[x.title]&&(vps[x.title].shots||[]).length)
+        ? vps[x.title].shots.map(s=>({seq:s.seq,prompt_en:s.prompt,voiceover:s.voiceover,onscreen:s.onscreen}))
+        : (scripts[x.title].scenes||[]).map((c,k)=>({seq:k+1,prompt_en:'',voiceover:c.noidung,onscreen:c.tram,_sc:c}));
+      let cls=null;
+      if(aiOn){
+        forgeProg(`📦 Phân loại Flow ${i+1}/${work.length}: ${x.title}`,1);
+        if(btn) btn.innerHTML=`<span class="spin"></span>${i+1}/${work.length}`;
+        const body=src.map((s,k)=>`#${k+1} EN:${(s.prompt_en||'').slice(0,280)} | Thoại:${s.voiceover||''} | Overlay:${s.onscreen||''}`).join('\n');
+        const out=await geminiCall(`Bạn là giám sát sản xuất video TikTok. Phân loại TỪNG SHOT thành thực thể để máy gán ảnh tham chiếu, bám BRAND.
+BRAND:\n${brandContext(1500)}
+Quy tắc: no_product MẶC ĐỊNH true, chỉ false khi shot rõ ràng có sản phẩm (hero/demo/cận nhãn/CTA cầm sản phẩm). Dùng TÊN nhất quán giữa các shot. goc_may đa dạng (cỡ cảnh+góc+chuyển động), không lặp trực diện.
+DANH SÁCH SHOT:\n${body}
+Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"nhan_vat":["tên NV xuất hiện"],"san_pham":["tên SP, RỖNG nếu không có"],"no_product":true,"canh":"tên bối cảnh","cam_xuc":"beat cảm xúc","goc_may":"gợi ý góc máy"}]}`,{json:true,temp:0.3});
+        cls=out.shots||[];
+      }
+      const shotsOut=src.map((s,k)=>{
+        const c=(cls&&cls[k])||{};
+        const nv=(c.nhan_vat||[]).map(n=>_idFor(charMap,'NV',n)).filter(Boolean);
+        const hasSP=Array.isArray(c.san_pham)&&c.san_pham.filter(Boolean).length>0;
+        const noProd = c.no_product===false ? false : !hasSP;
+        const sp = noProd?[]:(c.san_pham||[]).map(n=>_idFor(prodMap,'SP',n)).filter(Boolean);
+        const canh = c.canh?_idFor(sceneMap,'C',c.canh):null;
+        const tag=`N${x.day}-S${k+1}`;
+        nv.forEach(id=>_regAdd(charMap,id,tag)); sp.forEach(id=>_regAdd(prodMap,id,tag)); if(canh)_regAdd(sceneMap,canh,tag);
+        let pen=s.prompt_en||'';
+        if(!pen&&s._sc) pen=`${s._sc.phan||''}: ${s._sc.noidung||''}. Visual: ${s._sc.hinhanh||''}. Vertical 9:16, ~10s, cinematic, varied camera.`;
+        if(noProd) pen+=' No product appears in this shot; do not show, invent, imply, or place any product, packaging, bottle, or logo anywhere in the frame.';
+        return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:nv, san_pham:sp, no_product:noProd, canh:canh||'',
+          cam_xuc:c.cam_xuc||'', goc_may:c.goc_may||'', overlay:{ text:s.onscreen||'', do_hoa:'', sfx:'', nhac:'' },
+          ly_do_gan:'', prompt_en:pen, voiceover:s.voiceover||'' };
+      });
+      daysOut.push({ ngay:'N'+x.day, series:x.title.replace(/^N\d+:\s*/,''),
+        arc_cam_xuc:['Nỗi đau','Rào cản','Mong đợi','Tự hào','Thúc đẩy'], shots:shotsOut });
+      save();
+    }
+    const manifest={ _note:'Xuất từ VIRAL DOJO cho Lò Sản Xuất Video (Flow). Nạp bằng "Import manifest.json".',
+      meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral' },
+      characters:Object.values(charMap), products:Object.values(prodMap), scenes:Object.values(sceneMap), days:daysOut };
+    _dl('flow-manifest-'+_kenh().replace(/[^\w]+/g,'_')+'.json', JSON.stringify(manifest,null,2),'application/json');
+    if(fb)fb.innerHTML=`<div class="fb">✅ Xuất manifest cho Flow: ${daysOut.length} ngày · ${Object.keys(charMap).length} nhân vật · ${Object.keys(prodMap).length} sản phẩm · ${Object.keys(sceneMap).length} cảnh.${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'} Nạp vào Flow bằng "Import manifest.json".</div>`;
+  }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất manifest (Flow)'; }
 }
 /* --- 🎥 Bộ prompt video Omni (Google Flow) — chuỗi 10s/script --- */
 /* ép mọi giá trị (string/array/object) thành chuỗi đọc được — AI đôi khi trả object */
