@@ -720,6 +720,15 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
           <button class="btn ghost sm" onclick="adminListCodes()">↻ Danh sách</button>
         </div>
         <div id="adm-out" class="mut" style="font-size:12px;margin-top:8px"></div>
+        <div style="margin-top:12px;border-top:1px dashed var(--bd);padding-top:10px">
+          <label>💳 Bán hàng <span class="mut">(hiện trong popup "Mở khoá")</span></label>
+          <div class="row" style="gap:8px">
+            <div><label>Giá</label><input id="buy-price" placeholder="999.000đ"></div>
+            <div><label>Liên hệ</label><input id="buy-contact" placeholder="Zalo: 09xx.xxx.xxx"></div>
+          </div>
+          <div style="margin-top:6px"><label>Link ảnh QR (tuỳ chọn)</label><input id="buy-qr" placeholder="https://...qr.png"></div>
+          <div style="margin-top:8px"><button class="btn sm" onclick="adminSaveBuy()">💾 Lưu thông tin bán</button> <span class="mut" id="buy-out" style="font-size:12px"></span></div>
+        </div>
       </div>
       <p class="mut" style="font-size:11px;margin-top:8px"><a href="#" onclick="toggleAdmin();return false;" style="color:var(--mut)">⚙ Khu admin</a></p>
     </div>
@@ -983,7 +992,14 @@ function renderAuthUI(){
 }
 
 /* ===== 💎 PREMIUM (Trọn đời) — MÃ ĐĂNG NHẬP = LICENSE. Sửa VD_BUY cho số/QR/liên hệ thật ===== */
-const VD_BUY = { name:'VIRAL DOJO Trọn Đời', price:'599.000đ', contact:'Zalo: 09xx.xxx.xxx', qr:'' };
+let VD_BUY = Object.assign({ name:'VIRAL DOJO Trọn Đời', price:'999.000đ', contact:'Zalo: 09xx.xxx.xxx', qr:'' }, JSON.parse(localStorage.getItem('dojo_buy')||'{}'));
+function adminSaveBuy(){
+  VD_BUY.price=(document.getElementById('buy-price').value||'').trim()||VD_BUY.price;
+  VD_BUY.contact=(document.getElementById('buy-contact').value||'').trim()||VD_BUY.contact;
+  VD_BUY.qr=(document.getElementById('buy-qr').value||'').trim();
+  _origSet('dojo_buy',JSON.stringify({price:VD_BUY.price,contact:VD_BUY.contact,qr:VD_BUY.qr}));
+  const o=document.getElementById('buy-out'); if(o){ o.textContent='✅ Đã lưu'; setTimeout(()=>o.textContent='',1500); }
+}
 function vdPremium(){ return !!(SESS && SESS.code); }
 function requirePremium(feat){ if(vdPremium()) return true; openUpgrade(feat); return false; }
 function openUpgrade(feat){
@@ -1014,6 +1030,9 @@ function renderAdminUI(){
     : '<button class="btn sm" onclick="openLogin()">☁️ Đăng nhập</button>'; }
   const at=document.getElementById('adm-token'); if(at&&ADMIN.token) at.value=ADMIN.token;
   const pan=document.getElementById('admin-panel'); if(pan&&ADMIN.token) pan.style.display='';
+  const bp=document.getElementById('buy-price'); if(bp&&!bp.value) bp.value=VD_BUY.price;
+  const bc=document.getElementById('buy-contact'); if(bc&&!bc.value) bc.value=VD_BUY.contact;
+  const bq=document.getElementById('buy-qr'); if(bq&&!bq.value) bq.value=VD_BUY.qr;
 }
 function toggleAdmin(){ const p=document.getElementById('admin-panel'); if(p) p.style.display=(p.style.display==='none'?'':'none'); }
 function _admToken(){ const t=(document.getElementById('adm-token').value||'').trim(); if(t){ ADMIN.token=t; _origSet('dojo_admin',JSON.stringify(ADMIN)); } return t; }
