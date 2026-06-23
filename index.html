@@ -1618,13 +1618,17 @@ function _regAdd(map,id,tag){ const e=Object.values(map).find(v=>v.id===id); if(
 function _idFor(map,pre,name){ const k=(name||'').toString().toLowerCase().trim(); if(!k) return null; if(!map[k]) map[k]={id:pre+(Object.keys(map).length+1), ten:String(name), mo_ta:'', upload_huong_dan:'', xuat_hien_o:[]}; return map[k].id; }
 /* ép mọi kiểu (mảng/chuỗi/null/object) về MẢNG tên — AI đôi khi trả chuỗi "Nam A, Nam B" hoặc 1 giá trị */
 function _arr(x){ if(Array.isArray(x)) return x; if(x==null||x==='') return []; if(typeof x==='string') return x.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean); if(typeof x==='object') return Object.values(x).map(v=>String(v)); return [x]; }
+/* parse JSON khoan dung: bỏ ```json fences, cắt {…}, bỏ dấu phẩy thừa; lỗi trả null (không throw) */
+function _tryJson(s){ if(!s) return null; let t=String(s).replace(/```json/gi,'').replace(/```/g,'').trim();
+  const a=t.indexOf('{'), b=t.lastIndexOf('}'); if(a>=0&&b>a) t=t.slice(a,b+1);
+  t=t.replace(/,\s*([}\]])/g,'$1'); try{ return JSON.parse(t); }catch(e){ return null; } }
 async function exportFlowManifest(){
   const btn=document.getElementById('flow-manifest'), fb=document.getElementById('forge-fb');
   const days=_genDays(); if(!days.length){ alert('Chưa có kế hoạch — sinh 30 ngày ở 🚀 GENERATE trước.'); return; }
   const scripts=S.dna.skuld.scripts||{}, vps=S.dna.skuld.vprompts||{};
   const work=days.filter(x=>scripts[x.title]||(vps[x.title]&&(vps[x.title].shots||[]).length));
   if(!work.length){ if(fb)fb.innerHTML='<div class="fb">⚠️ Chưa có kịch bản/shot. Dựng kịch bản (🎬) + sinh prompt video (🎥) trước.</div>'; return; }
-  const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}, daysOut=[];
+  const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}, daysOut=[]; let _fail=0;
   if(btn) btn.disabled=true;
   try{
     for(let i=0;i<work.length;i++){
@@ -1637,12 +1641,14 @@ async function exportFlowManifest(){
         forgeProg(`📦 Phân loại Flow ${i+1}/${work.length}: ${x.title}`,1);
         if(btn) btn.innerHTML=`<span class="spin"></span>${i+1}/${work.length}`;
         const body=src.map((s,k)=>`#${k+1} EN:${(s.prompt_en||'').slice(0,280)} | Thoại:${s.voiceover||''} | Overlay:${s.onscreen||''}`).join('\n');
-        const out=await geminiCall(`Bạn là giám sát sản xuất video TikTok. Phân loại TỪNG SHOT thành thực thể để máy gán ảnh tham chiếu, bám BRAND.
+        try{
+          const raw=await geminiCall(`Bạn là giám sát sản xuất video TikTok. Phân loại TỪNG SHOT thành thực thể để máy gán ảnh tham chiếu, bám BRAND.
 BRAND:\n${brandContext(1500)}
 Quy tắc: no_product MẶC ĐỊNH true, chỉ false khi shot rõ ràng có sản phẩm (hero/demo/cận nhãn/CTA cầm sản phẩm). Dùng TÊN nhất quán giữa các shot. goc_may đa dạng (cỡ cảnh+góc+chuyển động), không lặp trực diện.
 DANH SÁCH SHOT:\n${body}
-Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"nhan_vat":["tên NV xuất hiện"],"san_pham":["tên SP, RỖNG nếu không có"],"no_product":true,"canh":"tên bối cảnh","cam_xuc":"beat cảm xúc","goc_may":"gợi ý góc máy"}]}`,{json:true,temp:0.3});
-        cls=out.shots||[];
+Trả về DUY NHẤT JSON hợp lệ (không markdown, không dấu phẩy thừa): {"shots":[{"seq":1,"nhan_vat":["tên NV xuất hiện"],"san_pham":["tên SP, RỖNG nếu không có"],"no_product":true,"canh":"tên bối cảnh","cam_xuc":"beat cảm xúc","goc_may":"gợi ý góc máy"}]}`,{temp:0.3});
+          const out=_tryJson(raw); cls=(out&&_arr(out.shots))||null; if(!cls) _fail++;
+        }catch(e){ _fail++; }   // ngày lỗi → bỏ qua, dùng mặc định, vẫn xuất tiếp
       }
       const shotsOut=src.map((s,k)=>{
         const c=(cls&&cls[k])||{};
@@ -1677,7 +1683,7 @@ Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"nhan_vat":["tên NV xuất hiệ
       '```json\n'+JSON.stringify(manifest,null,2)+'\n```\n';
     S._flowManifest = manifest;   // lưu để nút ".json" tải mà KHÔNG chạy lại AI
     _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.md', md, 'text/markdown');
-    if(fb)fb.innerHTML=`<div class="fb">✅ Xuất Flow Pack (.md có JSON nhúng): ${daysOut.length} ngày · ${nShot} shot · ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh.${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'} Nạp .md này vào Flow.</div>`;
+    if(fb)fb.innerHTML=`<div class="fb">✅ Xuất Flow Pack (.md có JSON nhúng): ${daysOut.length} ngày · ${nShot} shot · ${nC} nhân vật · ${nP} sản phẩm · ${nS} cảnh.${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'}${_fail?` ⚠️ ${_fail} ngày AI trả lỗi → giữ prompt + để mặc định no_product.`:''} Rồi bấm "🧩 Tải .json (Flow)" để lấy file nạp vào Flow.</div>`;
   }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
   if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất cho Flow (.md)'; }
 }
