@@ -363,6 +363,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;padding:18px}
       <button class="btn" id="forge-auto" onclick="runFullPipeline()" style="background:linear-gradient(135deg,#ffc23c,var(--ac))">⚡ Tự động: dựng → chấm → đẩy Vận hành</button>
       <button class="btn ghost" id="forge-script" onclick="buildScriptsTop()">🎬 Dựng kịch bản (cả loạt)</button>
       <button class="btn ghost" id="forge-score" onclick="scoreForgeBatch()">🧠 Chấm + xếp hạng kịch bản</button>
+      <button class="btn ghost" id="forge-regen" onclick="regenWeakScripts()" style="border-color:var(--warn);color:var(--warn)">♻️ Tạo lại kịch bản yếu → chấm lại</button>
       <button class="btn ghost sm" onclick="forgeReset()">🔄 Làm lại từ đầu</button>
     </div>
     <div id="forge-fb"></div>
@@ -1537,6 +1538,41 @@ async function buildScriptsTop(){
     fb.innerHTML=`<div class="fb">✅ Đã dựng ${L.length} kịch bản chi tiết. Giờ bấm "🧠 Chấm + xếp hạng kịch bản" để biết cái nào sẵn sàng sản xuất. Cuộn xuống xem + tải về.</div>`;
   }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
   btn.disabled=false; btn.innerHTML='🎬 Dựng kịch bản (cả loạt)';
+}
+/* ♻️ Tạo lại HÀNG LOẠT kịch bản chưa đủ điều kiện sản xuất (<60%) rồi tự chấm lại.
+   Viết lại TRÚNG chỗ yếu: nhồi các tiêu chí đã trượt (từ checks[]) + kịch bản cũ vào prompt. */
+async function regenWeakScripts(){
+  const btn=document.getElementById('forge-regen'), fb=document.getElementById('forge-fb');
+  if(!S.keys.gemini){ fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const sc=S.dna.skuld.scripts=S.dna.skuld.scripts||{};
+  // yếu = gen · CÓ kịch bản · CHƯA đạt ≥60% (score<600 hoặc chưa chấm theo bản hiện tại)
+  const L=S.dna.skuld.scored.filter(x=>x.from==='gen' && sc[x.title] && !(x._scv===FORGE_SV && x.score>=600));
+  if(!L.length){
+    const noScript=S.dna.skuld.scored.filter(x=>x.from==='gen'&&!sc[x.title]).length;
+    fb.innerHTML='<div class="fb">'+(noScript?('⚠️ Có '+noScript+' ý tưởng chưa có kịch bản — bấm "🎬 Dựng kịch bản" trước. Nút này chỉ TẠO LẠI kịch bản đã có mà <60%.'):'🎉 Mọi kịch bản đều đã đạt ≥60% — không có gì cần tạo lại.')+'</div>'; return;
+  }
+  if(!confirm('Tạo lại '+L.length+' kịch bản đang dưới 60% (ghi đè bản cũ) rồi tự chấm lại loạt?')) return;
+  btn.disabled=true;
+  try{
+    for(let i=0;i<L.length;i++){
+      const x=L[i]; btn.innerHTML=`<span class="spin"></span>Tạo lại ${i+1}/${L.length}...`;
+      forgeProg(`♻️ Tạo lại kịch bản ${i+1}/${L.length}: ${x.title}`,1);
+      const oldText=(((sc[x.title]||{}).scenes)||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình: ${c.hinhanh||''}; trám: ${c.tram||''}]`).join(' ').slice(0,900);
+      const failed=(Array.isArray(x.checks)?x.checks:[]).map((c,idx)=>c?null:(SK_Q[idx]&&SK_Q[idx][1])).filter(Boolean);
+      const fix=failed.length
+        ? 'Kịch bản CŨ bị giám khảo đánh TRƯỢT các tiêu chí sau — viết lại để ĐẠT bằng được:\n- '+failed.join('\n- ')
+        : 'Kịch bản cũ điểm thấp — nâng cấp mạnh độ viral: hook sắc hơn, cụ thể hơn, có bằng chứng & cao trào.';
+      const out=await geminiCall(`Bạn là biên kịch COREVIRAL. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6});
+      sc[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
+      x._sc=false; x._scv=null; x.score=0; x.checks=[];   // reset điểm → buộc chấm lại ở bước sau
+      save(); renderForgePlan(); renderScripts();
+    }
+    forgeProg(`✅ Đã tạo lại ${L.length} kịch bản. Đang chấm lại loạt...`,1);
+    await scoreForgeBatch();   // tự chấm các kịch bản vừa tạo (chỉ chấm cái _scv!==FORGE_SV)
+    const ready=L.filter(x=>x._scv===FORGE_SV && x.score>=600).length;
+    fb.innerHTML=`<div class="fb">✅ Đã tạo lại & chấm lại ${L.length} kịch bản yếu. Giờ <b>${ready}/${L.length}</b> đạt ≥60% ✅. Cái còn yếu: dùng "Liên kết ý tưởng" (Lò C) nâng cấp Ý TƯỞNG gốc rồi tạo lại.</div>`;
+  }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  btn.disabled=false; btn.innerHTML='♻️ Tạo lại kịch bản yếu → chấm lại';
 }
 function renderScripts(){
   const el=document.getElementById('forge-scripts'), ex=document.getElementById('forge-export'); if(!el) return;
