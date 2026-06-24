@@ -3525,6 +3525,7 @@ function ensureDynamic(){
   }
   AIM.close=function(){ AIM.open=false; var p=document.getElementById('aim-panel'); if(p)p.classList.remove('show'); };
   AIM.reset=function(){ if(!confirm('Xoá toàn bộ thống kê token của dự án này?'))return; S.dna.aiStats={calls:0,inTok:0,outTok:0,totTok:0,models:{},recent:[]}; try{save();}catch(e){} render(); };
+  AIM.togglePro=function(on){ try{ S.dna.modelHi=!!on; if(typeof save==='function')save(); if(typeof renderBrandKit==='function')renderBrandKit(); if(typeof scheduleSync==='function')scheduleSync(); }catch(e){} render(); };
 
   function render(){
     var launch=document.getElementById('aim-launch'); if(!launch) return;
@@ -3567,6 +3568,11 @@ function ensureDynamic(){
     } else {
       live='<div class="aim-live"><span class="aim-mut">● Nhàn rỗi — chưa có tác vụ AI nào đang chạy.</span></div>';
     }
+    // toggle model Pro (ngay trong monitor cho dễ thấy)
+    var proOn=(window.bkHi&&bkHi());
+    var proCtl='<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;background:#161922;border:1px solid '+(proOn?'#c8962f':'#2a2d36')+';border-radius:9px;padding:8px 11px;margin:0 0 10px">'
+      +'<input type="checkbox" '+(proOn?'checked':'')+' onchange="AIM.togglePro(this.checked)" style="width:auto;accent-color:#c8962f"> '
+      +'<span><b style="color:'+(proOn?'#e6b84a':'#e9eaf0')+'">⚡ Chất lượng cao (Gemini 2.5-Pro)</b><br><span style="color:#8a8f9c">cho khâu não: dựng/tạo lại KB · phân loại Flow · kiểm tra SP'+(proOn?' — ĐANG BẬT':' (đang dùng flash)')+'</span></span></label>';
     // totals
     var usd=totalCostUSD();
     var grid='<div class="aim-grid">'+
@@ -3585,7 +3591,7 @@ function ensureDynamic(){
     if(!a.recent.length) rec+='<div class="aim-mut" style="font-size:12px">Chưa có. Chạy một tác vụ AI (dựng kịch bản, xuất Flow…) để thấy ở đây.</div>';
     else a.recent.forEach(function(r){ rec+='<div class="aim-rec'+(r.ok?'':' bad')+'"><b>'+shortTask(r.task)+'</b> '+(r.ok?'':'❌ ')+
       '<span class="aim-mut">· '+shortModel(r.model)+' · '+fmtTok(r.tot)+' tok · '+(r.ms/1000).toFixed(1)+'s</span></div>'; });
-    bd.innerHTML=jobsH+live+grid+bym+rec+'<div style="text-align:right;margin-top:8px"><a class="rs" onclick="AIM.reset()">🗑 Reset thống kê</a></div>';
+    bd.innerHTML=jobsH+live+proCtl+grid+bym+rec+'<div style="text-align:right;margin-top:8px"><a class="rs" onclick="AIM.reset()">🗑 Reset thống kê</a></div>';
   }
   AIM.render=render;
   if(document.body) ui(); else document.addEventListener('DOMContentLoaded',ui);
