@@ -3495,37 +3495,38 @@ function ensureDynamic(){
     if(document.getElementById('aim-launch')) return;
     var st=document.createElement('style');
     st.textContent=
-      '#aim-launch{position:fixed;right:14px;bottom:14px;z-index:9000;background:#11131a;border:1px solid #2a2d36;color:#e9eaf0;border-radius:30px;padding:8px 13px;font:600 12.5px/1 system-ui;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.45);display:flex;align-items:center;gap:7px}'+
-      '#aim-launch .dot{width:8px;height:8px;border-radius:50%;background:#3a3f4b}'+
-      '#aim-launch.run .dot{background:#36d399;animation:aimp 1s infinite}'+
-      '@keyframes aimp{0%,100%{opacity:1}50%{opacity:.25}}'+
-      '#aim-panel{position:fixed;right:14px;bottom:58px;z-index:9000;width:330px;max-width:92vw;background:#11131a;border:1px solid #2a2d36;border-radius:14px;color:#e9eaf0;font:13px/1.45 system-ui;box-shadow:0 16px 50px rgba(0,0,0,.6);display:none;overflow:hidden}'+
+      '#aim-launch{position:fixed;right:14px;bottom:14px;z-index:9000;background:var(--card2);border:2px solid var(--bd);color:var(--tx);border-radius:24px;padding:8px 14px;font:800 12.5px/1 \'Be Vietnam Pro\',system-ui;cursor:pointer;box-shadow:3px 3px 0 var(--px);display:flex;align-items:center;gap:7px}'+
+      '#aim-launch:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--px)}'+
+      '#aim-launch .dot{width:9px;height:9px;border-radius:50%;background:var(--mut)}'+
+      '#aim-launch.run .dot{background:var(--ac);animation:aimp 1s infinite}'+
+      '@keyframes aimp{0%,100%{opacity:1}50%{opacity:.3}}'+
+      '#aim-panel{position:fixed;right:14px;bottom:60px;z-index:9000;width:328px;max-width:92vw;background:var(--card);border:3px solid var(--bd);border-radius:12px;color:var(--tx);font:600 13px/1.45 \'Be Vietnam Pro\',system-ui;box-shadow:6px 6px 0 var(--px),inset 0 0 0 2px var(--lo);display:none;overflow:hidden}'+
       '#aim-panel.show{display:block}'+
-      '#aim-panel .hd{display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:#161922;border-bottom:1px solid #2a2d36}'+
-      '#aim-panel .hd b{font-size:13.5px}'+
+      '#aim-panel .hd{display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:var(--card2);border-bottom:2px solid var(--bd)}'+
+      '#aim-panel .hd b{font-size:14px;font-weight:800;color:var(--tx);white-space:nowrap}'+
       '#aim-panel .bd{padding:12px 13px;max-height:62vh;overflow:auto}'+
-      '.aim-live{border:1px solid #2a2d36;border-radius:10px;padding:9px 11px;margin-bottom:10px;background:#0d0f15}'+
-      '.aim-live.on{border-color:#36d399}'+
+      '.aim-live{border:2px solid var(--bd);border-radius:9px;padding:9px 11px;margin-bottom:10px;background:var(--glass);box-shadow:inset 0 0 0 2px var(--lo)}'+
+      '.aim-live.on{border-color:var(--ac)}'+
       '.aim-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}'+
-      '.aim-card{background:#161922;border:1px solid #2a2d36;border-radius:10px;padding:8px 10px}'+
-      '.aim-card .k{font-size:11px;color:#8a8f9c}.aim-card .v{font-size:16px;font-weight:700;margin-top:2px}'+
-      '.aim-mrow{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px dashed #23262f}'+
-      '.aim-rec{font-size:11.5px;border-left:2px solid #2a2d36;padding:3px 8px;margin:4px 0}'+
-      '.aim-rec.bad{border-left-color:#f87272}'+
-      '.aim-mut{color:#8a8f9c}'+
-      '.aim-job{border:1px solid #2a2d36;border-radius:10px;padding:9px 11px;margin-bottom:8px;background:#0d0f15}'+
-      '.aim-job.run{border-color:#36d399}.aim-job.paused{border-color:#fbbf24}.aim-job.cancelling{border-color:#f87272;opacity:.7}'+
+      '.aim-card{background:var(--glass);border:2px solid var(--bd);border-radius:9px;padding:8px 10px;box-shadow:inset 0 0 0 2px var(--lo)}'+
+      '.aim-card .k{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}.aim-card .v{font-size:17px;font-weight:800;margin-top:2px;color:var(--ac2)}'+
+      '.aim-mrow{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px dashed var(--line)}'+
+      '.aim-rec{font-size:11.5px;border-left:3px solid var(--bd);padding:3px 8px;margin:4px 0}'+
+      '.aim-rec.bad{border-left-color:var(--red)}'+
+      '.aim-mut{color:var(--mut)}'+
+      '.aim-job{border:2px solid var(--bd);border-radius:9px;padding:9px 11px;margin-bottom:8px;background:var(--glass)}'+
+      '.aim-job.run{border-color:var(--ac)}.aim-job.paused{border-color:var(--warn)}.aim-job.cancelling{border-color:var(--red);opacity:.75}'+
       '.aim-job .jt{display:flex;justify-content:space-between;align-items:center;gap:6px}'+
-      '.aim-job .jn{font-weight:700;font-size:12.5px}'+
-      '.aim-bar{height:6px;border-radius:4px;background:#23262f;margin:7px 0 4px;overflow:hidden}'+
-      '.aim-bar i{display:block;height:100%;background:linear-gradient(90deg,#36d399,#22d3ee);transition:width .3s}'+
-      '.aim-job.paused .aim-bar i{background:#fbbf24}'+
-      '.aim-btn{cursor:pointer;border:1px solid #2a2d36;background:#161922;color:#e9eaf0;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:600}'+
-      '.aim-btn:hover{border-color:#3a3f4b}.aim-btn.warn{color:#fbbf24}.aim-btn.dang{color:#f87272}'+
-      '.aim-jbadge{font-size:10.5px;padding:1px 7px;border-radius:10px;background:#23262f;color:#8a8f9c}'+
-      '.aim-jbadge.run{background:#0f3a2c;color:#36d399}.aim-jbadge.paused{background:#3a300f;color:#fbbf24}'+
-      '#aim-panel .x{cursor:pointer;color:#8a8f9c;font-size:18px;line-height:1}'+
-      '#aim-panel .rs{cursor:pointer;color:#f87272;font-size:11.5px;text-decoration:none}';
+      '.aim-job .jn{font-weight:800;font-size:12.5px;color:var(--tx)}'+
+      '.aim-bar{height:8px;border-radius:4px;background:var(--lo);border:1px solid var(--bd);margin:7px 0 4px;overflow:hidden}'+
+      '.aim-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--gold));transition:width .3s}'+
+      '.aim-job.paused .aim-bar i{background:var(--warn)}'+
+      '.aim-btn{cursor:pointer;border:2px solid var(--bd);background:var(--card2);color:var(--tx);border-radius:6px;padding:3px 9px;font-size:12px;font-weight:800;box-shadow:2px 2px 0 var(--px)}'+
+      '.aim-btn:active{transform:translate(2px,2px);box-shadow:0 0 0}.aim-btn.warn{color:var(--orange)}.aim-btn.dang{color:var(--red)}'+
+      '.aim-jbadge{font-size:10.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:var(--lo);color:var(--mut)}'+
+      '.aim-jbadge.run{background:var(--ac);color:var(--hi)}.aim-jbadge.paused{background:var(--warn);color:var(--px)}'+
+      '#aim-panel .x{cursor:pointer;color:var(--mut);font-size:18px;line-height:1;font-weight:800}'+
+      '#aim-panel .rs{cursor:pointer;color:var(--red);font-size:11.5px;text-decoration:none}';
     document.head.appendChild(st);
     var b=document.createElement('div'); b.id='aim-launch'; b.innerHTML='<span class="dot"></span><span id="aim-lt">🤖 0</span>';
     b.onclick=function(){ AIM.open=!AIM.open; document.getElementById('aim-panel').classList.toggle('show',AIM.open); render(); };
@@ -3568,54 +3569,54 @@ function ensureDynamic(){
           '<div class="aim-bar"><i style="width:'+pct+'%"></i></div>'+
           '<div class="aim-mut" style="font-size:11.5px">'+badge+' '+(j.total?(j.done+'/'+j.total+' · '+pct+'%'):(''+j.done))+(j.sub?(' · '+shortTask(j.sub)):'')+'</div></div>';
       });
-      jobsH='<div style="font-size:11px;color:#8a8f9c;margin:0 0 5px">⚙️ LUỒNG ĐANG CHẠY</div>'+jobsH;
+      jobsH='<div style="font-size:11px;color:var(--mut);font-weight:700;margin:0 0 5px">⚙️ ĐANG CHẠY</div>'+jobsH;
     }
     // live
     var live='';
     if(running){
       var r=AIM.running[runIds[0]]; var el=((Date.now()-r.t0)/1000).toFixed(1);
-      live='<div class="aim-live on"><div><b style="color:#36d399">● Đang chạy</b> '+(runIds.length>1?('<span class="aim-mut">+'+(runIds.length-1)+' tác vụ</span>'):'')+'</div>'+
+      live='<div class="aim-live on"><div><b style="color:var(--ac2)">● Đang chạy</b> '+(runIds.length>1?('<span class="aim-mut">+'+(runIds.length-1)+' tác vụ</span>'):'')+'</div>'+
         '<div style="margin-top:4px">'+shortTask(r.task)+'</div>'+
-        '<div class="aim-mut" style="margin-top:3px">model <b style="color:#e9eaf0">'+shortModel(r.model)+'</b> · ⏱ '+el+'s</div></div>';
+        '<div class="aim-mut" style="margin-top:3px">model <b style="color:var(--tx)">'+shortModel(r.model)+'</b> · ⏱ '+el+'s</div></div>';
     } else {
-      live='<div class="aim-live"><span class="aim-mut">● Nhàn rỗi — chưa có tác vụ AI nào đang chạy.</span></div>';
+      live='<div class="aim-live"><span class="aim-mut">● Nhàn rỗi</span></div>';
     }
     // toggle model Pro (ngay trong monitor cho dễ thấy)
     var proOn=(window.bkHi&&bkHi());
-    var proCtl='<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;background:#161922;border:1px solid '+(proOn?'#c8962f':'#2a2d36')+';border-radius:9px;padding:8px 11px;margin:0 0 10px">'
-      +'<input type="checkbox" '+(proOn?'checked':'')+' onchange="AIM.togglePro(this.checked)" style="width:auto;accent-color:#c8962f"> '
-      +'<span><b style="color:'+(proOn?'#e6b84a':'#e9eaf0')+'">⚡ Chất lượng cao (Gemini 2.5-Pro)</b><br><span style="color:#8a8f9c">cho khâu não: dựng/tạo lại KB · phân loại Flow · kiểm tra SP'+(proOn?' — ĐANG BẬT':' (đang dùng flash)')+'</span></span></label>';
+    var proCtl='<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;background:var(--glass);border:2px solid '+(proOn?'var(--ac)':'var(--bd)')+';border-radius:9px;padding:8px 11px;margin:0 0 10px;box-shadow:inset 0 0 0 2px var(--lo)">'
+      +'<input type="checkbox" '+(proOn?'checked':'')+' onchange="AIM.togglePro(this.checked)" style="width:auto;accent-color:var(--ac)"> '
+      +'<span><b style="color:var(--ac2)">⚡ Chất lượng cao (Pro)</b><br><span style="color:var(--mut)">cho khâu não'+(proOn?' — ĐANG BẬT':' (đang dùng flash)')+'</span></span></label>';
     // số luồng song song
     var cc=(window.genConc?genConc():5);
-    var concCtl='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;background:#161922;border:1px solid #2a2d36;border-radius:9px;padding:8px 11px;margin:0 0 10px">'
-      +'<span>⚡ Số luồng chạy song song</span>'
-      +'<select onchange="AIM.setConc(this.value)" style="background:#0d0f15;color:#e9eaf0;border:1px solid #2a2d36;border-radius:6px;padding:3px 6px">'
+    var concCtl='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;background:var(--glass);border:2px solid var(--bd);border-radius:9px;padding:8px 11px;margin:0 0 10px;box-shadow:inset 0 0 0 2px var(--lo)">'
+      +'<span>⚡ Số luồng song song</span>'
+      +'<select onchange="AIM.setConc(this.value)" style="background:var(--card);color:var(--tx);border:2px solid var(--bd);border-radius:6px;padding:3px 6px;font-weight:700">'
       +[1,3,5,8,10].map(function(v){return '<option value="'+v+'"'+(v===cc?' selected':'')+'>'+v+' luồng</option>';}).join('')+'</select></div>';
     // thời gian tham gia
     var u=usage(); var days=Math.floor((Date.now()-(u.firstTs||Date.now()))/86400000);
-    var useBlock='<div style="font-size:11px;color:#8a8f9c;margin:10px 0 4px">⏱ THỜI GIAN THAM GIA</div>'
+    var useBlock='<div style="font-size:11px;color:var(--mut);font-weight:700;margin:10px 0 4px">⏱ THỜI GIAN THAM GIA</div>'
       +'<div class="aim-mrow"><span>Đã tham gia</span><span>'+(days>0?days+' ngày':'hôm nay')+' · '+(u.sessions||1)+' phiên</span></div>'
       +'<div class="aim-mrow"><span>Tổng dùng app</span><span>'+fmtDur(u.totalMs)+'</span></div>'
       +'<div class="aim-mrow"><span>⛵ Ra khơi (AI chạy)</span><span>'+fmtDur(u.aiMs)+'</span></div>';
     // totals
     var usd=totalCostUSD();
     var grid='<div class="aim-grid">'+
-      '<div class="aim-card"><div class="k">Tổng token dự án</div><div class="v">'+(fmtTok(a.totTok)||'0')+'</div></div>'+
-      '<div class="aim-card"><div class="k">Số lượt gọi AI</div><div class="v">'+a.calls+'</div></div>'+
+      '<div class="aim-card"><div class="k">Token dự án</div><div class="v">'+(fmtTok(a.totTok)||'0')+'</div></div>'+
+      '<div class="aim-card"><div class="k">Lượt gọi</div><div class="v">'+a.calls+'</div></div>'+
       '<div class="aim-card"><div class="k">Vào / Ra</div><div class="v" style="font-size:13px">'+fmtTok(a.inTok)+' / '+fmtTok(a.outTok)+'</div></div>'+
-      '<div class="aim-card"><div class="k">Chi phí ước tính</div><div class="v" style="font-size:14px">'+fmtVnd(usd*USD2VND)+'</div><div class="k">≈ $'+usd.toFixed(3)+'</div></div>'+
+      '<div class="aim-card"><div class="k">Chi phí</div><div class="v" style="font-size:14px">'+fmtVnd(usd*USD2VND)+'</div><div class="k">≈ $'+usd.toFixed(3)+'</div></div>'+
       '</div>';
     // by model
     var mk=Object.keys(a.models); var bym='';
-    if(mk.length){ bym='<div style="font-size:11px;color:#8a8f9c;margin:2px 0 4px">THEO MODEL</div>';
+    if(mk.length){ bym='<div style="font-size:11px;color:var(--mut);font-weight:700;margin:2px 0 4px">THEO MODEL</div>';
       mk.forEach(function(m){ var x=a.models[m]; var c=costOf(m,x.inTok,x.outTok);
         bym+='<div class="aim-mrow"><span>'+shortModel(m)+' <span class="aim-mut">×'+x.calls+'</span></span><span>'+fmtTok(x.inTok+x.outTok)+' tok · '+fmtVnd(c*USD2VND)+'</span></div>'; }); }
     // recent
-    var rec='<div style="font-size:11px;color:#8a8f9c;margin:10px 0 4px">NHẬT KÝ GẦN ĐÂY</div>';
-    if(!a.recent.length) rec+='<div class="aim-mut" style="font-size:12px">Chưa có. Chạy một tác vụ AI (dựng kịch bản, xuất Flow…) để thấy ở đây.</div>';
+    var rec='<div style="font-size:11px;color:var(--mut);font-weight:700;margin:10px 0 4px">GẦN ĐÂY</div>';
+    if(!a.recent.length) rec+='<div class="aim-mut" style="font-size:12px">Chưa có tác vụ nào.</div>';
     else a.recent.forEach(function(r){ rec+='<div class="aim-rec'+(r.ok?'':' bad')+'"><b>'+shortTask(r.task)+'</b> '+(r.ok?'':'❌ ')+
       '<span class="aim-mut">· '+shortModel(r.model)+' · '+fmtTok(r.tot)+' tok · '+(r.ms/1000).toFixed(1)+'s</span></div>'; });
-    bd.innerHTML=jobsH+live+proCtl+concCtl+grid+bym+useBlock+rec+'<div style="text-align:right;margin-top:8px"><a class="rs" onclick="AIM.reset()">🗑 Reset thống kê</a></div>';
+    bd.innerHTML=jobsH+live+proCtl+concCtl+grid+bym+useBlock+rec+'<div style="text-align:right;margin-top:8px"><a class="rs" onclick="AIM.reset()">🗑 Reset</a></div>';
   }
   AIM.render=render;
   if(document.body) ui(); else document.addEventListener('DOMContentLoaded',ui);
