@@ -1502,8 +1502,10 @@ async function auditScriptsCatalog(btn){
   if(!titles.length){ out.innerHTML='<div class="fb">Chưa có kịch bản nào để kiểm tra. Dựng kịch bản ở Lò Luyện trước.</div>'; return; }
   const old=btn.textContent; btn.disabled=true; let nIssue=0, nFix=0, rows='';
   const cam=(S.dna.brandKit.compliance||{}).cam||'';
+  const _jid=AIJob.start('🔍 Kiểm tra sản phẩm', titles.length);
   try{
     for(let i=0;i<titles.length;i++){
+      await AIJob.gate(_jid);
       const t=titles[i]; btn.innerHTML=`<span class="spin"></span>Kiểm tra ${i+1}/${titles.length}...`;
       const txt=((scripts[t].scenes)||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình:${c.hinhanh||''}; trám:${c.tram||''}]`).join('\n').slice(0,2600);
       let r;
@@ -1519,10 +1521,12 @@ Trả về DUY NHẤT JSON: {"ok":true/false,"issues":["mô tả ngắn lỗi"],
         if(Array.isArray(r.scenes) && r.scenes.length){ scripts[t]={scenes:normScenes(r.scenes), at:new Date().toISOString().slice(0,10)}; const x=(S.dna.skuld.scored||[]).find(o=>o.title===t); if(x){x._sc=false;x._scv=null;x.score=0;x.checks=[];} nFix++; fixed=true; }
         rows+=`<div style="border-left:3px solid var(--warn);padding:4px 10px;margin:4px 0;font-size:12.5px"><b>⚠️ ${_esc(t)}</b> ${fixed?'<span style="color:var(--ac)">— ✏️ đã tự sửa</span>':''}<br><span class="mut">${r.issues.map(_esc).join('; ')}</span></div>`;
       }
+      AIJob.tick(_jid, t);
     }
+    AIJob.done(_jid);
     if(nFix){ save(); if(typeof renderForgePlan==='function')renderForgePlan(); if(typeof renderScripts==='function')renderScripts(); }
     out.innerHTML=(nIssue?`<div class="fb"><b>${nIssue}</b> kịch bản có vấn đề, đã tự sửa <b>${nFix}</b>. Vào Lò chấm lại để cập nhật điểm.</div>`:'<div class="fb">✅ Tất cả kịch bản đều dùng đúng sản phẩm thật, không phát hiện claim cấm.</div>')+rows;
-  }catch(e){ out.innerHTML='<div class="fb bad">❌ '+e.message+'</div>'; }
+  }catch(e){ if(AIJob.isCancel(e)){ out.innerHTML='<div class="fb">⏹ Đã dừng kiểm tra (giữ phần đã sửa).</div>'; } else { AIJob.fail(_jid); out.innerHTML='<div class="fb bad">❌ '+e.message+'</div>'; } }
   btn.disabled=false; btn.textContent=old;
 }
 
@@ -1955,17 +1959,20 @@ async function scoreForgeBatch(){ if(!requirePremium('Chấm kịch bản'))retu
     fb.innerHTML=`<div class="fb">${noScript?'⚠️ Dựng kịch bản trước đã (bấm "🎬 Dựng kịch bản"). Chấm chạy trên KỊCH BẢN CHI TIẾT — không chấm ý tưởng trống.':'Tất cả kịch bản đã chấm. Xem xếp hạng ở Dashboard bên dưới.'}</div>`; return;
   }
   btn.disabled=true; const W=SK_W[forgeFmt()];
+  const _jid=AIJob.start('🧠 Chấm + xếp hạng', L.length);
   try{
     for(let s=0;s<L.length;s+=6){
+      await AIJob.gate(_jid);
       const chunk=L.slice(s,s+6);
       btn.innerHTML=`<span class="spin"></span>Chấm ${Math.min(s+6,L.length)}/${L.length}...`; forgeProg(`🧠 Chấm + xếp hạng kịch bản ${Math.min(s+6,L.length)}/${L.length}...`,1);
       const list=chunk.map((x,i)=>{ const body=((sc[x.title].scenes)||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình: ${c.hinhanh||''}; trám: ${c.tram||''}]`).join(' ').slice(0,800); return `#${i+1} "${x.title}" — KỊCH BẢN: ${body}`; }).join('\n');
       const out=await geminiCall(`Bạn là giám khảo VIRAL DOJO. Chấm 19 câu checklist cho MỖI KỊCH BẢN video (ĐẠT=true/false từng câu). Giờ chấm trên KỊCH BẢN CHI TIẾT đã dàn dựng — có bằng chứng từ cảnh/hình ảnh/trám/âm thanh, hãy chấm dựa trên các chi tiết đó.\nBỐI CẢNH BRAND:\n${brandContext(2500)}\n19 CÂU:\n${SK_Q.map((q,i)=>`${i+1}. ${q[1]}`).join('\n')}\nDANH SÁCH KỊCH BẢN:\n${list}\nTrả về DUY NHẤT JSON: {"rows":[{"i":1,"checks":[19 giá trị true/false]}]}.`,{json:true,temp:0.2});
       (out.rows||[]).forEach(o=>{ const x=chunk[o.i-1]; if(!x||!Array.isArray(o.checks)) return; x.checks=o.checks.map(Boolean); x.score=x.checks.reduce((t,c,i)=>t+(c?(W[i]||0):0),0); x._sc=true; x._scv=FORGE_SV; });
-      save(); renderForgePlan(); renderBoard();
+      save(); renderForgePlan(); renderBoard(); chunk.forEach(c=>AIJob.tick(_jid,c.title));
     }
+    AIJob.done(_jid);
     fb.innerHTML='<div class="fb">✅ Đã chấm + xếp hạng kịch bản. Cái nào ≥60% = ✅ sẵn sàng sản xuất; thấp hơn thì dùng "Liên kết ý tưởng" (LÒ C) nâng cấp rồi dựng lại. Điểm sửa tay được ở Scorecard.</div>'; if(typeof vdNotifyDone==='function')vdNotifyDone('Cham xep hang xong!');
-  }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  }catch(e){ if(AIJob.isCancel(e)){ fb.innerHTML='<div class="fb">⏹ Đã dừng chấm điểm (giữ phần đã chấm).</div>'; } else { AIJob.fail(_jid); fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   btn.disabled=false; btn.innerHTML='🧠 Chấm + xếp hạng kịch bản';
 }
 async function buildScriptsTop(){ if(!requirePremium('Dựng kịch bản'))return;
@@ -1975,15 +1982,18 @@ async function buildScriptsTop(){ if(!requirePremium('Dựng kịch bản'))retu
   const L=S.dna.skuld.scored.filter(x=>x.from==='gen'&&!S.dna.skuld.scripts[x.title]); // dựng cho TẤT CẢ ý tưởng chưa có kịch bản (không gate)
   if(!L.length){ fb.innerHTML='<div class="fb">Tất cả ý tưởng đã có kịch bản. Bấm "🧠 Chấm + xếp hạng kịch bản" để xếp hạng.</div>'; return; }
   btn.disabled=true;
+  const _jid=AIJob.start('🎬 Dựng kịch bản', L.length);
   try{
     for(let i=0;i<L.length;i++){
+      await AIJob.gate(_jid);
       const x=L[i]; btn.innerHTML=`<span class="spin"></span>Dựng ${i+1}/${L.length}...`; forgeProg(`🎬 Dựng kịch bản chi tiết ${i+1}/${L.length}: ${x.title}`,1);
       const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true,task:'🎬 Dựng kịch bản: '+x.title});
       S.dna.skuld.scripts[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
-      save(); renderForgePlan(); renderScripts();
+      save(); renderForgePlan(); renderScripts(); AIJob.tick(_jid, x.title);
     }
+    AIJob.done(_jid);
     fb.innerHTML=`<div class="fb">✅ Đã dựng ${L.length} kịch bản chi tiết. Giờ bấm "🧠 Chấm + xếp hạng kịch bản" để biết cái nào sẵn sàng sản xuất. Cuộn xuống xem + tải về.</div>`; if(typeof vdNotifyDone==='function')vdNotifyDone('Dung kich ban xong!');
-  }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  }catch(e){ if(AIJob.isCancel(e)){ fb.innerHTML='<div class="fb">⏹ Đã dừng dựng kịch bản (giữ phần đã xong).</div>'; } else { AIJob.fail(_jid); fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   btn.disabled=false; btn.innerHTML='🎬 Dựng kịch bản (cả loạt)';
 }
 /* ♻️ Tạo lại HÀNG LOẠT kịch bản chưa đủ điều kiện sản xuất (<60%) rồi tự chấm lại.
@@ -2000,8 +2010,10 @@ async function regenWeakScripts(){ if(!requirePremium('Tạo lại kịch bản 
   }
   if(!confirm('Tạo lại '+L.length+' kịch bản đang dưới 60% (ghi đè bản cũ) rồi tự chấm lại loạt?')) return;
   btn.disabled=true;
+  const _jid=AIJob.start('♻️ Nâng cấp kịch bản yếu', L.length);
   try{
     for(let i=0;i<L.length;i++){
+      await AIJob.gate(_jid);
       const x=L[i]; btn.innerHTML=`<span class="spin"></span>Tạo lại ${i+1}/${L.length}...`;
       forgeProg(`♻️ Tạo lại kịch bản ${i+1}/${L.length}: ${x.title}`,1);
       const oldText=(((sc[x.title]||{}).scenes)||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình: ${c.hinhanh||''}; trám: ${c.tram||''}]`).join(' ').slice(0,900);
@@ -2012,13 +2024,14 @@ async function regenWeakScripts(){ if(!requirePremium('Tạo lại kịch bản 
       const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true,task:'♻️ Tạo lại KB yếu: '+x.title});
       sc[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
       x._sc=false; x._scv=null; x.score=0; x.checks=[];   // reset điểm → buộc chấm lại ở bước sau
-      save(); renderForgePlan(); renderScripts();
+      save(); renderForgePlan(); renderScripts(); AIJob.tick(_jid, x.title);
     }
+    AIJob.done(_jid);
     forgeProg(`✅ Đã tạo lại ${L.length} kịch bản. Đang chấm lại loạt...`,1);
     await scoreForgeBatch();   // tự chấm các kịch bản vừa tạo (chỉ chấm cái _scv!==FORGE_SV)
     const ready=L.filter(x=>x._scv===FORGE_SV && x.score>=600).length;
     fb.innerHTML=`<div class="fb">✅ Đã tạo lại & chấm lại ${L.length} kịch bản yếu. Giờ <b>${ready}/${L.length}</b> đạt ≥60% ✅. Cái còn yếu: dùng "Liên kết ý tưởng" (Lò C) nâng cấp Ý TƯỞNG gốc rồi tạo lại.</div>`; if(typeof vdNotifyDone==='function')vdNotifyDone('Tao lai kich ban yeu xong!');
-  }catch(e){ fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  }catch(e){ if(AIJob.isCancel(e)){ fb.innerHTML='<div class="fb">⏹ Đã dừng nâng cấp kịch bản yếu (giữ phần đã xong).</div>'; } else { AIJob.fail(_jid); fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   btn.disabled=false; btn.innerHTML='♻️ Tạo lại kịch bản yếu → chấm lại';
 }
 function renderScripts(){
@@ -2122,8 +2135,10 @@ async function exportFlowManifest(){ if(!requirePremium('Xuất cho Flow'))retur
   if(!S.keys.gemini && !confirm('⚠️ Chưa kết nối Gemini → KHÔNG tự nhận diện nhân vật/sản phẩm/cảnh (Số thực thể sẽ RỖNG, mọi shot để no_product). Nên vào ⚡ Kết nối bật key trước.\n\nVẫn xuất thô?')) return;
   const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}, daysOut=[]; let _fail=0;
   if(btn) btn.disabled=true;
+  const _jid=AIJob.start('📦 Xuất manifest Flow', work.length);
   try{
     for(let i=0;i<work.length;i++){
+      await AIJob.gate(_jid);
       const x=work[i];
       const src=(vps[x.title]&&(vps[x.title].shots||[]).length)
         ? vps[x.title].shots.map(s=>({seq:s.seq,prompt_en:s.prompt,voiceover:s.voiceover,onscreen:s.onscreen}))
@@ -2176,8 +2191,9 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
       });
       daysOut.push({ ngay:'N'+x.day, series:x.title.replace(/^N\d+:\s*/,''),
         arc_cam_xuc:['Nỗi đau','Rào cản','Mong đợi','Tự hào','Thúc đẩy'], shots:shotsOut });
-      save();
+      save(); AIJob.tick(_jid, x.title);
     }
+    AIJob.done(_jid);
     const _bk=S.dna.brandKit||{}; const _bkB=_bk.brand||{};
     const manifest={ schema:'flow-pack/v1',
       meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters','products'],
@@ -2195,7 +2211,7 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
     S._flowManifest = manifest;   // lưu để nút ".json" tải mà KHÔNG chạy lại AI
     _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.md', md, 'text/markdown');
     if(fb)fb.innerHTML=`<div class="fb">✅ Xuất Flow Pack: ${daysOut.length} ngày · ${nShot} shot (6-8 cú cắt + voiceover) · ${nC} nhân vật · ${nP} sản phẩm (cảnh AI tự dựng).${aiOn?'':' (chưa có Gemini key → phân loại thô, nên bật key để gán chuẩn.)'}${_fail?` ⚠️ ${_fail} ngày AI trả lỗi → giữ prompt + mặc định no_product.`:''} Rồi bấm "🧩 Tải .json (Flow)" để lấy file nạp vào Flow.</div>`; if(typeof vdNotifyDone==='function')vdNotifyDone('Xuat Flow Pack xong!');
-  }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  }catch(e){ if(AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng xuất Flow (chưa tạo file — bấm lại để chạy tiếp).</div>'; } else { AIJob.fail(_jid); if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất cho Flow (.md)'; }
 }
 /* Tải manifest .json (cho nút "Nhập manifest.json" của Flow) — dùng lại kết quả đã phân loại, KHÔNG chạy lại AI */
@@ -2335,14 +2351,17 @@ async function genPostKitAll(){ if(!requirePremium('Sinh bộ đăng bài'))retu
   const titles=Object.keys(scripts).filter(t=>!(vp[t]&&vp[t].caption));
   if(!titles.length){ if(fb)fb.innerHTML='<div class="fb">'+(Object.keys(scripts).length?'Mọi video đã có bộ đăng bài. Xem/copy bên dưới.':'Chưa có kịch bản. Dựng kịch bản trước (🎬).')+'</div>'; renderVPrompts(); return; }
   if(btn)btn.disabled=true;
+  const _jid=AIJob.start('📋 Sinh bộ đăng bài', titles.length);
   try{
     for(let i=0;i<titles.length;i++){
+      await AIJob.gate(_jid);
       forgeProg(`📋 Sinh bộ đăng bài ${i+1}/${titles.length}: ${titles[i]}`,1);
       if(btn)btn.innerHTML=`<span class="spin"></span>${i+1}/${titles.length}`;
-      await genPostKit(titles[i]); save(); renderVPrompts();
+      await genPostKit(titles[i]); save(); renderVPrompts(); AIJob.tick(_jid, titles[i]);
     }
+    AIJob.done(_jid);
     if(fb)fb.innerHTML=`<div class="fb">✅ Đã sinh caption + hashtag + prompt nhạc cho ${titles.length} video. Bấm Copy ở từng video để đăng.</div>`;
-  }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  }catch(e){ if(AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng sinh bộ đăng bài (giữ phần đã xong).</div>'; } else { AIJob.fail(_jid); if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   if(btn){btn.disabled=false; btn.innerHTML='📋 Sinh bộ đăng bài (caption + nhạc + hashtag · cả loạt)';}
 }
 function regenPostKitAll(){ if(!confirm('Tạo lại bộ đăng bài (caption/hashtag/nhạc) cho TẤT CẢ video?')) return; const vp=S.dna.skuld.vprompts||{}; Object.values(vp).forEach(k=>{ delete k.caption; delete k.hashtags; delete k.music; }); save(); renderVPrompts(); genPostKitAll(); }
@@ -2602,14 +2621,17 @@ async function genVPromptsAll(){ if(!requirePremium('Sinh prompt video'))return;
   const scripts=S.dna.skuld.scripts||{}, titles=Object.keys(scripts).filter(t=>!S.dna.skuld.vprompts[t]);
   if(!titles.length){ if(fb)fb.innerHTML='<div class="fb">'+(Object.keys(scripts).length?'Tất cả kịch bản đã có prompt video. Xem/tải bên dưới.':'Chưa có kịch bản. Dựng kịch bản trước (🎬).')+'</div>'; renderVPrompts(); return; }
   if(btn)btn.disabled=true;
+  const _jid=AIJob.start('🎥 Sinh prompt video', titles.length);
   try{
     for(let i=0;i<titles.length;i++){
+      await AIJob.gate(_jid);
       forgeProg(`🎥 Sinh prompt video ${i+1}/${titles.length}: ${titles[i]}`,1);
       if(btn)btn.innerHTML=`<span class="spin"></span>${i+1}/${titles.length}`;
-      await genVPrompts(titles[i]); save(); renderVPrompts();
+      await genVPrompts(titles[i]); save(); renderVPrompts(); AIJob.tick(_jid, titles[i]);
     }
+    AIJob.done(_jid);
     if(fb)fb.innerHTML=`<div class="fb">✅ Đã sinh prompt video 10s cho ${titles.length} kịch bản. Tải .md/.csv → upload ảnh nhân vật+sản phẩm vào Google Flow → dán từng prompt theo thứ tự shot.</div>`;
-  }catch(e){ if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; }
+  }catch(e){ if(AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng sinh prompt video (giữ phần đã xong).</div>'; } else { AIJob.fail(_jid); if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   if(btn){btn.disabled=false; btn.innerHTML='🎥 Sinh prompt video (cả loạt)';}
 }
 function genVPromptDay(day){ const x=forgeFind(day); if(!x) return; const fb=document.getElementById('vp-fb');
@@ -3377,6 +3399,34 @@ function ensureDynamic(){
   var USD2VND=25400;
   var AIM={running:{}, seq:0, timer:null, open:false};
   window.AIM=AIM;
+
+  // ===== JOB ENGINE: luồng làm việc có pause / resume / cancel =====
+  var AIJob={ jobs:{}, seq:0 };
+  window.AIJob=AIJob;
+  AIJob.has=function(){ return Object.keys(this.jobs).length>0; };
+  AIJob.start=function(name,total){ var id=++this.seq; this.jobs[id]={id:id,name:name||'Luồng AI',total:total||0,done:0,sub:'',status:'running',t0:Date.now()};
+    AIM.open=true; var p=document.getElementById('aim-panel'); if(p)p.classList.add('show'); ensureTimer(); try{render();}catch(e){} return id; };
+  AIJob.tick=function(id,sub){ var j=this.jobs[id]; if(j){ j.done++; if(sub!=null)j.sub=sub; try{render();}catch(e){} } };
+  AIJob.setSub=function(id,sub){ var j=this.jobs[id]; if(j){ j.sub=sub; try{render();}catch(e){} } };
+  AIJob.setTotal=function(id,t){ var j=this.jobs[id]; if(j){ j.total=t; try{render();}catch(e){} } };
+  AIJob._fin=function(id,status){ var j=this.jobs[id]; if(!j)return; j.status=status; try{render();}catch(e){}
+    var self=this; setTimeout(function(){ delete self.jobs[id]; ensureTimer(); try{render();}catch(e){} }, status==='done'?1100:2600); };
+  AIJob.done=function(id){ this._fin(id,'done'); };
+  AIJob.fail=function(id){ this._fin(id,'error'); };
+  AIJob.pause=function(id){ var j=this.jobs[id]; if(j&&j.status==='running'){ j.status='paused'; try{render();}catch(e){} } };
+  AIJob.resume=function(id){ var j=this.jobs[id]; if(j&&j.status==='paused'){ j.status='running'; try{render();}catch(e){} } };
+  AIJob.cancel=function(id){ var j=this.jobs[id]; if(j){ j.status='cancelling'; try{render();}catch(e){} } };
+  AIJob.pauseAll=function(){ var s=this.jobs; Object.keys(s).forEach(function(k){ if(s[k].status==='running')s[k].status='paused'; }); try{render();}catch(e){} };
+  AIJob.resumeAll=function(){ var s=this.jobs; Object.keys(s).forEach(function(k){ if(s[k].status==='paused')s[k].status='running'; }); try{render();}catch(e){} };
+  // cổng hợp tác: vòng lặp gọi await ở đầu mỗi bước; treo khi pause; ném lỗi khi cancel
+  AIJob.gate=function(id){ var self=this; return new Promise(function(resolve,reject){
+    (function chk(){ var j=self.jobs[id]; if(!j){ resolve(); return; }
+      if(j.status==='cancelling'){ self._fin(id,'cancelled'); var e=new Error('__AIJOB_CANCELLED__'); e.cancelled=true; reject(e); return; }
+      if(j.status==='paused'){ setTimeout(chk,260); return; }
+      resolve();
+    })();
+  }); };
+  AIJob.isCancel=function(e){ return e&&(e.cancelled||e.message==='__AIJOB_CANCELLED__'); };
   function stats(){ if(!S.dna.aiStats||typeof S.dna.aiStats!=='object') S.dna.aiStats={calls:0,inTok:0,outTok:0,totTok:0,models:{},recent:[]};
     var a=S.dna.aiStats; a.models=a.models||{}; a.recent=a.recent||[]; return a; }
   function fmtTok(n){ n=n||0; if(n>=1e6) return (n/1e6).toFixed(2)+'M'; if(n>=1e3) return (n/1e3).toFixed(1)+'k'; return ''+n; }
@@ -3399,7 +3449,7 @@ function ensureDynamic(){
     try{ save(); }catch(e){}
     ensureTimer(); render();
   }
-  function ensureTimer(){ var has=Object.keys(AIM.running).length>0;
+  function ensureTimer(){ var has=Object.keys(AIM.running).length>0 || (window.AIJob&&AIJob.has&&AIJob.has());
     if(has && !AIM.timer) AIM.timer=setInterval(render,500);
     if(!has && AIM.timer){ clearInterval(AIM.timer); AIM.timer=null; } }
 
@@ -3441,6 +3491,17 @@ function ensureDynamic(){
       '.aim-rec{font-size:11.5px;border-left:2px solid #2a2d36;padding:3px 8px;margin:4px 0}'+
       '.aim-rec.bad{border-left-color:#f87272}'+
       '.aim-mut{color:#8a8f9c}'+
+      '.aim-job{border:1px solid #2a2d36;border-radius:10px;padding:9px 11px;margin-bottom:8px;background:#0d0f15}'+
+      '.aim-job.run{border-color:#36d399}.aim-job.paused{border-color:#fbbf24}.aim-job.cancelling{border-color:#f87272;opacity:.7}'+
+      '.aim-job .jt{display:flex;justify-content:space-between;align-items:center;gap:6px}'+
+      '.aim-job .jn{font-weight:700;font-size:12.5px}'+
+      '.aim-bar{height:6px;border-radius:4px;background:#23262f;margin:7px 0 4px;overflow:hidden}'+
+      '.aim-bar i{display:block;height:100%;background:linear-gradient(90deg,#36d399,#22d3ee);transition:width .3s}'+
+      '.aim-job.paused .aim-bar i{background:#fbbf24}'+
+      '.aim-btn{cursor:pointer;border:1px solid #2a2d36;background:#161922;color:#e9eaf0;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:600}'+
+      '.aim-btn:hover{border-color:#3a3f4b}.aim-btn.warn{color:#fbbf24}.aim-btn.dang{color:#f87272}'+
+      '.aim-jbadge{font-size:10.5px;padding:1px 7px;border-radius:10px;background:#23262f;color:#8a8f9c}'+
+      '.aim-jbadge.run{background:#0f3a2c;color:#36d399}.aim-jbadge.paused{background:#3a300f;color:#fbbf24}'+
       '#aim-panel .x{cursor:pointer;color:#8a8f9c;font-size:18px;line-height:1}'+
       '#aim-panel .rs{cursor:pointer;color:#f87272;font-size:11.5px;text-decoration:none}';
     document.head.appendChild(st);
@@ -3457,10 +3518,34 @@ function ensureDynamic(){
   function render(){
     var launch=document.getElementById('aim-launch'); if(!launch) return;
     var a=stats(); var runIds=Object.keys(AIM.running); var running=runIds.length>0;
-    launch.classList.toggle('run',running);
-    document.getElementById('aim-lt').textContent='🤖 '+(fmtTok(a.totTok)||'0')+(running?' •':'');
+    var jids=Object.keys(AIJob.jobs); var busy=running||jids.length>0;
+    launch.classList.toggle('run',busy);
+    document.getElementById('aim-lt').textContent='🤖 '+(fmtTok(a.totTok)||'0')+(jids.length?(' ⏵'+jids.length):(running?' •':''));
     if(!AIM.open) return;
     var bd=document.getElementById('aim-bd'); if(!bd) return;
+    // ===== LUỒNG ĐANG CHẠY (pause/resume/cancel) =====
+    var jobsH='';
+    if(jids.length){
+      if(jids.length>1) jobsH+='<div style="display:flex;gap:6px;margin-bottom:8px"><button class="aim-btn warn" onclick="AIJob.pauseAll()">⏸ Dừng tất cả</button><button class="aim-btn" onclick="AIJob.resumeAll()">▶ Tiếp tất cả</button></div>';
+      jids.forEach(function(id){ var j=AIJob.jobs[id];
+        var pct=j.total?Math.min(100,Math.round(j.done/j.total*100)):(j.status==='done'?100:0);
+        var cls=j.status==='paused'?'paused':((j.status==='cancelling'||j.status==='error'||j.status==='cancelled')?'cancelling':'run');
+        var badge=j.status==='paused'?'<span class="aim-jbadge paused">⏸ Tạm dừng</span>'
+          :j.status==='done'?'<span class="aim-jbadge">✅ Xong</span>'
+          :j.status==='cancelled'?'<span class="aim-jbadge">✕ Đã hủy</span>'
+          :j.status==='error'?'<span class="aim-jbadge">❌ Lỗi</span>'
+          :j.status==='cancelling'?'<span class="aim-jbadge">…đang hủy</span>'
+          :'<span class="aim-jbadge run">● Chạy</span>';
+        var ctrl='';
+        if(j.status==='running') ctrl='<button class="aim-btn warn" onclick="AIJob.pause('+id+')">⏸ Dừng</button>';
+        else if(j.status==='paused') ctrl='<button class="aim-btn" onclick="AIJob.resume('+id+')">▶ Tiếp</button>';
+        if(j.status==='running'||j.status==='paused') ctrl+=' <button class="aim-btn dang" onclick="AIJob.cancel('+id+')">✕</button>';
+        jobsH+='<div class="aim-job '+cls+'"><div class="jt"><span class="jn">'+shortTask(j.name)+'</span><span style="white-space:nowrap">'+ctrl+'</span></div>'+
+          '<div class="aim-bar"><i style="width:'+pct+'%"></i></div>'+
+          '<div class="aim-mut" style="font-size:11.5px">'+badge+' '+(j.total?(j.done+'/'+j.total+' · '+pct+'%'):(''+j.done))+(j.sub?(' · '+shortTask(j.sub)):'')+'</div></div>';
+      });
+      jobsH='<div style="font-size:11px;color:#8a8f9c;margin:0 0 5px">⚙️ LUỒNG ĐANG CHẠY</div>'+jobsH;
+    }
     // live
     var live='';
     if(running){
@@ -3489,7 +3574,7 @@ function ensureDynamic(){
     if(!a.recent.length) rec+='<div class="aim-mut" style="font-size:12px">Chưa có. Chạy một tác vụ AI (dựng kịch bản, xuất Flow…) để thấy ở đây.</div>';
     else a.recent.forEach(function(r){ rec+='<div class="aim-rec'+(r.ok?'':' bad')+'"><b>'+shortTask(r.task)+'</b> '+(r.ok?'':'❌ ')+
       '<span class="aim-mut">· '+shortModel(r.model)+' · '+fmtTok(r.tot)+' tok · '+(r.ms/1000).toFixed(1)+'s</span></div>'; });
-    bd.innerHTML=live+grid+bym+rec+'<div style="text-align:right;margin-top:8px"><a class="rs" onclick="AIM.reset()">🗑 Reset thống kê</a></div>';
+    bd.innerHTML=jobsH+live+grid+bym+rec+'<div style="text-align:right;margin-top:8px"><a class="rs" onclick="AIM.reset()">🗑 Reset thống kê</a></div>';
   }
   AIM.render=render;
   if(document.body) ui(); else document.addEventListener('DOMContentLoaded',ui);
