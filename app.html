@@ -3495,12 +3495,12 @@ function ensureDynamic(){
     if(document.getElementById('aim-launch')) return;
     var st=document.createElement('style');
     st.textContent=
-      '#aim-launch{position:fixed;right:14px;bottom:14px;z-index:9000;background:var(--card2);border:2px solid var(--bd);color:var(--tx);border-radius:24px;padding:8px 14px;font:800 12.5px/1 \'Be Vietnam Pro\',system-ui;cursor:pointer;box-shadow:3px 3px 0 var(--px);display:flex;align-items:center;gap:7px}'+
+      '#aim-launch{position:fixed;right:14px;bottom:62px;z-index:9999;background:var(--card2);border:2px solid var(--bd);color:var(--tx);border-radius:24px;padding:8px 14px;font:800 12.5px/1 \'Be Vietnam Pro\',system-ui;cursor:pointer;box-shadow:3px 3px 0 var(--px);display:flex;align-items:center;gap:7px}'+
       '#aim-launch:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--px)}'+
       '#aim-launch .dot{width:9px;height:9px;border-radius:50%;background:var(--mut)}'+
       '#aim-launch.run .dot{background:var(--ac);animation:aimp 1s infinite}'+
       '@keyframes aimp{0%,100%{opacity:1}50%{opacity:.3}}'+
-      '#aim-panel{position:fixed;right:14px;bottom:60px;z-index:9000;width:328px;max-width:92vw;background:var(--card);border:3px solid var(--bd);border-radius:12px;color:var(--tx);font:600 13px/1.45 \'Be Vietnam Pro\',system-ui;box-shadow:6px 6px 0 var(--px),inset 0 0 0 2px var(--lo);display:none;overflow:hidden}'+
+      '#aim-panel{position:fixed;right:14px;bottom:108px;z-index:9999;width:328px;max-width:92vw;background:var(--card);border:3px solid var(--bd);border-radius:12px;color:var(--tx);font:600 13px/1.45 \'Be Vietnam Pro\',system-ui;box-shadow:6px 6px 0 var(--px),inset 0 0 0 2px var(--lo);display:none;overflow:hidden}'+
       '#aim-panel.show{display:block}'+
       '#aim-panel .hd{display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:var(--card2);border-bottom:2px solid var(--bd)}'+
       '#aim-panel .hd b{font-size:14px;font-weight:800;color:var(--tx);white-space:nowrap}'+
