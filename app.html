@@ -312,6 +312,61 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
     <div style="margin-top:14px"><button class="btn" onclick="saveOnboard()">Lưu & vào Trạm 1 →</button></div>
   </div>
 
+  <!-- 🏷️ BRAND KIT — HỒ SƠ SẢN PHẨM CHUẨN -->
+  <div class="sec" id="brandkit">
+    <h2>🏷️ Hồ sơ Sản phẩm chuẩn (Brand Kit) <span class="pill">Ground mọi kịch bản đúng sản phẩm THẬT của thương hiệu</span></h2>
+    <p class="mut" style="margin:0 0 10px">Khai báo CHÍNH XÁC sản phẩm thật + điều cấm. Toàn bộ AI (kịch bản, prompt video, xuất Flow) sẽ bám đúng dữ liệu này → không bịa sản phẩm, không sai tên, không claim bậy. Có thể <b>tải mẫu về tự điền / nhờ agent điền rồi nạp lên</b>.</p>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="btn ghost sm" onclick="bkTemplate('md')">📥 Tải mẫu .md</button>
+      <button class="btn ghost sm" onclick="bkTemplate('json')">📥 Tải mẫu .json</button>
+      <label class="btn ghost sm" style="cursor:pointer">📤 Nạp file<input type="file" accept=".json,.md,.txt" style="display:none" onchange="bkImport(this.files)"></label>
+      <button class="btn ghost sm" onclick="bkExport('json')">💾 Xuất .json</button>
+      <button class="btn ghost sm" style="border-color:var(--ac);color:var(--ac)" onclick="bkAIFill(this)">✨ AI điền từ Brand Vault</button>
+    </div>
+
+    <div style="padding:10px 12px;background:var(--card2);border:1px solid var(--bd);border-radius:10px;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13.5px">
+        <input type="checkbox" id="bk-hi" style="width:auto" onchange="bkToggleHi(this.checked)">
+        <b>⚡ Chất lượng cao (Gemini 2.5-Pro)</b> cho khâu não: dựng kịch bản + phân loại Flow
+      </label>
+      <p class="mut" style="margin:6px 0 0;font-size:12px">Kịch bản sâu hơn, ít bịa hơn. BYOK — bạn tự trả phí token (Pro đắt hơn flash). Việc vặt vẫn dùng flash. Tắt khi chạy nháp.</p>
+    </div>
+
+    <div class="row">
+      <div><label>Tên thương hiệu</label><input id="bk-ten" placeholder="VD: ONIIZ"></div>
+      <div><label>Slogan</label><input id="bk-slogan" placeholder="VD: Tự tin từ bên trong"></div>
+    </div>
+    <div class="row">
+      <div><label>Tông giọng</label><input id="bk-tone" placeholder="VD: trẻ trung, hài, thẳng thắn"></div>
+      <div><label>Khách mục tiêu</label><input id="bk-khach" placeholder="VD: nam 18-30, TikTok Shop"></div>
+    </div>
+    <div class="row">
+      <div><label>NÊN nói/thể hiện</label><input id="bk-nen" placeholder="VD: tự nhiên, bằng chứng thật, gần gũi"></div>
+      <div><label>KHÔNG được</label><input id="bk-khong" placeholder="VD: hứa hẹn tuyệt đối, so sánh hạ bệ đối thủ"></div>
+    </div>
+
+    <h3 style="font-size:14px;margin:16px 0 6px">📦 Danh mục sản phẩm thật</h3>
+    <div id="bk-products"></div>
+    <button class="btn ghost sm" style="margin-top:8px" onclick="bkAddProduct()">+ Thêm sản phẩm</button>
+
+    <h3 style="font-size:14px;margin:16px 0 6px">🧑 Nhân vật thương hiệu (tùy chọn)</h3>
+    <textarea id="bk-personas" placeholder="VD: Tuấn — chàng trai chính, 25t, hài hước; Linh — bạn gái, dịu dàng..." style="min-height:50px"></textarea>
+
+    <h3 style="font-size:14px;margin:16px 0 6px">⚖️ Tuân thủ</h3>
+    <div class="row">
+      <div><label>Claim CẤM</label><input id="bk-cam" placeholder="VD: chữa bệnh, 100% hết mụn, cam kết tuyệt đối"></div>
+      <div><label>Disclaimer bắt buộc</label><input id="bk-disc" placeholder="VD: Hiệu quả tùy cơ địa"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center">
+      <button class="btn" onclick="bkSave(this)">💾 Lưu Hồ sơ</button>
+      <button class="btn ghost sm" onclick="auditScriptsCatalog(this)">🔍 Kiểm tra kịch bản đúng sản phẩm</button>
+      <span id="bk-fb" class="mut" style="font-size:12.5px"></span>
+    </div>
+    <div id="bk-audit" style="margin-top:10px"></div>
+  </div>
+
   <!-- 🪪 BIO ĐA NỀN TẢNG -->
   <div class="sec" id="biokit">
     <h2>🪪 Tiểu sử / Bio đa nền tảng <span class="pill">TikTok · Instagram · Threads · Facebook · YouTube — copy &amp; dán</span></h2>
@@ -905,6 +960,7 @@ function applyBlob(blob){
   if(!blob) return; S.v=blob.v||2; S.activeId=blob.activeId; S.projects=blob.projects||{};
   if(!S.projects[S.activeId]) S.activeId=Object.keys(S.projects)[0];
   _origSet('dojo',JSON.stringify(S));
+  if(typeof renderBrandKit==='function') renderBrandKit();
 }
 
 async function pull(){
@@ -1063,15 +1119,18 @@ async function adminListCodes(){
 
 /* ================= GEMINI HELPER (dùng chung mọi trạm) ================= */
 const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_PRO   = 'gemini-2.5-pro';   // model "chất lượng cao" cho khâu não (kịch bản, phân loại Flow)
 async function geminiCall(prompt, opt){
   opt = opt || {};
   const key = S.keys.gemini;
   if(!key) throw new Error('NO_KEY');
+  // opt.hi = bước "não": dùng Pro KHI người dùng bật toggle Chất lượng cao; còn lại luôn flash
+  const model = (opt.hi && (typeof bkHi==='function') && bkHi()) ? GEMINI_PRO : GEMINI_MODEL;
   const cfg = { temperature: opt.temp==null?0.4:opt.temp };
   if(opt.json) cfg.responseMimeType = 'application/json';
   const parts=[{text:prompt}];
   (opt.images||[]).forEach(im=>{ if(im&&im.data) parts.push({inline_data:{mime_type:im.mime||'image/jpeg', data:im.data}}); });
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,{
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({contents:[{parts}], generationConfig:cfg})
   });
@@ -1306,6 +1365,166 @@ function renderOpsDashboard(){
 /* ================= BRAND VAULT ================= */
 S.dna.brand = S.dna.brand || [];
 
+/* ================= 🏷️ BRAND KIT — Hồ sơ sản phẩm chuẩn (ground mọi AI) ================= */
+function bkDefault(){ return { brand:{ten:'',slogan:'',tone:'',khach:'',nen:'',khong:''}, products:[], personas:'', compliance:{cam:'',disclaimer:''} }; }
+function ensureBK(){ S.dna.brandKit=Object.assign(bkDefault(), S.dna.brandKit||{}); if(!Array.isArray(S.dna.brandKit.products))S.dna.brandKit.products=[]; return S.dna.brandKit; }
+ensureBK();
+function bkHi(){ return !!(S.dna && S.dna.modelHi); }   // toggle "Chất lượng cao" (Pro) cho khâu não
+
+/* Chuỗi ngữ cảnh CÓ CẤU TRÚC, ưu tiên cao — nhét lên ĐẦU brandContext để mọi kịch bản bám đúng SP thật */
+function bkContext(){
+  const k=ensureBK(); const b=k.brand||{}; const ps=k.products||[]; const cp=k.compliance||{};
+  if(!b.ten && !ps.length && !(b.tone||b.khach)) return '';   // chưa thiết lập → không chèn
+  let s='【HỒ SƠ THƯƠNG HIỆU CHUẨN — BẮT BUỘC bám đúng, KHÔNG bịa sản phẩm/đặc điểm ngoài danh sách này】\n';
+  if(b.ten) s+=`Thương hiệu: ${b.ten}`+(b.slogan?` — "${b.slogan}"`:'')+'\n';
+  if(b.tone) s+=`Tông giọng: ${b.tone}\n`;
+  if(b.khach) s+=`Khách mục tiêu: ${b.khach}\n`;
+  if(b.nen) s+=`NÊN: ${b.nen}\n`;
+  if(b.khong) s+=`KHÔNG được: ${b.khong}\n`;
+  if(ps.length){
+    s+=`\nDANH MỤC SẢN PHẨM THẬT (chỉ được nhắc các sản phẩm dưới đây, đúng TÊN):\n`;
+    ps.forEach((p,i)=>{ s+=`${p.id||('SP'+(i+1))}. ${p.ten||'(chưa đặt tên)'}`
+      +(p.nhom?` [${p.nhom}]`:'')+(p.gia?` · giá ${p.gia}`:'')
+      +(p.loiich?`\n   Lợi ích: ${p.loiich}`:'')+(p.usp?`\n   USP: ${p.usp}`:'')
+      +(p.khach?`\n   Khách: ${p.khach}`:'')+(p.cam?`\n   ⛔ Cấm nói: ${p.cam}`:'')+'\n'; });
+  }
+  if(k.personas) s+=`\nNhân vật thương hiệu: ${k.personas}\n`;
+  if(cp.cam||cp.disclaimer){ s+='\n⚖️ Tuân thủ: '; if(cp.cam)s+=`Cấm claim: ${cp.cam}. `; if(cp.disclaimer)s+=`Disclaimer: ${cp.disclaimer}.`; s+='\n'; }
+  return s+'\n';
+}
+/* tên SP thật cho validate/audit + cho meta của manifest */
+function bkProductNames(){ return (ensureBK().products||[]).map(p=>(p.ten||'').trim()).filter(Boolean); }
+
+/* ----- tải file chung ----- */
+function bkDownload(name, text, mime){
+  const blob=new Blob([text],{type:mime||'text/plain;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1500);
+}
+/* ----- render form ----- */
+function renderBrandKit(){
+  const k=ensureBK(), b=k.brand||{};
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=v||''; };
+  set('bk-ten',b.ten); set('bk-slogan',b.slogan); set('bk-tone',b.tone); set('bk-khach',b.khach);
+  set('bk-nen',b.nen); set('bk-khong',b.khong); set('bk-personas',k.personas);
+  set('bk-cam',(k.compliance||{}).cam); set('bk-disc',(k.compliance||{}).disclaimer);
+  const hi=document.getElementById('bk-hi'); if(hi) hi.checked=bkHi();
+  renderBkProducts();
+}
+function renderBkProducts(){
+  const wrap=document.getElementById('bk-products'); if(!wrap) return;
+  const ps=S.dna.brandKit.products||[];
+  if(!ps.length){ wrap.innerHTML='<p class="mut" style="font-size:12.5px">Chưa có sản phẩm — bấm "+ Thêm sản phẩm" hoặc nạp file mẫu / để AI điền.</p>'; return; }
+  wrap.innerHTML=ps.map((p,i)=>`<div class="bk-prow" style="border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--card2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:12.5px;color:var(--ac)">${p.id||('SP'+(i+1))}</b><a href="#" style="color:var(--red);text-decoration:none;font-size:13px" onclick="bkDelProduct(${i});return false">✕ xóa</a></div>
+    <div class="row"><div><label>ID</label><input class="bkp-id" value="${_esc(p.id||('SP'+(i+1)))}"></div><div><label>Tên sản phẩm (chính xác)</label><input class="bkp-ten" value="${_esc(p.ten)}" placeholder="VD: ONIIZ Peachy"></div></div>
+    <div class="row"><div><label>Nhóm</label><input class="bkp-nhom" value="${_esc(p.nhom)}" placeholder="VD: bọt rửa"></div><div><label>Giá</label><input class="bkp-gia" value="${_esc(p.gia)}" placeholder="VD: 199k"></div></div>
+    <div class="row"><div><label>Lợi ích chính</label><input class="bkp-loiich" value="${_esc(p.loiich)}" placeholder="3 lợi ích, phẩy cách"></div><div><label>USP</label><input class="bkp-usp" value="${_esc(p.usp)}" placeholder="điểm khác biệt"></div></div>
+    <div class="row"><div><label>Khách của SP</label><input class="bkp-khach" value="${_esc(p.khach)}"></div><div><label>⛔ Cấm nói</label><input class="bkp-cam" value="${_esc(p.cam)}" placeholder="claim cấm cho SP này"></div></div>
+  </div>`).join('');
+}
+function _esc(s){ return String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function bkAddProduct(){ bkRead(); S.dna.brandKit.products.push({id:'SP'+(S.dna.brandKit.products.length+1),ten:'',nhom:'',gia:'',loiich:'',usp:'',khach:'',cam:''}); renderBkProducts(); }
+function bkDelProduct(i){ bkRead(); S.dna.brandKit.products.splice(i,1); renderBkProducts(); }
+/* đọc DOM → S.dna.brandKit (không lưu) */
+function bkRead(){
+  const g=id=>{ const e=document.getElementById(id); return e?e.value.trim():''; };
+  const k=ensureBK(); if(!k.brand)k.brand={}; if(!k.compliance)k.compliance={};
+  k.brand.ten=g('bk-ten'); k.brand.slogan=g('bk-slogan'); k.brand.tone=g('bk-tone'); k.brand.khach=g('bk-khach');
+  k.brand.nen=g('bk-nen'); k.brand.khong=g('bk-khong'); k.personas=g('bk-personas');
+  k.compliance.cam=g('bk-cam'); k.compliance.disclaimer=g('bk-disc');
+  const rows=[...document.querySelectorAll('#bk-products .bk-prow')];
+  if(rows.length){ k.products=rows.map((r,i)=>{ const v=c=>{ const e=r.querySelector('.'+c); return e?e.value.trim():''; };
+    return {id:v('bkp-id')||('SP'+(i+1)),ten:v('bkp-ten'),nhom:v('bkp-nhom'),gia:v('bkp-gia'),loiich:v('bkp-loiich'),usp:v('bkp-usp'),khach:v('bkp-khach'),cam:v('bkp-cam')}; }); }
+}
+function bkSave(btn){ bkRead(); save(); const fb=document.getElementById('bk-fb'); if(fb){ fb.textContent='✅ Đã lưu hồ sơ — AI sẽ bám đúng '+bkProductNames().length+' sản phẩm.'; setTimeout(()=>fb.textContent='',4000);} if(typeof scheduleSync==='function')scheduleSync(); }
+function bkToggleHi(on){ S.dna.modelHi=!!on; save(); const fb=document.getElementById('bk-fb'); if(fb){ fb.textContent=on?'⚡ Đã bật Pro cho khâu não.':'Đã tắt Pro (dùng flash).'; setTimeout(()=>fb.textContent='',3500);} }
+
+/* ----- mẫu / import / export ----- */
+function bkSampleObj(){ return { brand:{ten:'ONIIZ',slogan:'Tự tin từ bên trong',tone:'trẻ trung, thẳng thắn, hài nhẹ',khach:'nam 18-30, mua TikTok Shop',nen:'bằng chứng thật, gần gũi',khong:'hứa hẹn tuyệt đối, hạ bệ đối thủ'},
+  products:[{id:'SP1',ten:'ONIIZ Peachy',nhom:'bọt rửa',gia:'199k',loiich:'sạch sâu, dịu nhẹ, thơm lâu',usp:'pH cân bằng cho da nhạy cảm',khach:'nam mới dùng',cam:'chữa bệnh, 100% hết mụn'},
+            {id:'SP2',ten:'ONIIZ Fresh',nhom:'bọt rửa',gia:'199k',loiich:'mát lạnh, khử mùi, the mát',usp:'tinh chất bạc hà',khach:'nam vận động nhiều',cam:'cam kết tuyệt đối'}],
+  personas:'Tuấn — chàng trai chính, 25t, hài hước; Linh — bạn gái, dịu dàng',
+  compliance:{cam:'chữa bệnh, tuyệt đối, nhanh nhất thị trường',disclaimer:'Hiệu quả tùy cơ địa'} }; }
+function bkTemplate(fmt){
+  const o=bkSampleObj();
+  if(fmt==='json'){ bkDownload('brand-kit-mau.json', JSON.stringify(o,null,2),'application/json'); return; }
+  let m=`# HỒ SƠ THƯƠNG HIỆU (Brand Kit) — điền rồi nạp lại vào Viral Dojo\n\n> Mẹo: có thể nhờ AI/agent điền hộ. Giữ nguyên cấu trúc. Phần \`\`\`json ở cuối là cái app ĐỌC — điền chính xác vào đó.\n\n## Thương hiệu\n- Tên: ${o.brand.ten}\n- Slogan: ${o.brand.slogan}\n- Tông giọng: ${o.brand.tone}\n- Khách: ${o.brand.khach}\n- NÊN: ${o.brand.nen}\n- KHÔNG: ${o.brand.khong}\n\n## Sản phẩm thật\n`;
+  o.products.forEach(p=>{ m+=`- ${p.id} ${p.ten} [${p.nhom}] · ${p.gia} — Lợi ích: ${p.loiich} — USP: ${p.usp} — Cấm: ${p.cam}\n`; });
+  m+=`\n## Tuân thủ\n- Claim cấm: ${o.compliance.cam}\n- Disclaimer: ${o.compliance.disclaimer}\n\n---\n\n\`\`\`json\n${JSON.stringify(o,null,2)}\n\`\`\`\n`;
+  bkDownload('brand-kit-mau.md', m,'text/markdown;charset=utf-8');
+}
+function bkExport(fmt){ bkRead(); bkDownload('brand-kit.json', JSON.stringify(S.dna.brandKit,null,2),'application/json'); }
+function bkImport(files){
+  const f=files&&files[0]; if(!f) return; const fb=document.getElementById('bk-fb');
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      let txt=String(rd.result||''); let obj=null;
+      const mj=txt.match(/```json\s*([\s\S]*?)```/i); if(mj) txt=mj[1];
+      else { const a=txt.indexOf('{'), z=txt.lastIndexOf('}'); if(a>=0&&z>a) txt=txt.slice(a,z+1); }
+      obj=JSON.parse(txt);
+      S.dna.brandKit=Object.assign(bkDefault(), obj);
+      if(!Array.isArray(S.dna.brandKit.products)) S.dna.brandKit.products=[];
+      save(); renderBrandKit();
+      if(fb){ fb.textContent='✅ Đã nạp '+bkProductNames().length+' sản phẩm từ file.'; setTimeout(()=>fb.textContent='',4000);}
+    }catch(e){ if(fb) fb.textContent='❌ File không đọc được: '+e.message+' (cần .json hoặc .md có khối ```json).'; else alert('File không đọc được: '+e.message); }
+  };
+  rd.readAsText(f);
+}
+/* ----- AI điền từ Brand Vault ----- */
+async function bkAIFill(btn){
+  const fb=document.getElementById('bk-fb');
+  if(!S.keys.gemini){ if(fb)fb.textContent='Cần Gemini key — tab ⚡ Kết nối.'; return; }
+  const vault=(S.dna.brand||[]).map(b=>b.content).join('\n').slice(0,14000);
+  if(!vault && !(S.dna.onboard&&S.dna.onboard.nganh)){ if(fb)fb.textContent='Hãy nạp Brand Vault hoặc điền Bước 0 trước để AI có dữ liệu.'; return; }
+  const old=btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spin"></span>AI đang lập hồ sơ...';
+  try{
+    const obj=await geminiCall(`Bạn là chuyên viên thương hiệu. Từ DỮ LIỆU dưới, lập HỒ SƠ SẢN PHẨM CHUẨN. CHỈ dùng sản phẩm/thông tin CÓ THẬT trong dữ liệu, KHÔNG bịa. Mỗi biến thể là 1 sản phẩm riêng.
+DỮ LIỆU:
+Ngành: ${(S.dna.onboard||{}).nganh||''} | Khách: ${(S.dna.onboard||{}).khach||''}
+${vault}
+Trả về DUY NHẤT JSON: {"brand":{"ten":"","slogan":"","tone":"","khach":"","nen":"","khong":""},"products":[{"id":"SP1","ten":"","nhom":"","gia":"","loiich":"","usp":"","khach":"","cam":""}],"personas":"","compliance":{"cam":"","disclaimer":""}}`,{json:true,temp:0.3,hi:true});
+    S.dna.brandKit=Object.assign(bkDefault(), obj); if(!Array.isArray(S.dna.brandKit.products))S.dna.brandKit.products=[];
+    save(); renderBrandKit();
+    if(fb) fb.textContent='✨ AI đã lập '+bkProductNames().length+' sản phẩm — kiểm tra lại rồi bấm 💾 Lưu.';
+  }catch(e){ if(fb) fb.textContent='❌ '+e.message; }
+  btn.disabled=false; btn.textContent=old;
+}
+/* ----- 🔍 Audit kịch bản đúng catalog: cảnh báo + tự sửa ----- */
+async function auditScriptsCatalog(btn){
+  bkRead(); const out=document.getElementById('bk-audit');
+  if(!S.keys.gemini){ out.innerHTML='<div class="fb bad">Cần Gemini key để kiểm tra.</div>'; return; }
+  const names=bkProductNames();
+  if(!names.length){ out.innerHTML='<div class="fb bad">Chưa có sản phẩm trong Hồ sơ — thêm sản phẩm thật trước đã.</div>'; return; }
+  const scripts=(S.dna.skuld&&S.dna.skuld.scripts)||{}; const titles=Object.keys(scripts);
+  if(!titles.length){ out.innerHTML='<div class="fb">Chưa có kịch bản nào để kiểm tra. Dựng kịch bản ở Lò Luyện trước.</div>'; return; }
+  const old=btn.textContent; btn.disabled=true; let nIssue=0, nFix=0, rows='';
+  const cam=(S.dna.brandKit.compliance||{}).cam||'';
+  try{
+    for(let i=0;i<titles.length;i++){
+      const t=titles[i]; btn.innerHTML=`<span class="spin"></span>Kiểm tra ${i+1}/${titles.length}...`;
+      const txt=((scripts[t].scenes)||[]).map(c=>`${c.phan||''}: ${c.noidung||''} [hình:${c.hinhanh||''}; trám:${c.tram||''}]`).join('\n').slice(0,2600);
+      let r;
+      try{ r=await geminiCall(`Đối chiếu KỊCH BẢN với DANH MỤC SẢN PHẨM THẬT. Tìm chỗ nhắc sản phẩm KHÔNG có trong danh mục, hoặc claim vi phạm. NẾU có lỗi: viết lại scenes CHỈ dùng sản phẩm thật + bỏ claim cấm, GIỮ nguyên ý/cảm xúc/cấu trúc.
+SẢN PHẨM THẬT (chỉ được dùng các tên này): ${names.join(' | ')}
+CLAIM CẤM: ${cam||'(không có)'}
+KỊCH BẢN:
+${txt}
+Trả về DUY NHẤT JSON: {"ok":true/false,"issues":["mô tả ngắn lỗi"],"scenes":[{"phan":"","noidung":"","hinhanh":"","tram":"","note":""}]} — nếu ok:true thì scenes có thể rỗng.`,{json:true,temp:0.2,hi:true}); }
+      catch(e){ rows+=`<div class="mut" style="font-size:12.5px">• ${_esc(t)}: bỏ qua (${e.message})</div>`; continue; }
+      if(r && r.ok===false && Array.isArray(r.issues) && r.issues.length){
+        nIssue++; let fixed=false;
+        if(Array.isArray(r.scenes) && r.scenes.length){ scripts[t]={scenes:normScenes(r.scenes), at:new Date().toISOString().slice(0,10)}; const x=(S.dna.skuld.scored||[]).find(o=>o.title===t); if(x){x._sc=false;x._scv=null;x.score=0;x.checks=[];} nFix++; fixed=true; }
+        rows+=`<div style="border-left:3px solid var(--warn);padding:4px 10px;margin:4px 0;font-size:12.5px"><b>⚠️ ${_esc(t)}</b> ${fixed?'<span style="color:var(--ac)">— ✏️ đã tự sửa</span>':''}<br><span class="mut">${r.issues.map(_esc).join('; ')}</span></div>`;
+      }
+    }
+    if(nFix){ save(); if(typeof renderForgePlan==='function')renderForgePlan(); if(typeof renderScripts==='function')renderScripts(); }
+    out.innerHTML=(nIssue?`<div class="fb"><b>${nIssue}</b> kịch bản có vấn đề, đã tự sửa <b>${nFix}</b>. Vào Lò chấm lại để cập nhật điểm.</div>`:'<div class="fb">✅ Tất cả kịch bản đều dùng đúng sản phẩm thật, không phát hiện claim cấm.</div>')+rows;
+  }catch(e){ out.innerHTML='<div class="fb bad">❌ '+e.message+'</div>'; }
+  btn.disabled=false; btn.textContent=old;
+}
+
 /* lazy-load thư viện parse từ CDN, cache theo src */
 const _cdnCache = {};
 function loadScript(src){
@@ -1379,7 +1598,8 @@ function renderVault(){
 function brandContext(maxLen){
   maxLen = maxLen || 9000;
   const ob = S.dna.onboard||{};
-  let ctx = `Ngành: ${ob.nganh||'?'} | Kênh: ${ob.kenh||'?'} | Khách: ${ob.khach||'?'}\n`;
+  const bk = bkContext();   // 🏷️ Hồ sơ chuẩn lên ĐẦU, ưu tiên cao nhất
+  let ctx = bk + `Ngành: ${ob.nganh||'?'} | Kênh: ${ob.kenh||'?'} | Khách: ${ob.khach||'?'}\n`;
   let budget = maxLen - ctx.length;
   for(const b of S.dna.brand){
     if(budget<=200) break;
@@ -1757,7 +1977,7 @@ async function buildScriptsTop(){ if(!requirePremium('Dựng kịch bản'))retu
   try{
     for(let i=0;i<L.length;i++){
       const x=L[i]; btn.innerHTML=`<span class="spin"></span>Dựng ${i+1}/${L.length}...`; forgeProg(`🎬 Dựng kịch bản chi tiết ${i+1}/${L.length}: ${x.title}`,1);
-      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6});
+      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true});
       S.dna.skuld.scripts[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
       save(); renderForgePlan(); renderScripts();
     }
@@ -1788,7 +2008,7 @@ async function regenWeakScripts(){ if(!requirePremium('Tạo lại kịch bản 
       const fix=failed.length
         ? 'Kịch bản CŨ bị giám khảo đánh TRƯỢT các tiêu chí sau — viết lại để ĐẠT bằng được:\n- '+failed.join('\n- ')
         : 'Kịch bản cũ điểm thấp — nâng cấp mạnh độ viral: hook sắc hơn, cụ thể hơn, có bằng chứng & cao trào.';
-      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6});
+      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true});
       sc[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
       x._sc=false; x._scv=null; x.score=0; x.checks=[];   // reset điểm → buộc chấm lại ở bước sau
       save(); renderForgePlan(); renderScripts();
@@ -1930,7 +2150,7 @@ NHIỆM VỤ mỗi shot — trả các trường:
 - prompt_en: 1 đoạn TIẾNG ANH cho Veo/Omni mô tả 1 CHUỖI 10 GIÂY gồm 6-8 CÚ CẮT NHANH, MỖI cú 1 GÓC MÁY SÁNG TẠO KHÁC NHAU (extreme close-up, low-angle, POV, overhead/top-down, whip-pan, tracking, macro insert, dutch tilt, snap-zoom) khớp diễn biến kịch bản; bối cảnh tự thiết kế; nhân vật & sản phẩm LẤY TỪ ẢNH THAM CHIẾU upload (đừng tả ngoại hình SP bằng chữ); LỒNG audio: 'Audio: the character speaks in Vietnamese: "<voiceover>" with clear lip-synced voiceover' + nhạc nền trend + SFX khớp từng cú cắt; chèn on-screen text từ overlay; dọc 9:16, fast-paced cho Gen Z. Nếu no_product=true thêm "No product appears; do not show any product/packaging/logo". Nếu false thêm "Use the uploaded product reference image as the SINGLE source of truth; do NOT recolor/relabel/restyle/redesign/replace it".
 Dùng TÊN NHẤT QUÁN giữa các shot & các ngày (cùng người/SP = cùng tên).
 DANH SÁCH SHOT (Overlay + Thoại + gợi ý EN):\n${body}
-Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,"nhan_vat":[],"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":"","voiceover":"","prompt_en":""}]}`,{temp:0.45});
+Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,"nhan_vat":[],"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":"","voiceover":"","prompt_en":""}]}`,{temp:0.45,hi:true});
           const out=_tryJson(raw); cls=(out&&_arr(out.shots))||null; if(!cls) _fail++;
         }catch(e){ _fail++; }   // ngày lỗi → bỏ qua, dùng mặc định, vẫn xuất tiếp
       }
@@ -1957,8 +2177,12 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
         arc_cam_xuc:['Nỗi đau','Rào cản','Mong đợi','Tự hào','Thúc đẩy'], shots:shotsOut });
       save();
     }
+    const _bk=S.dna.brandKit||{}; const _bkB=_bk.brand||{};
     const manifest={ schema:'flow-pack/v1',
-      meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters','products'] },
+      meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters','products'],
+        thuong_hieu:_bkB.ten||'', slogan:_bkB.slogan||'', tone:_bkB.tone||'',
+        san_pham_thuong_hieu:(_bk.products||[]).map(p=>({ten:p.ten||'',nhom:p.nhom||'',gia:p.gia||'',usp:p.usp||'',cam:p.cam||''})).filter(p=>p.ten),
+        tuan_thu:(_bk.compliance||{}).cam||'' },
       characters:Object.values(charMap), products:Object.values(prodMap), scenes:Object.values(sceneMap), days:daysOut };
     const nC=Object.keys(charMap).length, nP=Object.keys(prodMap).length, nS=Object.keys(sceneMap).length;
     const nShot=daysOut.reduce((t,d)=>t+d.shots.length,0);
@@ -3139,7 +3363,7 @@ function ensureDynamic(){
   if(S.dna.m5 && S.dna.m5.videos) S.dna.m5.videos.forEach(v=>addVideo(v));
 
   if(S.dna.xpSeen==null) S.dna.xpSeen=calcXP(); // không bắn toast cho tiến độ đã có
-  renderProjBar(); renderDNA(); renderStations(); renderVault(); renderBioKit(); refreshGates(); renderOverview(); renderXP(); ensureDynamic();
+  renderProjBar(); renderDNA(); renderStations(); renderVault(); renderBrandKit(); renderBioKit(); refreshGates(); renderOverview(); renderXP(); ensureDynamic();
   document.getElementById('grade-hint').textContent = S.keys.gemini ? 'Gemini đã kết nối — chấm sâu bằng AI.' : 'Chưa có Gemini key → chấm offline cơ bản. Vào tab ⚡ Kết nối để AI chấm thật.';
   renderAuthUI(); renderAdminUI(); if(syncOn()){ setBadge('synced'); pull(); }
 })();
