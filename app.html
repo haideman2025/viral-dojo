@@ -1126,6 +1126,7 @@ async function geminiCall(prompt, opt){
   if(!key) throw new Error('NO_KEY');
   // opt.hi = bước "não": dùng Pro KHI người dùng bật toggle Chất lượng cao; còn lại luôn flash
   const model = (opt.hi && (typeof bkHi==='function') && bkHi()) ? GEMINI_PRO : GEMINI_MODEL;
+  window.__aiTask = opt.task || 'Tác vụ AI';   // nhãn cho AI Monitor
   const cfg = { temperature: opt.temp==null?0.4:opt.temp };
   if(opt.json) cfg.responseMimeType = 'application/json';
   const parts=[{text:prompt}];
@@ -1217,7 +1218,7 @@ async function runGrade(o){
   try{
     if(S.keys.gemini){
       const prompt = `Bạn là giám khảo khóa VIRAL DOJO, chấm bài Trạm ${o.num} "${o.title}" CHẶT TAY, đúng rubric dưới (giữ NGUYÊN tiêu chí & thang điểm).\n${o.rubric}\n\nBỐI CẢNH THƯƠNG HIỆU (chấm "thực tiễn/bám insight" phải đối chiếu dữ liệu này):\n${brandContext(3500)}\n\nBÀI NỘP:\n${o.baiText}\n\nTrả về DUY NHẤT JSON (không markdown): {"scores":[${o.scoresShape}],"total":n,"feedback":"3-6 câu tiếng Việt: điểm mạnh, điểm trừ cụ thể ở mục nào, 2 gợi ý nâng điểm hành động được"}`;
-      out = await geminiCall(prompt,{json:true,temp:0.2});
+      out = await geminiCall(prompt,{json:true,temp:0.2,task:'🧮 Chấm Trạm '+o.num+': '+o.title});
       out.total = out.total!=null ? out.total : (out.scores||[]).reduce((a,s)=>a+(s.diem||0),0);
     } else { out = o.local(); }
   }catch(e){ out = o.local(); out.note = '(Gemini lỗi/'+e.message+' → đã chấm offline cơ bản)'; }
@@ -1484,7 +1485,7 @@ async function bkAIFill(btn){
 DỮ LIỆU:
 Ngành: ${(S.dna.onboard||{}).nganh||''} | Khách: ${(S.dna.onboard||{}).khach||''}
 ${vault}
-Trả về DUY NHẤT JSON: {"brand":{"ten":"","slogan":"","tone":"","khach":"","nen":"","khong":""},"products":[{"id":"SP1","ten":"","nhom":"","gia":"","loiich":"","usp":"","khach":"","cam":""}],"personas":"","compliance":{"cam":"","disclaimer":""}}`,{json:true,temp:0.3,hi:true});
+Trả về DUY NHẤT JSON: {"brand":{"ten":"","slogan":"","tone":"","khach":"","nen":"","khong":""},"products":[{"id":"SP1","ten":"","nhom":"","gia":"","loiich":"","usp":"","khach":"","cam":""}],"personas":"","compliance":{"cam":"","disclaimer":""}}`,{json:true,temp:0.3,hi:true,task:'🏷️ AI lập hồ sơ thương hiệu'});
     S.dna.brandKit=Object.assign(bkDefault(), obj); if(!Array.isArray(S.dna.brandKit.products))S.dna.brandKit.products=[];
     save(); renderBrandKit();
     if(fb) fb.textContent='✨ AI đã lập '+bkProductNames().length+' sản phẩm — kiểm tra lại rồi bấm 💾 Lưu.';
@@ -1511,7 +1512,7 @@ SẢN PHẨM THẬT (chỉ được dùng các tên này): ${names.join(' | ')}
 CLAIM CẤM: ${cam||'(không có)'}
 KỊCH BẢN:
 ${txt}
-Trả về DUY NHẤT JSON: {"ok":true/false,"issues":["mô tả ngắn lỗi"],"scenes":[{"phan":"","noidung":"","hinhanh":"","tram":"","note":""}]} — nếu ok:true thì scenes có thể rỗng.`,{json:true,temp:0.2,hi:true}); }
+Trả về DUY NHẤT JSON: {"ok":true/false,"issues":["mô tả ngắn lỗi"],"scenes":[{"phan":"","noidung":"","hinhanh":"","tram":"","note":""}]} — nếu ok:true thì scenes có thể rỗng.`,{json:true,temp:0.2,hi:true,task:'🔍 Kiểm tra SP: '+t}); }
       catch(e){ rows+=`<div class="mut" style="font-size:12.5px">• ${_esc(t)}: bỏ qua (${e.message})</div>`; continue; }
       if(r && r.ok===false && Array.isArray(r.issues) && r.issues.length){
         nIssue++; let fixed=false;
@@ -1977,7 +1978,7 @@ async function buildScriptsTop(){ if(!requirePremium('Dựng kịch bản'))retu
   try{
     for(let i=0;i<L.length;i++){
       const x=L[i]; btn.innerHTML=`<span class="spin"></span>Dựng ${i+1}/${L.length}...`; forgeProg(`🎬 Dựng kịch bản chi tiết ${i+1}/${L.length}: ${x.title}`,1);
-      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true});
+      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true,task:'🎬 Dựng kịch bản: '+x.title});
       S.dna.skuld.scripts[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
       save(); renderForgePlan(); renderScripts();
     }
@@ -2008,7 +2009,7 @@ async function regenWeakScripts(){ if(!requirePremium('Tạo lại kịch bản 
       const fix=failed.length
         ? 'Kịch bản CŨ bị giám khảo đánh TRƯỢT các tiêu chí sau — viết lại để ĐẠT bằng được:\n- '+failed.join('\n- ')
         : 'Kịch bản cũ điểm thấp — nâng cấp mạnh độ viral: hook sắc hơn, cụ thể hơn, có bằng chứng & cao trào.';
-      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true});
+      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true,task:'♻️ Tạo lại KB yếu: '+x.title});
       sc[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
       x._sc=false; x._scv=null; x.score=0; x.checks=[];   // reset điểm → buộc chấm lại ở bước sau
       save(); renderForgePlan(); renderScripts();
@@ -2150,7 +2151,7 @@ NHIỆM VỤ mỗi shot — trả các trường:
 - prompt_en: 1 đoạn TIẾNG ANH cho Veo/Omni mô tả 1 CHUỖI 10 GIÂY gồm 6-8 CÚ CẮT NHANH, MỖI cú 1 GÓC MÁY SÁNG TẠO KHÁC NHAU (extreme close-up, low-angle, POV, overhead/top-down, whip-pan, tracking, macro insert, dutch tilt, snap-zoom) khớp diễn biến kịch bản; bối cảnh tự thiết kế; nhân vật & sản phẩm LẤY TỪ ẢNH THAM CHIẾU upload (đừng tả ngoại hình SP bằng chữ); LỒNG audio: 'Audio: the character speaks in Vietnamese: "<voiceover>" with clear lip-synced voiceover' + nhạc nền trend + SFX khớp từng cú cắt; chèn on-screen text từ overlay; dọc 9:16, fast-paced cho Gen Z. Nếu no_product=true thêm "No product appears; do not show any product/packaging/logo". Nếu false thêm "Use the uploaded product reference image as the SINGLE source of truth; do NOT recolor/relabel/restyle/redesign/replace it".
 Dùng TÊN NHẤT QUÁN giữa các shot & các ngày (cùng người/SP = cùng tên).
 DANH SÁCH SHOT (Overlay + Thoại + gợi ý EN):\n${body}
-Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,"nhan_vat":[],"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":"","voiceover":"","prompt_en":""}]}`,{temp:0.45,hi:true});
+Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,"nhan_vat":[],"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":"","voiceover":"","prompt_en":""}]}`,{temp:0.45,hi:true,task:'📦 Phân loại Flow: '+x.title});
           const out=_tryJson(raw); cls=(out&&_arr(out.shots))||null; if(!cls) _fail++;
         }catch(e){ _fail++; }   // ngày lỗi → bỏ qua, dùng mặc định, vẫn xuất tiếp
       }
@@ -3366,6 +3367,133 @@ function ensureDynamic(){
   renderProjBar(); renderDNA(); renderStations(); renderVault(); renderBrandKit(); renderBioKit(); refreshGates(); renderOverview(); renderXP(); ensureDynamic();
   document.getElementById('grade-hint').textContent = S.keys.gemini ? 'Gemini đã kết nối — chấm sâu bằng AI.' : 'Chưa có Gemini key → chấm offline cơ bản. Vào tab ⚡ Kết nối để AI chấm thật.';
   renderAuthUI(); renderAdminUI(); if(syncOn()){ setBadge('synced'); pull(); }
+})();
+</script>
+<!-- ================= 🤖 AI MONITOR — dashboard token/model real-time ================= -->
+<script>
+(function(){
+  // Rates USD / 1 triệu token (ước tính, có thể chỉnh)
+  var RATES={'gemini-2.5-flash':{in:0.30,out:2.50},'gemini-2.5-pro':{in:1.25,out:10.0}};
+  var USD2VND=25400;
+  var AIM={running:{}, seq:0, timer:null, open:false};
+  window.AIM=AIM;
+  function stats(){ if(!S.dna.aiStats||typeof S.dna.aiStats!=='object') S.dna.aiStats={calls:0,inTok:0,outTok:0,totTok:0,models:{},recent:[]};
+    var a=S.dna.aiStats; a.models=a.models||{}; a.recent=a.recent||[]; return a; }
+  function fmtTok(n){ n=n||0; if(n>=1e6) return (n/1e6).toFixed(2)+'M'; if(n>=1e3) return (n/1e3).toFixed(1)+'k'; return ''+n; }
+  function fmtVnd(n){ return Math.round(n).toLocaleString('vi-VN')+'đ'; }
+  function costOf(model,inT,outT){ var r=RATES[model]||RATES['gemini-2.5-flash']; return ((inT/1e6)*r.in + (outT/1e6)*r.out); }
+  function totalCostUSD(){ var a=stats(),u=0; Object.keys(a.models).forEach(function(m){ var x=a.models[m]; u+=costOf(m,x.inTok||0,x.outTok||0); }); return u; }
+  function shortTask(t){ t=(t||'Tác vụ AI').replace(/<[^>]*>/g,'').trim(); return t.length>46?t.slice(0,46)+'…':t; }
+  function shortModel(m){ return (m||'?').replace('gemini-2.5-','').replace('gemini-','');  }
+
+  // ---- ghi nhận 1 call ----
+  function aiStart(id,task,model){ AIM.running[id]={task:task,model:model,t0:Date.now()}; ensureTimer(); render(); }
+  function aiEnd(id,model,usage,ok){
+    var r=AIM.running[id]; delete AIM.running[id];
+    var inT=(usage&&usage.promptTokenCount)||0, outT=(usage&&usage.candidatesTokenCount)||0;
+    var tot=(usage&&usage.totalTokenCount)||(inT+outT);
+    var a=stats(); a.calls++; a.inTok+=inT; a.outTok+=outT; a.totTok+=tot;
+    var mm=a.models[model]||(a.models[model]={calls:0,inTok:0,outTok:0}); mm.calls++; mm.inTok+=inT; mm.outTok+=outT;
+    a.recent.unshift({task:(r&&r.task)||'Tác vụ AI', model:model, inT:inT, outT:outT, tot:tot, ok:ok!==false, ms:r?(Date.now()-r.t0):0});
+    if(a.recent.length>24) a.recent.length=24;
+    try{ save(); }catch(e){}
+    ensureTimer(); render();
+  }
+  function ensureTimer(){ var has=Object.keys(AIM.running).length>0;
+    if(has && !AIM.timer) AIM.timer=setInterval(render,500);
+    if(!has && AIM.timer){ clearInterval(AIM.timer); AIM.timer=null; } }
+
+  // ---- chặn fetch: đọc usageMetadata mọi call Gemini (phủ cả geminiCall lẫn fetch trực tiếp) ----
+  var _of=window.fetch.bind(window);
+  window.fetch=function(input,init){
+    var url=(typeof input==='string'?input:(input&&input.url))||'';
+    if(!/generativelanguage\.googleapis\.com[\s\S]*generateContent/.test(url)) return _of(input,init);
+    var model=((url.match(/models\/([^:]+):/)||[])[1])||'?';
+    var task=window.__aiTask||'Tác vụ AI';
+    var id=++AIM.seq; aiStart(id,task,model);
+    var p=_of(input,init);
+    p.then(function(res){ var ok=res.ok;
+      res.clone().json().then(function(j){ aiEnd(id,model,(j&&j.usageMetadata)||null,ok); }).catch(function(){ aiEnd(id,model,null,ok); });
+    }, function(){ aiEnd(id,model,null,false); });
+    return p;
+  };
+
+  // ---- UI ----
+  function ui(){
+    if(document.getElementById('aim-launch')) return;
+    var st=document.createElement('style');
+    st.textContent=
+      '#aim-launch{position:fixed;right:14px;bottom:14px;z-index:9000;background:#11131a;border:1px solid #2a2d36;color:#e9eaf0;border-radius:30px;padding:8px 13px;font:600 12.5px/1 system-ui;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.45);display:flex;align-items:center;gap:7px}'+
+      '#aim-launch .dot{width:8px;height:8px;border-radius:50%;background:#3a3f4b}'+
+      '#aim-launch.run .dot{background:#36d399;animation:aimp 1s infinite}'+
+      '@keyframes aimp{0%,100%{opacity:1}50%{opacity:.25}}'+
+      '#aim-panel{position:fixed;right:14px;bottom:58px;z-index:9000;width:330px;max-width:92vw;background:#11131a;border:1px solid #2a2d36;border-radius:14px;color:#e9eaf0;font:13px/1.45 system-ui;box-shadow:0 16px 50px rgba(0,0,0,.6);display:none;overflow:hidden}'+
+      '#aim-panel.show{display:block}'+
+      '#aim-panel .hd{display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:#161922;border-bottom:1px solid #2a2d36}'+
+      '#aim-panel .hd b{font-size:13.5px}'+
+      '#aim-panel .bd{padding:12px 13px;max-height:62vh;overflow:auto}'+
+      '.aim-live{border:1px solid #2a2d36;border-radius:10px;padding:9px 11px;margin-bottom:10px;background:#0d0f15}'+
+      '.aim-live.on{border-color:#36d399}'+
+      '.aim-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}'+
+      '.aim-card{background:#161922;border:1px solid #2a2d36;border-radius:10px;padding:8px 10px}'+
+      '.aim-card .k{font-size:11px;color:#8a8f9c}.aim-card .v{font-size:16px;font-weight:700;margin-top:2px}'+
+      '.aim-mrow{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px dashed #23262f}'+
+      '.aim-rec{font-size:11.5px;border-left:2px solid #2a2d36;padding:3px 8px;margin:4px 0}'+
+      '.aim-rec.bad{border-left-color:#f87272}'+
+      '.aim-mut{color:#8a8f9c}'+
+      '#aim-panel .x{cursor:pointer;color:#8a8f9c;font-size:18px;line-height:1}'+
+      '#aim-panel .rs{cursor:pointer;color:#f87272;font-size:11.5px;text-decoration:none}';
+    document.head.appendChild(st);
+    var b=document.createElement('div'); b.id='aim-launch'; b.innerHTML='<span class="dot"></span><span id="aim-lt">🤖 0</span>';
+    b.onclick=function(){ AIM.open=!AIM.open; document.getElementById('aim-panel').classList.toggle('show',AIM.open); render(); };
+    document.body.appendChild(b);
+    var p=document.createElement('div'); p.id='aim-panel';
+    p.innerHTML='<div class="hd"><b>🤖 AI Monitor</b><span class="x" onclick="AIM.close()">✕</span></div><div class="bd" id="aim-bd"></div>';
+    document.body.appendChild(p);
+  }
+  AIM.close=function(){ AIM.open=false; var p=document.getElementById('aim-panel'); if(p)p.classList.remove('show'); };
+  AIM.reset=function(){ if(!confirm('Xoá toàn bộ thống kê token của dự án này?'))return; S.dna.aiStats={calls:0,inTok:0,outTok:0,totTok:0,models:{},recent:[]}; try{save();}catch(e){} render(); };
+
+  function render(){
+    var launch=document.getElementById('aim-launch'); if(!launch) return;
+    var a=stats(); var runIds=Object.keys(AIM.running); var running=runIds.length>0;
+    launch.classList.toggle('run',running);
+    document.getElementById('aim-lt').textContent='🤖 '+(fmtTok(a.totTok)||'0')+(running?' •':'');
+    if(!AIM.open) return;
+    var bd=document.getElementById('aim-bd'); if(!bd) return;
+    // live
+    var live='';
+    if(running){
+      var r=AIM.running[runIds[0]]; var el=((Date.now()-r.t0)/1000).toFixed(1);
+      live='<div class="aim-live on"><div><b style="color:#36d399">● Đang chạy</b> '+(runIds.length>1?('<span class="aim-mut">+'+(runIds.length-1)+' tác vụ</span>'):'')+'</div>'+
+        '<div style="margin-top:4px">'+shortTask(r.task)+'</div>'+
+        '<div class="aim-mut" style="margin-top:3px">model <b style="color:#e9eaf0">'+shortModel(r.model)+'</b> · ⏱ '+el+'s</div></div>';
+    } else {
+      live='<div class="aim-live"><span class="aim-mut">● Nhàn rỗi — chưa có tác vụ AI nào đang chạy.</span></div>';
+    }
+    // totals
+    var usd=totalCostUSD();
+    var grid='<div class="aim-grid">'+
+      '<div class="aim-card"><div class="k">Tổng token dự án</div><div class="v">'+(fmtTok(a.totTok)||'0')+'</div></div>'+
+      '<div class="aim-card"><div class="k">Số lượt gọi AI</div><div class="v">'+a.calls+'</div></div>'+
+      '<div class="aim-card"><div class="k">Vào / Ra</div><div class="v" style="font-size:13px">'+fmtTok(a.inTok)+' / '+fmtTok(a.outTok)+'</div></div>'+
+      '<div class="aim-card"><div class="k">Chi phí ước tính</div><div class="v" style="font-size:14px">'+fmtVnd(usd*USD2VND)+'</div><div class="k">≈ $'+usd.toFixed(3)+'</div></div>'+
+      '</div>';
+    // by model
+    var mk=Object.keys(a.models); var bym='';
+    if(mk.length){ bym='<div style="font-size:11px;color:#8a8f9c;margin:2px 0 4px">THEO MODEL</div>';
+      mk.forEach(function(m){ var x=a.models[m]; var c=costOf(m,x.inTok,x.outTok);
+        bym+='<div class="aim-mrow"><span>'+shortModel(m)+' <span class="aim-mut">×'+x.calls+'</span></span><span>'+fmtTok(x.inTok+x.outTok)+' tok · '+fmtVnd(c*USD2VND)+'</span></div>'; }); }
+    // recent
+    var rec='<div style="font-size:11px;color:#8a8f9c;margin:10px 0 4px">NHẬT KÝ GẦN ĐÂY</div>';
+    if(!a.recent.length) rec+='<div class="aim-mut" style="font-size:12px">Chưa có. Chạy một tác vụ AI (dựng kịch bản, xuất Flow…) để thấy ở đây.</div>';
+    else a.recent.forEach(function(r){ rec+='<div class="aim-rec'+(r.ok?'':' bad')+'"><b>'+shortTask(r.task)+'</b> '+(r.ok?'':'❌ ')+
+      '<span class="aim-mut">· '+shortModel(r.model)+' · '+fmtTok(r.tot)+' tok · '+(r.ms/1000).toFixed(1)+'s</span></div>'; });
+    bd.innerHTML=live+grid+bym+rec+'<div style="text-align:right;margin-top:8px"><a class="rs" onclick="AIM.reset()">🗑 Reset thống kê</a></div>';
+  }
+  AIM.render=render;
+  if(document.body) ui(); else document.addEventListener('DOMContentLoaded',ui);
+  setTimeout(function(){ try{ ui(); render(); }catch(e){} },300);
 })();
 </script>
 <script>
