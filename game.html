@@ -466,6 +466,10 @@ window.VDGame16={mount:mount,start:start,stop:stop,isRunning:isRunning};if(docum
   document.querySelectorAll('.slot-bar .back').forEach(function(b){b.addEventListener('click',function(){try{window.VDsfx&&window.VDsfx.back&&window.VDsfx.back();}catch(e){}close();});});
   function refreshBest(){document.querySelectorAll('[data-best]').forEach(function(el){var v=localStorage.getItem('g'+el.dataset.best+'_best');el.textContent=v?('⭐ Kỷ lục: '+v):'Chưa chơi';});}
   refreshBest();
+  // Deep-link: game.html#g15 → tự mở game 15 (dùng khi nhúng iframe trong modal chờ AI)
+  function fromHash(){ var m=(location.hash||'').match(/g(\d+)/i); if(m){ var n=+m[1]; if(n>=1&&n<=16){ if(cur!==n){ if(cur)close(); open(n); } return true; } } return false; }
+  if(fromHash()){ document.documentElement.classList.add('embed'); }
+  window.addEventListener('hashchange',fromHash);
 })();
 </script>
 

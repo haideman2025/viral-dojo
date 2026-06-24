@@ -184,9 +184,20 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
   padding:16px;max-width:468px;width:100%;max-height:92vh;overflow:auto}
 #vd-wait .vw-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 #vd-wait .vw-title{font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:16px;color:var(--tx);display:flex;align-items:center;gap:8px}
-#vd-wait .vw-x{background:var(--card2);border:2px solid var(--bd);color:var(--tx);border-radius:6px;padding:5px 11px;font-weight:800;cursor:pointer;box-shadow:2px 2px 0 var(--px)}
+#vd-wait .vw-x,#vd-wait .vw-min{background:var(--card2);border:2px solid var(--bd);color:var(--tx);border-radius:6px;padding:5px 11px;font-weight:800;cursor:pointer;box-shadow:2px 2px 0 var(--px)}
+#vd-wait .vw-btns{display:flex;gap:6px}
 #vd-wait .vw-status{font-size:13px;color:var(--mut);font-weight:700;margin-bottom:10px}
-#vd-wait .vw-swap{margin-top:10px;text-align:center}
+#vd-wait .vw-pick{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+#vd-wait .vw-pick .btn{font-size:12px}
+#vd-wait .vw-pick .btn.act{background:var(--ac);color:var(--hi);border-color:var(--px)}
+#vd-wait .vw-mini{display:none}
+/* ==== Thu gọn: modal co thành thẻ nhỏ góc dưới-phải, KHÔNG chặn thao tác app ==== */
+#vd-wait.min{background:transparent;pointer-events:none;align-items:flex-end;justify-content:flex-end;padding:14px}
+#vd-wait.min .vw-box{pointer-events:auto;width:auto;min-width:230px;max-width:300px;padding:11px 13px}
+#vd-wait.min .vw-body{display:none}
+#vd-wait.min .vw-status{display:none}
+#vd-wait.min .vw-mini{display:block;font-size:12.5px;color:var(--ac2);font-weight:700}
+#vd-wait .vw-iframe{width:100%;height:440px;max-height:64vh;border:2px solid var(--px);border-radius:8px;background:var(--glass);display:block}
 
 @media (max-width:760px){.wrap{padding:18px 13px 98px}.row>div,.cc{min-width:100%}}
 @media (max-width:560px){
@@ -3654,10 +3665,18 @@ function ensureDynamic(){
 <!-- ===== Modal chơi game lúc đợi AI ===== -->
 <div id="vd-wait"><div class="vw-box">
   <div class="vw-head"><div class="vw-title">⏳ AI đang ra khơi…</div>
-    <button class="vw-x" id="vw-x">✕ Đóng</button></div>
+    <div class="vw-btns"><button class="vw-min" id="vw-min" title="Thu gọn / phóng to">▾ Thu gọn</button><button class="vw-x" id="vw-x">✕ Đóng</button></div></div>
   <div class="vw-status" id="vw-status">Chơi game trong lúc đợi AI nhé! 🏴‍☠️</div>
-  <div id="vd-game-host"></div>
-  <div class="vw-swap"><button class="btn ghost sm" id="vw-swap">🔀 Đổi game khác</button></div>
+  <div class="vw-mini" id="vw-mini">🤖 AI vẫn đang chạy… bấm <b>▴ Mở</b> để chơi tiếp.</div>
+  <div class="vw-body" id="vw-body">
+    <div id="vd-game-host"></div>
+    <div class="vw-pick">
+      <button class="btn ghost sm act" id="vw-swap" data-pick="mini">🔀 Game nhanh</button>
+      <button class="btn ghost sm" data-pick="15">🧗 Thang Viral</button>
+      <button class="btn ghost sm" data-pick="16">🏰 Thủ Thành Kênh</button>
+      <button class="btn ghost sm" data-pick="arcade">🎮 Tất cả 16 game</button>
+    </div>
+  </div>
 </div></div>
 
 <!-- ===== GAME 1 · 🪙 Hứng vàng ===== -->
@@ -3933,19 +3952,31 @@ function ensureDynamic(){
 (function(){
   "use strict";
   var games=[window.VDGame1,window.VDGame2,window.VDGame3].filter(Boolean);
-  var modal,host,statusEl,cur=null,idx=0;
-  function grab(){ modal=document.getElementById('vd-wait'); host=document.getElementById('vd-game-host'); statusEl=document.getElementById('vw-status'); }
-  function mountGame(i){ if(!games.length||!host)return; idx=(i%games.length+games.length)%games.length; cur=games[idx]; host.innerHTML=''; try{ cur.mount('vd-game-host'); }catch(e){} }
+  var modal,host,statusEl,minBtn,cur=null,idx=0,mode='mini',started=false;
+  function grab(){ modal=document.getElementById('vd-wait'); host=document.getElementById('vd-game-host'); statusEl=document.getElementById('vw-status'); minBtn=document.getElementById('vw-min'); }
+  function stopCur(){ try{ if(cur&&cur.stop) cur.stop(); }catch(e){} }
+  function mountGame(i){ if(!games.length||!host)return; mode='mini'; idx=(i%games.length+games.length)%games.length; cur=games[idx]; host.innerHTML=''; try{ cur.mount('vd-game-host'); }catch(e){} markPick('mini'); }
+  function loadBig(which){ // 15,16 hoặc 'arcade' → nhúng game.html qua iframe
+    if(!host)return; stopCur(); cur=null; mode='big';
+    var hash = which==='arcade' ? '' : ('#g'+which);
+    host.innerHTML='<iframe class="vw-iframe" src="game.html'+hash+'" title="Game"></iframe>';
+    markPick(String(which));
+  }
+  function markPick(key){ try{ document.querySelectorAll('#vd-wait .vw-pick .btn').forEach(function(b){ b.classList.toggle('act', b.dataset.pick===key); }); }catch(e){} }
+  function setMin(on){ if(!modal)return; modal.classList.toggle('min',on); if(minBtn)minBtn.textContent=on?'▴ Mở':'▾ Thu gọn';
+    if(on){ stopCur(); } else if(mode==='mini'){ mountGame(idx); } }
   window.vdOpenWait=function(msg){
     grab(); if(!modal||!games.length) return;
     if(statusEl) statusEl.textContent=msg||'AI đang ra khơi… chơi game trong lúc đợi! 🏴‍☠️';
     modal.classList.add('show');
-    if(!cur) mountGame(Math.floor(Math.random()*games.length));
+    if(!started){ mountGame(Math.floor(Math.random()*games.length)); started=true; }
   };
-  window.vdCloseWait=function(){ grab(); if(!modal)return; try{ if(cur&&cur.stop) cur.stop(); }catch(e){} modal.classList.remove('show'); };
+  window.vdCloseWait=function(){ grab(); if(!modal)return; stopCur(); if(host)host.innerHTML=''; cur=null; started=false; modal.classList.remove('show'); modal.classList.remove('min'); if(minBtn)minBtn.textContent='▾ Thu gọn'; };
   document.addEventListener('click',function(e){
-    if(e.target.closest('#vw-x')) window.vdCloseWait();
-    else if(e.target.closest('#vw-swap')) mountGame(idx+1);
+    if(e.target.closest('#vw-x')){ window.vdCloseWait(); return; }
+    if(e.target.closest('#vw-min')){ grab(); setMin(!modal.classList.contains('min')); return; }
+    var pk=e.target.closest('#vd-wait .vw-pick .btn'); if(pk){ grab(); var v=pk.dataset.pick;
+      if(v==='mini') mountGame(idx+1); else loadBig(v); }
   });
 })();
 </script>
