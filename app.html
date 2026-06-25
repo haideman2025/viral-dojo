@@ -256,6 +256,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
 <div id="projbar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 12px">
   <span style="font-size:12.5px;font-weight:800;color:var(--mut);white-space:nowrap">📁 Dự án</span>
   <select id="proj-sel" onchange="projSwitch(this.value)" style="width:auto;min-width:170px;padding:7px 10px;font-weight:700"></select>
+  <span id="proj-count" class="mut" style="font-size:11.5px;font-weight:800;white-space:nowrap"></span>
   <button class="btn ghost sm" onclick="projNew()">➕ Tạo mới</button>
   <button class="btn ghost sm" onclick="projRename()">✏️ Đổi tên</button>
   <button class="btn ghost sm" onclick="projDuplicate()">📑 Nhân bản</button>
@@ -941,13 +942,28 @@ function save(){ const p=S.projects&&S.projects[S.activeId]; if(p) p.updatedAt=_
 
 /* ===================== QUẢN LÝ DỰ ÁN (đa pack) ===================== */
 function projList(){ return Object.entries(S.projects).map(([id,p])=>({id,...p})); }
+/* ===== Giới hạn SỐ DỰ ÁN theo cấp tài khoản (chỉnh số ở đây) ===== */
+const PLAN_LIMITS = { free:1, trial:2, life:10, vip:50 };
+const PLAN_NAMES  = { free:'Miễn phí', trial:'Dùng thử', life:'Trọn đời', vip:'VIP' };
+function curPlan(){ if(!(SESS&&SESS.code)) return 'free'; if(sessExpired()) return 'free'; return (SESS.plan&&PLAN_LIMITS[SESS.plan]!=null)?SESS.plan:'life'; }
+function projLimit(){ return PLAN_LIMITS[curPlan()] || 1; }
+function projLimitBlock(){
+  const lim=projLimit(), plan=curPlan(), n=Object.keys(S.projects).length;
+  const msg='Gói '+(PLAN_NAMES[plan]||plan)+' chỉ mở tối đa '+lim+' dự án (bạn đang có '+n+').\n\nNâng cấp Trọn đời để mở thêm dự án?';
+  if(confirm(msg)) openUpgrade('Thêm dự án (gói '+(PLAN_NAMES[plan]||plan)+' giới hạn '+lim+')');
+}
 function renderProjBar(){ const sel=document.getElementById('proj-sel'); if(!sel) return;
-  sel.innerHTML = projList().map(p=>`<option value="${p.id}"${p.id===S.activeId?' selected':''}>${_escAttr(p.name)}</option>`).join(''); }
+  sel.innerHTML = projList().map(p=>`<option value="${p.id}"${p.id===S.activeId?' selected':''}>${_escAttr(p.name)}</option>`).join('');
+  const c=document.getElementById('proj-count'); if(c){ const n=Object.keys(S.projects).length, lim=projLimit();
+    c.textContent='('+n+'/'+lim+' · '+(PLAN_NAMES[curPlan()]||curPlan())+')'; c.style.color = n>=lim ? 'var(--red)' : 'var(--mut)'; } }
 function projSwitch(id){ if(id && S.projects[id] && id!==S.activeId){ S.activeId=id; localStorage.setItem('dojo',JSON.stringify(S)); location.reload(); } }
-function projNew(){ const name=(prompt('Tên dự án mới (1 kênh / 1 pack nội dung):','Dự án '+(Object.keys(S.projects).length+1))||'').trim(); if(!name) return;
+function projNew(){
+  if(Object.keys(S.projects).length >= projLimit()){ projLimitBlock(); return; }
+  const name=(prompt('Tên dự án mới (1 kênh / 1 pack nội dung):','Dự án '+(Object.keys(S.projects).length+1))||'').trim(); if(!name) return;
   const id=_pid(); S.projects[id]={name,createdAt:_today(),updatedAt:_today(),dna:{onboard:{},m1:{},scores:{}}}; S.activeId=id; localStorage.setItem('dojo',JSON.stringify(S)); location.reload(); }
 function projRename(){ const p=activeProject(); const name=(prompt('Đổi tên dự án:',p.name)||'').trim(); if(name){ p.name=name; localStorage.setItem('dojo',JSON.stringify(S)); renderProjBar(); } }
-function projDuplicate(){ const src=activeProject(); const id=_pid();
+function projDuplicate(){ if(Object.keys(S.projects).length >= projLimit()){ projLimitBlock(); return; }
+  const src=activeProject(); const id=_pid();
   S.projects[id]={name:src.name+' (copy)',createdAt:_today(),updatedAt:_today(),dna:JSON.parse(JSON.stringify(src.dna||{}))}; S.activeId=id; localStorage.setItem('dojo',JSON.stringify(S)); location.reload(); }
 function projDelete(){ if(Object.keys(S.projects).length<=1){ alert('Không thể xoá dự án cuối cùng — tạo dự án khác trước.'); return; }
   const p=activeProject(); if(!confirm('Xoá dự án "'+p.name+'"? Không hồi lại được. Nên Tải DNA backup trước.')) return;
