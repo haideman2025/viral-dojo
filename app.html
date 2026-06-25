@@ -1189,10 +1189,11 @@ async function adminRefresh(){
       +'<tr style="color:var(--mut);text-align:left"><th style="padding:3px 4px">Tên</th><th>Mã</th><th>Gói</th><th>Lần cuối</th><th>v</th><th></th></tr>';
     list.forEach(function(a){
       const on=a.active, dot=a.lastSeen?(on?'🟢':'⚪'):'⚫';
+      const pl=a.plan||'life', opts=[['trial','Dùng thử'],['life','Trọn đời'],['vip','VIP'],['free','Khoá']];
       h+='<tr style="border-top:1px dashed var(--line)">'
         +'<td style="padding:4px 4px">'+dot+' '+_escAttr(a.name||'')+(a.note?'<br><span class="mut" style="font-size:10.5px">'+_escAttr(a.note)+'</span>':'')+'</td>'
         +'<td><code style="user-select:all;font-size:11px">'+_escAttr(a.code)+'</code></td>'
-        +'<td>'+_escAttr(a.plan||'life')+'</td>'
+        +'<td><select onchange="adminSetPlan(\''+a.code+'\',this.value)" style="background:var(--card2);color:var(--tx);border:1px solid var(--bd);border-radius:6px;font-size:11px;font-weight:700;padding:2px 4px">'+opts.map(o=>'<option value="'+o[0]+'"'+(o[0]===pl?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></td>'
         +'<td title="'+_escAttr((a.lastSeen||'').replace('T',' ').slice(0,16))+'">'+_timeAgo(a.lastSeen)+'</td>'
         +'<td>'+(a.version||0)+'</td>'
         +'<td style="white-space:nowrap"><a href="#" onclick="adminCopy(\''+a.code+'\');return false" title="Copy mã" style="text-decoration:none">📋</a> '
@@ -1228,6 +1229,13 @@ async function adminDelete(code,name){
   if(!confirm('XOÁ / thu hồi mã "'+(name||code)+'"?\nNgười dùng sẽ KHÔNG đăng nhập được nữa (dữ liệu cloud của mã này bị xoá).')) return;
   try{ await _admFetch('/admin/code/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})}); adminRefresh(); }
   catch(e){ alert('Lỗi: '+e.message); }
+}
+async function adminSetPlan(code,plan){
+  const lbl={trial:'Dùng thử (30 ngày)',life:'Trọn đời',vip:'VIP',free:'Khoá (hết hạn ngay)'}[plan]||plan;
+  if(!confirm('Đổi gói mã '+code+' → '+lbl+'?'+(plan==='trial'?'\n(đặt hạn 30 ngày từ hôm nay)':(plan==='life'||plan==='vip'?'\n(bỏ hạn — vĩnh viễn)':'')))){ adminRefresh(); return; }
+  try{ await _admFetch('/admin/code/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,plan})});
+    const o=document.getElementById('adm-out'); if(o){ o.textContent='✅ Đã đổi gói '+code+' → '+lbl; setTimeout(()=>o.textContent='',2500);} adminRefresh(); }
+  catch(e){ alert('Lỗi: '+e.message); adminRefresh(); }
 }
 async function adminExtend(code){
   const v=prompt('Gia hạn / đổi hạn cho '+code+':\n- Nhập SỐ NGÀY (vd 30) để gia hạn từ hôm nay\n- Để TRỐNG = chuyển thành TRỌN ĐỜI (bỏ hạn)','30');

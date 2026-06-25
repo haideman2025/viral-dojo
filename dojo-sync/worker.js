@@ -134,6 +134,18 @@ export default {
           if (!sets.length) return json({ error: 'Không có gì để sửa.' }, 400);
           vals.push(b.code);
           const r = await env.DB.prepare(`UPDATE accounts SET ${sets.join(',')} WHERE code=?`).bind(...vals).run();
+          // đổi gói → tự chỉnh hạn: trọn đời/VIP = bỏ hạn; dùng thử = +N ngày (mặc định 30)
+          if (b.plan != null) {
+            if (b.plan === 'life' || b.plan === 'vip') {
+              await env.DB.prepare('UPDATE accounts SET expires_at=NULL WHERE code=?').bind(b.code).run();
+            } else if (b.plan === 'trial') {
+              const days = Number(b.days) > 0 ? Number(b.days) : 30;
+              await env.DB.prepare('UPDATE accounts SET expires_at=? WHERE code=?').bind(new Date(Date.now() + days * 86400e3).toISOString(), b.code).run();
+            } else if (b.plan === 'free') {
+              // khoá ngay: đặt hết hạn ở quá khứ → client coi như hết quyền sản xuất
+              await env.DB.prepare('UPDATE accounts SET expires_at=? WHERE code=?').bind(new Date(Date.now() - 1000).toISOString(), b.code).run();
+            }
+          }
           return json({ ok: true, changed: (r.meta && r.meta.changes) || 0 });
         }
 
