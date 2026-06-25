@@ -41,9 +41,18 @@ async function ensureSchema(env) {
     "ALTER TABLE accounts ADD COLUMN plan TEXT DEFAULT 'life'",
     "ALTER TABLE accounts ADD COLUMN note TEXT",
     "ALTER TABLE accounts ADD COLUMN pushes INTEGER DEFAULT 0",
+    "ALTER TABLE accounts ADD COLUMN expires_at TEXT",   // NULL = trọn đời; có giá trị = hết hạn (dùng thử)
   ];
   for (const sql of cols) { try { await env.DB.prepare(sql).run(); } catch (e) { /* duplicate column → bỏ qua */ } }
+  try { await env.DB.prepare("CREATE TABLE IF NOT EXISTS leads (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, phone TEXT, email TEXT, code TEXT, source TEXT, created_at TEXT)").run(); } catch (e) {}
+  try { await env.DB.prepare("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)").run(); } catch (e) {}
 }
+/** đọc plan + expires_at an toàn (cột có thể chưa migrate) */
+async function accMeta(env, code) {
+  try { const r = await env.DB.prepare('SELECT plan,expires_at FROM accounts WHERE code=?').bind(code).first(); return { plan: (r && r.plan) || 'life', expiresAt: (r && r.expires_at) || null }; }
+  catch (e) { return { plan: 'life', expiresAt: null }; }
+}
+async function getSetting(env, key) { try { const r = await env.DB.prepare('SELECT value FROM settings WHERE key=?').bind(key).first(); return r && r.value; } catch (e) { return null; } }
 
 /** ghi nhận hoạt động — KHÔNG được làm vỡ sync nếu cột chưa migrate */
 async function touch(env, code, isPush) {
@@ -54,7 +63,7 @@ async function touch(env, code, isPush) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (!env.DB) return json({ error: 'D1 chưa cấu hình (binding DB).' }, 500);
@@ -136,7 +145,67 @@ export default {
           return json({ ok: true, deleted: (r.meta && r.meta.changes) || 0 });
         }
 
+        // Gia hạn / đặt ngày hết hạn cho mã (vd biến dùng thử thành trọn đời: days=null)
+        if (path === '/admin/code/expiry' && req.method === 'POST') {
+          const b = await req.json().catch(() => ({}));
+          if (!b.code) return json({ error: 'Thiếu code.' }, 400);
+          const exp = (b.days == null || b.days === '') ? null : new Date(Date.now() + Number(b.days) * 86400e3).toISOString();
+          await env.DB.prepare('UPDATE accounts SET expires_at=?, plan=? WHERE code=?').bind(exp, exp ? 'trial' : 'life', b.code).run();
+          return json({ ok: true, expiresAt: exp });
+        }
+
+        // Danh sách lead đăng ký dùng thử
+        if (path === '/admin/leads' && req.method === 'GET') {
+          const r = await env.DB.prepare('SELECT l.id,l.name,l.phone,l.email,l.code,l.source,l.created_at, a.expires_at, a.last_seen FROM leads l LEFT JOIN accounts a ON a.code=l.code ORDER BY l.created_at DESC LIMIT 1000').all();
+          const leads = (r.results || []).map(x => ({ id: x.id, name: x.name, phone: x.phone, email: x.email, code: x.code, source: x.source, createdAt: x.created_at, expiresAt: x.expires_at, lastSeen: x.last_seen }));
+          return json({ leads });
+        }
+
+        // Cấu hình (webhook Google Sheet)
+        if (path === '/admin/settings' && req.method === 'GET') {
+          return json({ sheetWebhook: (await getSetting(env, 'sheet_webhook')) || '' });
+        }
+        if (path === '/admin/settings' && req.method === 'POST') {
+          const b = await req.json().catch(() => ({}));
+          await env.DB.prepare('INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value')
+            .bind('sheet_webhook', (b.sheetWebhook || '').toString().slice(0, 500)).run();
+          return json({ ok: true });
+        }
+
         return json({ error: 'not found' }, 404);
+      }
+
+      // ---------- LEAD (công khai — form landing) ----------
+      if (path === '/lead' && req.method === 'POST') {
+        await ensureSchema(env);
+        const b = await req.json().catch(() => ({}));
+        const name = (b.name || '').toString().trim().slice(0, 120);
+        const phone = (b.phone || '').toString().trim().slice(0, 40);
+        const email = (b.email || '').toString().trim().slice(0, 120);
+        if (!name || !(phone || email)) return json({ error: 'Vui lòng nhập Tên và SĐT hoặc Email.' }, 400);
+        // chống tạo trùng: cùng email/sđt → trả lại mã cũ
+        let existing = null;
+        if (email) existing = await env.DB.prepare('SELECT code FROM leads WHERE email=? ORDER BY id DESC').bind(email).first();
+        if (!existing && phone) existing = await env.DB.prepare('SELECT code FROM leads WHERE phone=? ORDER BY id DESC').bind(phone).first();
+        let code, expiresAt;
+        if (existing && existing.code) {
+          code = existing.code;
+          const m = await accMeta(env, code); expiresAt = m.expiresAt;
+        } else {
+          code = genCode();
+          for (let i = 0; i < 3; i++) { const ex = await env.DB.prepare('SELECT code FROM accounts WHERE code=?').bind(code).first(); if (!ex) break; code = genCode(); }
+          expiresAt = new Date(Date.now() + 30 * 86400e3).toISOString(); // dùng thử 30 ngày
+          await env.DB.prepare('INSERT INTO accounts (code,name,blob,version,created_at,updated_at,last_seen,plan,note,pushes,expires_at) VALUES (?,?,NULL,0,?,?,NULL,?,?,0,?)')
+            .bind(code, name, now(), now(), 'trial', 'Đăng ký dùng thử (landing)', expiresAt).run();
+          await env.DB.prepare('INSERT INTO leads (name,phone,email,code,source,created_at) VALUES (?,?,?,?,?,?)')
+            .bind(name, phone, email, code, (b.source || 'landing').toString().slice(0, 40), now()).run();
+          // đẩy sang Google Sheet (nếu admin đã cấu hình webhook) — fire & forget
+          const hook = await getSetting(env, 'sheet_webhook');
+          if (hook && ctx && ctx.waitUntil) {
+            ctx.waitUntil(fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, phone, email, code, expiresAt, created_at: now(), source: b.source || 'landing' }) }).catch(() => {}));
+          }
+        }
+        return json({ ok: true, code, expiresAt, name });
       }
 
       // ---------- USER (cần access code) ----------
@@ -147,12 +216,14 @@ export default {
 
       if (path === '/auth' && req.method === 'POST') {
         await touch(env, code, false);
-        return json({ ok: true, name: acc.name, version: acc.version });
+        const m = await accMeta(env, code);
+        return json({ ok: true, name: acc.name, version: acc.version, plan: m.plan, expiresAt: m.expiresAt });
       }
 
       if (path === '/pull' && req.method === 'GET') {
         await touch(env, code, false);
-        return json({ blob: acc.blob ? JSON.parse(acc.blob) : null, version: acc.version, name: acc.name });
+        const m = await accMeta(env, code);
+        return json({ blob: acc.blob ? JSON.parse(acc.blob) : null, version: acc.version, name: acc.name, plan: m.plan, expiresAt: m.expiresAt });
       }
 
       if (path === '/push' && req.method === 'POST') {

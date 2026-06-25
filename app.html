@@ -781,7 +781,8 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
         <label>🛠 Admin token <span class="mut">(chỉ admin — lưu trong máy này)</span></label>
         <input id="adm-token" type="password" placeholder="ADMIN_TOKEN">
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <button class="btn sm" onclick="adminRefresh()">📊 Mở / Làm mới Dashboard</button>
+          <button class="btn sm" onclick="adminRefresh()">📊 Dashboard</button>
+          <button class="btn ghost sm" onclick="adminLeads()">📥 Leads dùng thử</button>
           <label class="mut" style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="adm-auto" style="width:auto" onchange="adminAuto(this.checked)"> tự làm mới 30s</label>
         </div>
         <div id="adm-kpi" style="margin-top:10px"></div>
@@ -800,7 +801,14 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
         </div>
 
         <div id="adm-users" style="margin-top:12px"></div>
+        <div id="adm-leads" style="margin-top:12px"></div>
         <div id="adm-out" class="mut" style="font-size:12px;margin-top:8px"></div>
+
+        <div style="margin-top:12px;border-top:1px dashed var(--bd);padding-top:10px">
+          <label>📊 Google Sheet webhook <span class="mut">(tuỳ chọn — đẩy lead sang Sheet)</span></label>
+          <div style="display:flex;gap:8px;margin-top:5px"><input id="adm-sheet" placeholder="https://script.google.com/macros/s/.../exec" style="flex:1;min-width:140px"><button class="btn ghost sm" onclick="adminSaveSheet()">💾 Lưu</button></div>
+          <div id="adm-sheet-out" class="mut" style="font-size:11.5px;margin-top:4px"></div>
+        </div>
 
         <div style="margin-top:12px;border-top:1px dashed var(--bd);padding-top:10px">
           <label>💳 Bán hàng <span class="mut">(hiện trong popup "Mở khoá")</span></label>
@@ -977,10 +985,22 @@ async function authWith(code){
   const r=await fetch(_base()+'/auth',{method:'POST',headers:{'x-dojo-code':code}});
   const d=await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(d.error||'Mã không hợp lệ.');
-  SESS={code,name:d.name}; _saveSess(); SYNCMETA={version:0}; _saveMeta();   // version 0 → ép pull
+  SESS={code,name:d.name,plan:d.plan||'life',expiresAt:d.expiresAt||null}; _saveSess(); SYNCMETA={version:0}; _saveMeta();   // version 0 → ép pull
   return d;
 }
 function logout(){ SESS=null; _saveSess(); SYNCMETA={}; _saveMeta(); _dirty=false; renderAuthUI(); }
+/* hết hạn dùng thử? (gói trial có expiresAt; trọn đời = null) */
+function sessExpired(){ return !!(SESS && SESS.expiresAt && Date.now() > Date.parse(SESS.expiresAt)); }
+function trialDaysLeft(){ if(!(SESS&&SESS.expiresAt)) return null; return Math.ceil((Date.parse(SESS.expiresAt)-Date.now())/86400e3); }
+/* tự đăng nhập khi vào từ landing với ?code=XXX */
+(async function autoLoginFromURL(){
+  try{ var m=(location.search||'').match(/[?&]code=([^&]+)/); if(!m) return;
+    var code=decodeURIComponent(m[1]).trim().toUpperCase();
+    var u=new URL(location.href); u.searchParams.delete('code'); var clean=u.pathname+(u.search||'')+u.hash;
+    if(SESS && SESS.code===code){ history.replaceState(null,'',clean); return; }
+    await authWith(code); history.replaceState(null,'',clean); location.reload();
+  }catch(e){ try{ var u2=new URL(location.href); u2.searchParams.delete('code'); history.replaceState(null,'',u2.pathname+(u2.search||'')); }catch(_){} }
+})();
 
 /* Nạp blob cloud vào S (GIỮ S.keys local), persist KHÔNG kích push */
 function applyBlob(blob){
@@ -997,6 +1017,7 @@ async function pull(){
     const d=await r.json().catch(()=>({}));
     if(r.status===401){ logout(); return; }
     if(!r.ok) throw new Error(d.error||'pull lỗi');
+    if(SESS && ('expiresAt' in d || 'plan' in d)){ SESS.plan=d.plan||SESS.plan; SESS.expiresAt=('expiresAt' in d)?d.expiresAt:SESS.expiresAt; _saveSess(); if(typeof renderAuthUI==='function')renderAuthUI(); }
     if(d.blob==null){ SYNCMETA={version:0}; _saveMeta(); await pushNow(true); return; } // TK mới → đẩy local làm gốc
     if((d.version||0) > (SYNCMETA.version||0)){ applyBlob(d.blob); SYNCMETA={version:d.version}; _saveMeta(); }
     setBadge('synced');
@@ -1064,7 +1085,11 @@ function renderAuthUI(){
   const el=document.getElementById('auth-head'); if(!el) return;
   if(!SYNC_URL){ el.innerHTML='<span class="mut" style="font-size:11.5px">đồng bộ: chưa bật</span>'; return; }
   if(SESS&&SESS.code){
-    el.innerHTML='<span title="'+_escAttr(SESS.code)+'">👤 '+_escAttr(SESS.name||'Tài khoản')+'</span>'+
+    const dl=trialDaysLeft(); let badge='';
+    if(dl!=null){ badge = dl>0
+      ? ' <span style="background:var(--gold);color:var(--px);font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px">⏳ Dùng thử còn '+dl+' ngày</span>'
+      : ' <span style="background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;cursor:pointer" onclick="openUpgrade(\'Dùng thử đã hết hạn\')">⛔ Hết hạn dùng thử — Mở khoá</span>'; }
+    el.innerHTML='<span title="'+_escAttr(SESS.code)+'">👤 '+_escAttr(SESS.name||'Tài khoản')+'</span>'+badge+
       ' · <span id="sync-badge" style="font-weight:700">(local)</span>'+
       ' <button class="btn ghost sm" onclick="logout()">Đăng xuất</button>';
   } else {
@@ -1083,7 +1108,7 @@ function adminSaveBuy(){
   _origSet('dojo_buy',JSON.stringify({price:VD_BUY.price,contact:VD_BUY.contact,qr:VD_BUY.qr}));
   const o=document.getElementById('buy-out'); if(o){ o.textContent='✅ Đã lưu'; setTimeout(()=>o.textContent='',1500); }
 }
-function vdPremium(){ return !!(SESS && SESS.code); }
+function vdPremium(){ return !!(SESS && SESS.code) && !sessExpired(); }
 function requirePremium(feat){ if(vdPremium()) return true; openUpgrade(feat); return false; }
 function openUpgrade(feat){
   const ov=document.createElement('div'); ov.className='auth-ov';
@@ -1159,6 +1184,7 @@ async function adminRefresh(){
         +'<a href="#" onclick="adminDelete(\''+a.code+'\',\''+_escAttr(a.name||'').replace(/\'/g,"")+'\');return false" title="Xoá" style="text-decoration:none;color:var(--red)">🗑</a></td></tr>';
     });
     h+='</table></div>'; users.innerHTML=h;
+    try{ const sw=document.getElementById('adm-sheet'); if(sw&&!sw.value){ const cfg=await _admFetch('/admin/settings'); sw.value=cfg.sheetWebhook||''; } }catch(e){}
   }catch(e){ kpi.innerHTML='<span style="color:var(--red)">'+(e.message||'lỗi')+'</span>'; }
 }
 function adminAuto(on){ if(_admAutoT){ clearInterval(_admAutoT); _admAutoT=null; } if(on){ adminRefresh(); _admAutoT=setInterval(adminRefresh,30000); } }
@@ -1186,6 +1212,38 @@ async function adminDelete(code,name){
   if(!confirm('XOÁ / thu hồi mã "'+(name||code)+'"?\nNgười dùng sẽ KHÔNG đăng nhập được nữa (dữ liệu cloud của mã này bị xoá).')) return;
   try{ await _admFetch('/admin/code/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})}); adminRefresh(); }
   catch(e){ alert('Lỗi: '+e.message); }
+}
+async function adminExtend(code){
+  const v=prompt('Gia hạn / đổi hạn cho '+code+':\n- Nhập SỐ NGÀY (vd 30) để gia hạn từ hôm nay\n- Để TRỐNG = chuyển thành TRỌN ĐỜI (bỏ hạn)','30');
+  if(v===null) return;
+  try{ await _admFetch('/admin/code/expiry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,days:(v.trim()===''?null:Number(v))})}); adminRefresh(); adminLeads(); }
+  catch(e){ alert('Lỗi: '+e.message); }
+}
+async function adminLeads(){
+  const box=document.getElementById('adm-leads'); box.innerHTML='<span class="mut" style="font-size:12px">Đang tải leads…</span>';
+  try{ const d=await _admFetch('/admin/leads'); const list=d.leads||[];
+    if(!list.length){ box.innerHTML='<div class="mut" style="font-size:12px">Chưa có lead đăng ký dùng thử.</div>'; return; }
+    let h='<div style="font-size:11px;color:var(--mut);font-weight:700;margin:0 0 5px">📥 LEADS DÙNG THỬ ('+list.length+') — tải bằng nút dưới</div>'
+      +'<div style="overflow:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">'
+      +'<tr style="color:var(--mut);text-align:left"><th style="padding:3px 4px">Tên</th><th>SĐT</th><th>Email</th><th>Mã</th><th>Hạn</th><th></th></tr>';
+    list.forEach(function(l){ const dl=l.expiresAt?Math.ceil((Date.parse(l.expiresAt)-Date.now())/86400e3):null;
+      h+='<tr style="border-top:1px dashed var(--line)"><td style="padding:4px 4px">'+_escAttr(l.name||'')+'</td><td style="user-select:all">'+_escAttr(l.phone||'')+'</td><td style="user-select:all;font-size:11px">'+_escAttr(l.email||'')+'</td>'
+        +'<td><code style="font-size:10.5px;user-select:all">'+_escAttr(l.code||'')+'</code></td>'
+        +'<td>'+(dl==null?'∞':(dl>0?dl+'ng':'hết'))+'</td>'
+        +'<td style="white-space:nowrap"><a href="#" onclick="adminCopy(\''+l.code+'\');return false" title="Copy mã" style="text-decoration:none">📋</a> <a href="#" onclick="adminExtend(\''+l.code+'\');return false" title="Gia hạn" style="text-decoration:none">⏳</a></td></tr>'; });
+    h+='</table></div><div style="margin-top:6px"><button class="btn ghost sm" onclick="adminExportLeads()">⬇️ Tải CSV</button></div>';
+    box.innerHTML=h; box._leads=list;
+  }catch(e){ box.innerHTML='<span style="color:var(--red)">'+(e.message||'lỗi')+'</span>'; }
+}
+function adminExportLeads(){ const box=document.getElementById('adm-leads'); const list=(box&&box._leads)||[]; if(!list.length)return;
+  const esc=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const csv='Tên,SĐT,Email,Mã,Nguồn,Ngày tạo,Hạn\n'+list.map(l=>[l.name,l.phone,l.email,l.code,l.source,(l.createdAt||'').replace('T',' ').slice(0,16),(l.expiresAt||'').slice(0,10)].map(esc).join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download='viral-dojo-leads.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+}
+async function adminSaveSheet(){
+  const out=document.getElementById('adm-sheet-out'); const url=(document.getElementById('adm-sheet').value||'').trim();
+  try{ _admToken(); await _admFetch('/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheetWebhook:url})}); out.textContent='✅ Đã lưu webhook'; setTimeout(()=>out.textContent='',2500); }
+  catch(e){ out.innerHTML='<span style="color:var(--red)">'+(e.message||'lỗi')+'</span>'; }
 }
 
 (function injectAuthCSS(){ const s=document.createElement('style');

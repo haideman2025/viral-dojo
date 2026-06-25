@@ -426,8 +426,54 @@ footer{padding:30px 0;text-align:center;color:var(--mut);font-size:14px;border-t
   dots.forEach(function(d){ d.addEventListener('click',function(){ clearInterval(timer); go(+d.dataset.g); play(); try{VDsfx&&VDsfx.tab&&VDsfx.tab();}catch(e){} }); });
   play();
 })();
-/* Nút Bắt đầu → vào app, bỏ qua màn Giương buồm */
-function vdStart(){ try{ VDsfx&&VDsfx.win&&VDsfx.win(); }catch(e){} setTimeout(function(){ location.href='app.html?start=1'; },180); }
+/* ===== CTA → Form nhận MÃ DÙNG THỬ 30 NGÀY (lead → Worker → admin/Sheet) ===== */
+var LEAD_API='https://dojo-sync.hai-cbe.workers.dev';
+function vdStart(){ try{ VDsfx&&VDsfx.win&&VDsfx.win(); }catch(e){} openLeadForm(); }
+function gotoApp(code){ location.href='app.html?start=1'+(code?('&code='+encodeURIComponent(code)):''); }
+function openLeadForm(){
+  if(document.getElementById('lead-ov')) return;
+  var ov=document.createElement('div'); ov.id='lead-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px';
+  ov.innerHTML='<div style="background:var(--card);border:3px solid var(--bd);border-radius:14px;box-shadow:6px 6px 0 var(--px),inset 0 0 0 2px var(--lo);max-width:430px;width:100%;padding:22px;font-family:\'Be Vietnam Pro\',sans-serif">'
+    +'<h3 style="margin:0 0 4px;font-family:Bungee,sans-serif;color:var(--tx)">⚓ Nhận mã dùng thử 30 ngày</h3>'
+    +'<p style="font-size:13px;color:var(--mut);font-weight:600;margin:0 0 14px">Mở khoá <b>FULL tính năng</b> 1 tháng: 🚀 GENERATE 30 ngày · 🥋 Lò dựng kịch bản · 📦 Xuất Flow · ☁️ Đồng bộ. Điền thông tin để nhận mã ngay.</p>'
+    +'<div id="lead-form">'
+    +'<input id="ld-name" placeholder="Họ tên *" style="width:100%;box-sizing:border-box;padding:11px;margin-bottom:8px;border:2px solid var(--bd);border-radius:8px;font-weight:600;background:var(--glass);color:var(--tx)">'
+    +'<input id="ld-phone" placeholder="Số điện thoại *" inputmode="tel" style="width:100%;box-sizing:border-box;padding:11px;margin-bottom:8px;border:2px solid var(--bd);border-radius:8px;font-weight:600;background:var(--glass);color:var(--tx)">'
+    +'<input id="ld-email" placeholder="Email (để nhận thông tin)" inputmode="email" style="width:100%;box-sizing:border-box;padding:11px;margin-bottom:6px;border:2px solid var(--bd);border-radius:8px;font-weight:600;background:var(--glass);color:var(--tx)">'
+    +'<div id="ld-err" style="color:var(--red);font-size:12.5px;min-height:16px;font-weight:600"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:6px"><button class="btn red" id="ld-go" style="flex:1">🎁 Nhận mã dùng thử</button>'
+    +'<button class="btn ghost" id="ld-cancel">Đóng</button></div>'
+    +'<p style="font-size:11.5px;color:var(--mut);text-align:center;margin:10px 0 0">Đã có mã? <a href="#" id="ld-have" style="color:var(--ac2);font-weight:700">Vào app ngay →</a></p>'
+    +'</div>'
+    +'<div id="lead-done" style="display:none;text-align:center">'
+    +'<div style="font-size:40px">🎉</div><h3 style="margin:6px 0;color:var(--tx)">Mã dùng thử của bạn</h3>'
+    +'<div id="ld-code" style="font-family:monospace;font-size:18px;font-weight:800;background:var(--glass);border:2px dashed var(--bd);border-radius:10px;padding:12px;user-select:all;letter-spacing:1px;color:var(--ac2)"></div>'
+    +'<p style="font-size:12px;color:var(--mut);margin:8px 0 12px">Hiệu lực 30 ngày. Mã đã lưu cho bạn — bấm vào app là tự đăng nhập.</p>'
+    +'<button class="btn big red" id="ld-enter" style="width:100%">🚀 Vào app dùng thử ngay</button></div>'
+    +'</div>';
+  document.body.appendChild(ov);
+  var err=ov.querySelector('#ld-err');
+  ov.querySelector('#ld-cancel').onclick=function(){ ov.remove(); };
+  ov.querySelector('#ld-have').onclick=function(e){ e.preventDefault(); gotoApp(); };
+  ov.querySelector('#ld-go').onclick=async function(){
+    var name=(ov.querySelector('#ld-name').value||'').trim();
+    var phone=(ov.querySelector('#ld-phone').value||'').trim();
+    var email=(ov.querySelector('#ld-email').value||'').trim();
+    if(!name){ err.textContent='Nhập họ tên.'; return; }
+    if(!phone && !email){ err.textContent='Nhập số điện thoại hoặc email.'; return; }
+    var btn=ov.querySelector('#ld-go'); btn.disabled=true; btn.textContent='Đang tạo mã…'; err.textContent='';
+    try{
+      var r=await fetch(LEAD_API+'/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone,email,source:'landing'})});
+      var d=await r.json(); if(!r.ok) throw new Error(d.error||'Lỗi, thử lại.');
+      ov.querySelector('#lead-form').style.display='none';
+      ov.querySelector('#lead-done').style.display='';
+      ov.querySelector('#ld-code').textContent=d.code;
+      ov.querySelector('#ld-enter').onclick=function(){ gotoApp(d.code); };
+      try{ VDsfx&&VDsfx.win&&VDsfx.win(); }catch(e){}
+    }catch(e){ err.textContent=e.message||'Lỗi mạng, thử lại.'; btn.disabled=false; btn.textContent='🎁 Nhận mã dùng thử'; }
+  };
+}
 </script>
 
 <!-- Âm thanh dùng chung (gentle) -->
