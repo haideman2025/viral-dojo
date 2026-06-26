@@ -2559,7 +2559,8 @@ async function geminiImage(prompt, images){
 }
 function renderRoster(){ const el=document.getElementById('roster-list'); if(!el) return; const r=roster();
   if(!r.length){ el.innerHTML='<div class="mut" style="font-size:12px">Chưa có nhân vật. Bấm "➕ Thêm nhân vật".</div>'; return; }
-  el.innerHTML=r.map(c=>{
+  const _withImg=r.filter(c=>c.img).length;
+  el.innerHTML=`<div class="mut" style="font-size:11.5px;margin-bottom:6px">📸 <b style="color:${_withImg<r.length?'var(--warn)':'var(--ac)'}">${_withImg}/${r.length}</b> nhân vật đã có ảnh${_withImg<r.length?` — còn ${r.length-_withImg} thiếu (chỉ nhân vật CÓ ảnh mới được nhúng vào JSON)`:' ✅'}</div>`+r.map(c=>{
     const img=c.img?`<img src="${c.img}" style="width:100%;height:128px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)">`:`<div style="width:100%;height:128px;border:1px dashed var(--bd);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:12px">Chưa có ảnh</div>`;
     return `<div class="cách" style="margin-bottom:8px">
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -2616,7 +2617,7 @@ BRAND:\n${brandContext(1500)}
 STYLE kênh: ${v.style||'(theo brand)'}
 KỊCH BẢN (tóm tắt từng video):\n${body}
 Trả về DUY NHẤT JSON: {"characters":[{"ten":"tên ngắn nhất quán","vai_tro":"vai trò trong kênh","mo_ta":"mô tả TIẾNG VIỆT ngắn 1 dòng","prompt":"PROMPT TIẾNG ANH chi tiết tạo ảnh chân dung tham chiếu dọc 9:16: tuổi/giới/sắc tộc/kiểu+màu tóc/đặc điểm khuôn mặt/trang phục/thần thái phù hợp brand & style; nền studio trung tính, ánh sáng đều, KHÔNG chữ/logo/watermark"}]}
-Chỉ liệt kê nhân vật NGƯỜI (bỏ sản phẩm/đồ vật). Tối đa 8 nhân vật, ưu tiên nhân vật xuất hiện nhiều.`,{json:true,temp:0.5});
+Chỉ liệt kê nhân vật NGƯỜI (bỏ sản phẩm/đồ vật). Liệt kê ĐẦY ĐỦ MỌI nhân vật xuất hiện (tối đa 20). GỘP người trùng vai/đặc điểm thành 1, KHÔNG tách 1 người thành nhiều tên.`,{json:true,temp:0.4});
     const list=_arr(o&&o.characters).filter(x=>x&&(x.ten||x.mo_ta));
     if(!list.length){ if(fb)fb.innerHTML='<div class="fb bad">AI không tìm thấy nhân vật rõ ràng — thử lại hoặc thêm tay.</div>'; if(btn){btn.disabled=false;btn.innerHTML=old;} return; }
     const r=roster(); let added=0, updated=0;
@@ -2641,11 +2642,14 @@ async function rosterGenAllImg(){ const fb=document.getElementById('roster-fb'),
   try{
     await runPool(targets, async (c)=>{ AIJob.setSub(_jid, c.ten||'nhân vật');
       const prompt=(c.prompt||'').trim() || `Generate a high-quality 9:16 vertical character reference portrait. Character: ${c.ten||''} — ${c.mo_ta||'(follow brand & style)'}. Channel style: ${v.style||''}. Clean neutral studio background, even lighting, clear face, no text/logo/watermark.`;
-      try{ const du=await geminiImage(prompt); c.img=await dataUrlToScaled(du,512); done++; save(); renderRoster(); if(btn)btn.innerHTML=`<span class="spin"></span>${done}/${targets.length}`; }
-      catch(e){ fail++; }
+      let ok=false;
+      for(let attempt=0; attempt<3 && !ok; attempt++){
+        try{ const du=await geminiImage(prompt); c.img=await dataUrlToScaled(du,512); done++; ok=true; save(); renderRoster(); if(btn)btn.innerHTML=`<span class="spin"></span>${done}/${targets.length}`; }
+        catch(e){ if(attempt<2) await new Promise(r=>setTimeout(r,1500*(attempt+1))); else fail++; }   // retry 2 lần (chống rate-limit 429)
+      }
     }, _jid);
     AIJob.done(_jid);
-    if(fb)fb.innerHTML=`<div class="fb">✅ Sinh xong ${done}/${targets.length} ảnh nhân vật${fail?` · ${fail} lỗi (thử lại từng cái bằng 🧠 trên card)`:''}. Bấm "⬇️ Tải tất cả ảnh" để đưa vào Google Flow.</div>`;
+    if(fb)fb.innerHTML=`<div class="fb">✅ Sinh xong ${done}/${targets.length} ảnh nhân vật${fail?` · ${fail} lỗi (rate-limit?) → bấm lại "🎨 Sinh ảnh hàng loạt" để sinh tiếp các nhân vật CÒN THIẾU ảnh`:''}. Mọi nhân vật phải có ảnh thì JSON mới nhúng đủ.</div>`;
   }catch(e){ if(AIJob.isCancel(e)){ if(fb)fb.innerHTML=`<div class="fb">⏹ Đã dừng (đã sinh ${done} ảnh).</div>`; } else { AIJob.fail(_jid); if(fb)fb.innerHTML='<div class="fb bad">❌ '+e.message+'</div>'; } }
   if(btn){btn.disabled=false; btn.innerHTML='🎨 Sinh ảnh hàng loạt';}
 }
