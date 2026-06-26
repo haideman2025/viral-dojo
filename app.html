@@ -2332,6 +2332,10 @@ async function exportFlowManifest(){ if(!requirePremium('Xuất cho Flow'))retur
   if(!S.keys.gemini && !confirm('⚠️ Chưa kết nối Gemini → KHÔNG tự nhận diện nhân vật/sản phẩm/cảnh (Số thực thể sẽ RỖNG, mọi shot để no_product). Nên vào ⚡ Kết nối bật key trước.\n\nVẫn xuất thô?')) return;
   const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}; let daysOut=[], _fail=0;
   const _lang=voLang(), _voice=voStyle(), _langCode=voLangCode();
+  // 🎭 SEED nhân vật từ Dàn nhân vật (roster) TRƯỚC khi quét → AI dùng lại ĐÚNG tên (Kai/Leo...), ảnh khớp, KHÔNG tạo nhân vật trùng
+  const _rosSeed=roster().filter(rc=>(rc.ten||'').trim());
+  _rosSeed.forEach(rc=>_idFor(charMap,'NV',rc.ten));
+  const _rosCtx=_rosSeed.length?`\nDÀN NHÂN VẬT CHÍNH THỨC CỦA KÊNH — khi shot có nhân vật KHỚP, BẮT BUỘC dùng ĐÚNG tên dưới đây (KHÔNG đặt tên mới cho cùng một người):\n${_rosSeed.map(rc=>`- ${rc.ten}${rc.mo_ta?': '+rc.mo_ta:''}`).join('\n')}`:'';
   if(btn) btn.disabled=true;
   const _jid=AIJob.start('📦 Xuất manifest Flow', work.length);
   let _dn=0;
@@ -2352,10 +2356,10 @@ async function exportFlowManifest(){ if(!requirePremium('Xuất cho Flow'))retur
           const raw=await geminiCall(`Bạn là ĐẠO DIỄN kiêm giám sát sản xuất video TikTok. Với MỖI shot: nhận diện thực thể + viết prompt quay NHỊP NHANH, cảm xúc cao, CÓ VOICEOVER.
 BRAND (chứa tên sản phẩm/biến thể & nhân vật):\n${brandContext(1800)}
 ${ideaCtx}
-${known}
+${known}${_rosCtx}
 🗣 NGÔN NGỮ ĐẦU RA: viết voiceover + chữ on-screen bằng ${_lang}${_voice?`, giọng đọc: ${_voice}`:''} (dịch từ tiếng Việt sang ${_lang} tự nhiên, đúng văn hoá thị trường — KHÔNG dịch word-by-word).
 NHIỆM VỤ mỗi shot — trả các trường:
-- nhan_vat: tên người xuất hiện. Không có tên riêng thì đặt tên mô tả ngắn ổn định (vd "Chàng trai chính"). LUÔN có ≥1 nhân vật nếu shot có người.
+- nhan_vat: tên người xuất hiện — ƯU TIÊN dùng ĐÚNG tên trong DÀN NHÂN VẬT CHÍNH THỨC ở trên nếu khớp người; chỉ đặt tên mới khi thật sự là người CHƯA có trong dàn (đặt tên mô tả ngắn ổn định). LUÔN có ≥1 nhân vật nếu shot có người.
 - san_pham: tên sản phẩm/biến thể XUẤT HIỆN. Biến thể khác nhau = sản phẩm KHÁC (vd "ONIIZ Peachy","ONIIZ Fresh","ONIIZ Cool" là 3 SP). RỖNG nếu shot không khoe sản phẩm.
 - no_product: true nếu shot KHÔNG có sản phẩm; false nếu overlay/thoại/ý tưởng nhắc tới sản phẩm cụ thể.
 - canh: MÔ TẢ bối cảnh do BẠN tự thiết kế phù hợp nội dung (1 câu) — AI Flow tự dựng cảnh, user KHÔNG upload ảnh cảnh.
