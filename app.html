@@ -2334,8 +2334,8 @@ NHIỆM VỤ mỗi shot — trả các trường:
 - canh: MÔ TẢ bối cảnh do BẠN tự thiết kế phù hợp nội dung (1 câu) — AI Flow tự dựng cảnh, user KHÔNG upload ảnh cảnh.
 - cam_xuc: beat cảm xúc. goc_may: phong cách máy chủ đạo của shot.
 - voiceover: lời thoại TIẾNG VIỆT nhân vật nói trong shot (lấy từ Thoại, gọn ~10s; rỗng nếu không có).
-- prompt_en: 1 đoạn TIẾNG ANH cho Veo/Omni mô tả 1 CHUỖI 10 GIÂY gồm 6-8 CÚ CẮT NHANH, MỖI cú 1 GÓC MÁY SÁNG TẠO KHÁC NHAU (extreme close-up, low-angle, POV, overhead/top-down, whip-pan, tracking, macro insert, dutch tilt, snap-zoom) khớp diễn biến kịch bản; bối cảnh tự thiết kế; nhân vật & sản phẩm LẤY TỪ ẢNH THAM CHIẾU upload (đừng tả ngoại hình SP bằng chữ); LỒNG audio: 'Audio: the character speaks in Vietnamese: "<voiceover>" with clear lip-synced voiceover' + nhạc nền trend + SFX khớp từng cú cắt; chèn on-screen text từ overlay; dọc 9:16, fast-paced cho Gen Z. Nếu no_product=true thêm "No product appears; do not show any product/packaging/logo". Nếu false thêm "Use the uploaded product reference image as the SINGLE source of truth; do NOT recolor/relabel/restyle/redesign/replace it".
-Dùng TÊN NHẤT QUÁN giữa các shot & các ngày (cùng người/SP = cùng tên).
+- prompt_en: 1 đoạn TIẾNG ANH cho Veo/Omni mô tả 1 CHUỖI 10 GIÂY gồm 6-8 CÚ CẮT NHANH, MỖI cú 1 GÓC MÁY SÁNG TẠO KHÁC NHAU (extreme close-up, low-angle, POV, overhead/top-down, whip-pan, tracking, macro insert, dutch tilt, snap-zoom) — NHƯNG 6-8 cú cắt PHẢI cùng 1 khoảnh khắc liền mạch, chèn nguyên văn: "${CUT_COHERENCE_EN}"; khớp diễn biến kịch bản; bối cảnh tự thiết kế; nhân vật & sản phẩm LẤY TỪ ẢNH THAM CHIẾU upload (đừng tả ngoại hình SP bằng chữ); LỒNG audio: 'Audio: the character speaks in Vietnamese: "<voiceover>" with clear lip-synced voiceover' + nhạc nền trend + SFX khớp từng cú cắt; chèn on-screen text từ overlay; dọc 9:16, fast-paced cho Gen Z. Nếu no_product=true thêm "No product appears; do not show any product/packaging/logo". Nếu false thêm "Use the uploaded product reference image as the SINGLE source of truth; do NOT recolor/relabel/restyle/redesign/replace it".
+Dùng TÊN NHẤT QUÁN giữa các shot & các ngày (cùng người/SP = cùng tên). GIỮ trang phục + bối cảnh GIỐNG NHAU giữa các shot trong CÙNG 1 ngày (trừ khi ý tưởng ngày đổi cảnh rõ ràng).
 DANH SÁCH SHOT (Overlay + Thoại + gợi ý EN):\n${body}
 Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,"nhan_vat":[],"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":"","voiceover":"","prompt_en":""}]}`,{temp:0.45,task:'📦 Phân loại Flow: '+x.title});
           const out=_tryJson(raw); cls=(out&&_arr(out.shots))||null; if(!cls) _fail++;
@@ -2353,7 +2353,7 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
         nv.forEach(id=>_regAdd(charMap,id,tag)); sp.forEach(id=>_regAdd(prodMap,id,tag));
         const vo=(c.voiceover&&String(c.voiceover))||s.voiceover||'';
         let pen=(c.prompt_en&&String(c.prompt_en))||s.prompt_en||'';
-        if(!pen&&s._sc) pen=`Fast-paced 10s sequence, 6-8 quick cuts with varied creative camera angles. ${s._sc.noidung||''}. Setting: ${s._sc.hinhanh||''}. Vertical 9:16, cinematic, dynamic.`;
+        if(!pen&&s._sc) pen=`Fast-paced 10s sequence, 6-8 quick cuts with varied creative camera angles. ${CUT_COHERENCE_EN} ${s._sc.noidung||''}. Setting: ${s._sc.hinhanh||''}. Vertical 9:16, cinematic, dynamic.`;
         if(vo && !/voiceover|speaks in vietnamese/i.test(pen)) pen+=` Audio: the character speaks in Vietnamese: "${vo}" with clear lip-synced voiceover, plus trending background music and SFX synced to each cut.`;
         if(noProd && !/no product appears/i.test(pen)) pen+=' No product appears in this shot; do not show, invent, imply, or place any product, packaging, bottle, or logo anywhere in the frame.';
         return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:nv, san_pham:sp, no_product:noProd, canh:canh,
@@ -2467,6 +2467,9 @@ async function genVRef(){
   if(btn){btn.disabled=false; btn.innerHTML=old;}
 }
 async function ensureVRef(){ if(!asText(vref().character).trim()) await genVRef(); }
+/* 🔗 Quy tắc LIỀN MẠCH 6-8 cú cắt trong 1 shot 10s — chống lỗi mỗi cú cắt đổi nhân vật/trang phục/bối cảnh */
+const CUT_COHERENCE_VN = `🔗 LIỀN MẠCH 6-8 CÚ CẮT (BẮT BUỘC): trong CÙNG 1 shot 10s, 6-8 cú cắt nhanh chỉ là CÁC GÓC MÁY / CỠ CẢNH KHÁC NHAU của CÙNG MỘT khoảnh khắc liền mạch — GIỮ NGUYÊN: cùng nhân vật (khuôn mặt + tóc), cùng trang phục, cùng bối cảnh/địa điểm, cùng ánh sáng & thời điểm, cùng sản phẩm. CHỈ đổi góc máy/cỡ cảnh giữa các cú cắt; TUYỆT ĐỐI KHÔNG đổi người/trang phục/kiểu tóc/bối cảnh/màu sắc giữa các cú cắt trong cùng 1 shot.`;
+const CUT_COHERENCE_EN = `All 6-8 quick cuts depict the SAME continuous moment of the SAME single character — identical face, hairstyle and outfit, the SAME location, lighting and time of day; ONLY the camera angle and shot size change between cuts. Never swap the person, wardrobe, hairstyle, setting, props, or colors between cuts.`;
 async function genVPrompts(title){
   const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
@@ -2479,6 +2482,7 @@ KHOÁ NHẤT QUÁN — nhắc lại NGUYÊN VĂN trong MỌI shot prompt:
 - CHARACTER (giữ y hệt mọi shot, dùng ảnh tham chiếu): ${v.character||'(theo brand)'}
 ${PRODUCT_RULE}
 - WARDROBE/SETTING: trang phục + bối cảnh phải GIỐNG NHAU xuyên suốt 1 video (trừ khi kịch bản đổi cảnh rõ ràng).
+- ${CUT_COHERENCE_VN}
 - STYLE: ${v.style||'cinematic, hợp TikTok'}
 
 ⛔ QUY TẮC SẢN PHẨM (BẮT BUỘC): KHÔNG dùng BẤT KỲ tính từ nào mô tả ngoại hình sản phẩm (màu sắc, chất liệu, kiểu chai/hộp/tuýp, nhãn, logo) trong prompt — ngoại hình 100% đến từ ảnh đính kèm. Nếu kịch bản/Hình ảnh có tả ngoại hình sản phẩm khác ảnh, BỎ QUA phần đó và ưu tiên ẢNH.
@@ -2486,7 +2490,7 @@ ${PRODUCT_RULE}
 Bám CHÍNH XÁC field của kịch bản: "Nội dung"→hành động & lời thoại · "Hình ảnh"→bối cảnh/góc quay/nhân vật (KHÔNG lấy mô tả ngoại hình sản phẩm) · "TRÁM"→overlay/âm thanh. KHÔNG bịa khác kịch bản.
 
 Mỗi shot 10s, trả 3 trường:
-- prompt (TIẾNG ANH, chuẩn Veo/Omni): 1 đoạn liền mạch gồm — [shot size + camera move + angle] (vd medium tracking shot, slow push-in, eye-level) · [subject = CHARACTER y hệt + wardrobe] · [action cụ thể từ kịch bản] · [PRODUCT: chỉ nêu CÁCH cầm/đặt/dùng — gọi là "the product from the uploaded reference image", KHÔNG tả ngoại hình/màu/bao bì] · [setting/bối cảnh + props] · [lighting + mood + color] · [lens/DOF] · [audio: nhạc/SFX] · [on-screen text nếu có] · và CÂU BẮT BUỘC: ${MANDATORY} · CONTINUITY: shot ≥2 mở đầu bằng "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;" để match-cut mượt khi ghép.
+- prompt (TIẾNG ANH, chuẩn Veo/Omni): 1 đoạn liền mạch gồm — [shot size + camera move + angle] (vd medium tracking shot, slow push-in, eye-level) · [subject = CHARACTER y hệt + wardrobe] · [action cụ thể từ kịch bản] · [PRODUCT: chỉ nêu CÁCH cầm/đặt/dùng — gọi là "the product from the uploaded reference image", KHÔNG tả ngoại hình/màu/bao bì] · [setting/bối cảnh + props] · [lighting + mood + color] · [lens/DOF] · [audio: nhạc/SFX] · [on-screen text nếu có] · và CÂU BẮT BUỘC: ${MANDATORY} · CUT-LOCK (BẮT BUỘC, chèn nguyên văn vào MỌI prompt): "${CUT_COHERENCE_EN}" · CONTINUITY: shot ≥2 mở đầu bằng "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;" để match-cut mượt khi ghép.
 - voiceover (TIẾNG VIỆT): lời thoại CHÍNH XÁC cho shot, lấy ĐÚNG từ "Nội dung" (chia vừa 10s, không bịa). Không có thì để trống.
 - onscreen (TIẾNG VIỆT): chữ overlay ngắn (từ TRÁM).
 
