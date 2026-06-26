@@ -2411,7 +2411,7 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
     const nShot=daysOut.reduce((t,d)=>t+d.shots.length,0);
     // .md NHÚNG khối ```json``` — Flow đọc thẳng khối JSON, KHÔNG cần AI phân tích
     const md=`# Flow Pack — ${_kenh()}\n\n`+
-      `> Nạp file .md này vào "Lò Sản Xuất Video" (Flow). App đọc KHỐI JSON \`flow-pack/v1\` bên dưới để dựng Số thực thể (NV/SP/Cảnh) + danh sách shot. KHÔNG cần "Phân tích thông minh".\n\n`+
+      `> Nạp file .md này vào "Lò Sản Xuất Video" (Flow). App đọc KHỐI JSON \`flow-pack/v1\` bên dưới để dựng Số thực thể (NV/SP/Cảnh) + danh sách shot. KHÔNG cần "Phân tích thông minh".\n> 💡 Để có ĐẦY ĐỦ voice (\`meta.voice\`/\`days[].voice\`) + ẢNH nhân vật nhúng sẵn, hãy bấm "🧩 Tải .json (Flow)" — file .json kèm \`characters[].anh_base64\` để tool tự nạp ảnh (file .md này KHÔNG kèm ảnh cho gọn).\n\n`+
       `## Tóm tắt\n- ${daysOut.length} ngày · ${nShot} shot · mỗi shot 6-8 cú cắt nhanh + voiceover ${_lang}\n- 🗣 Voice: ${_lang}${_langCode?` (${_langCode})`:''}${_voice?` · giọng: ${_voice}`:''} — xem \`meta.voice\` & \`days[].voice\` trong JSON\n- ${nC} nhân vật · ${nP} sản phẩm (user CHỈ upload 2 nhóm này) · bối cảnh AI Flow tự dựng (không cần upload)\n- Mỗi nhân vật/sản phẩm = 1 ID, upload 1 ảnh dùng lại. Shot \`no_product:true\` thì KHÔNG đính ảnh sản phẩm.\n\n`+
       '```json\n'+JSON.stringify(manifest,null,2)+'\n```\n';
     S._flowManifest = manifest;   // lưu để nút ".json" tải mà KHÔNG chạy lại AI
@@ -2420,10 +2420,17 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
   }catch(e){ if(AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng xuất Flow (chưa tạo file — bấm lại để chạy tiếp).</div>'; } else { AIJob.fail(_jid); if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   if(btn){ btn.disabled=false; btn.innerHTML='📦 Xuất cho Flow (.md)'; }
 }
-/* Tải manifest .json (cho nút "Nhập manifest.json" của Flow) — dùng lại kết quả đã phân loại, KHÔNG chạy lại AI */
+/* Tải manifest .json (cho nút "Nhập manifest.json" của Flow) — dùng lại kết quả đã phân loại, KHÔNG chạy lại AI.
+   NHÚNG ảnh nhân vật (base64) từ Dàn nhân vật theo TÊN — CHỈ lúc tải, KHÔNG lưu vào localStorage (tránh phình + cloud sync). */
 function exportFlowJson(){ if(!requirePremium('Xuất cho Flow'))return;
   if(!S._flowManifest){ alert('Bấm "📦 Xuất cho Flow (.md)" trước để phân loại, rồi mới tải .json.'); return; }
-  _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.json', JSON.stringify(S._flowManifest,null,2), 'application/json');
+  const man=JSON.parse(JSON.stringify(S._flowManifest));   // clone tạm để nhúng ảnh, không đụng bản gốc nhẹ
+  const ros=roster(); let nImg=0;
+  (man.characters||[]).forEach(ch=>{ const m=ros.find(rc=>(rc.ten||'').toLowerCase().trim() && (rc.ten||'').toLowerCase().trim()===String(ch.ten||'').toLowerCase().trim());
+    if(m&&m.img){ ch.anh_base64=m.img; ch.co_anh=true; nImg++; } });
+  if(man.meta) man.meta.anh_nhan_vat_nhung=nImg>0;
+  _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.json', JSON.stringify(man,null,2), 'application/json');
+  const fb=document.getElementById('forge-fb'); if(fb)fb.innerHTML=`<div class="fb">✅ Đã tải .json${nImg?` (đã NHÚNG ${nImg} ảnh nhân vật base64 — tool Flow tự nạp ảnh, khỏi upload tay)`:' (chưa có ảnh nhân vật nào trong Dàn — sinh/upload ảnh ở 🎭 Dàn nhân vật để nhúng)'}.</div>`;
 }
 /* --- 🎥 Bộ prompt video Omni (Google Flow) — chuỗi 10s/script --- */
 /* ép mọi giá trị (string/array/object) thành chuỗi đọc được — AI đôi khi trả object */
