@@ -2329,7 +2329,7 @@ async function exportFlowManifest(){ if(!requirePremium('Xuất cho Flow'))retur
   if(!work.length){ if(fb)fb.innerHTML='<div class="fb">⚠️ Chưa có kịch bản/shot. Dựng kịch bản (🎬) + sinh prompt video (🎥) trước.</div>'; return; }
   if(!S.keys.gemini && !confirm('⚠️ Chưa kết nối Gemini → KHÔNG tự nhận diện nhân vật/sản phẩm/cảnh (Số thực thể sẽ RỖNG, mọi shot để no_product). Nên vào ⚡ Kết nối bật key trước.\n\nVẫn xuất thô?')) return;
   const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}; let daysOut=[], _fail=0;
-  const _lang=voLang(), _voice=voStyle();
+  const _lang=voLang(), _voice=voStyle(), _langCode=voLangCode();
   if(btn) btn.disabled=true;
   const _jid=AIJob.start('📦 Xuất manifest Flow', work.length);
   let _dn=0;
@@ -2386,6 +2386,7 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
           ly_do_gan:'', prompt_en:pen, voiceover:vo };
       });
       daysOut[i]={ ngay:'N'+x.day, series:x.title.replace(/^N\d+:\s*/,''),
+        voice:{ ngon_ngu:_lang, ma_ngon_ngu:_langCode, phong_cach:_voice },
         arc_cam_xuc:['Nỗi đau','Rào cản','Mong đợi','Tự hào','Thúc đẩy'], shots:shotsOut };
       save();
     }, _jid);
@@ -2399,7 +2400,7 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
     const _bk=S.dna.brandKit||{}; const _bkB=_bk.brand||{};
     const manifest={ schema:'flow-pack/v1',
       meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters','products'],
-        voice:{ ngon_ngu:_lang, phong_cach:_voice, ghi_chu:'Voiceover + on-screen text + caption theo ngôn ngữ này' },
+        voice:{ ngon_ngu:_lang, ma_ngon_ngu:_langCode, phong_cach:_voice||'(mặc định)', ghi_chu:'Voiceover + on-screen text + caption theo ngôn ngữ này; ma_ngon_ngu là BCP-47 cho TTS' },
         thuong_hieu:_bkB.ten||'', slogan:_bkB.slogan||'', tone:_bkB.tone||'',
         san_pham_thuong_hieu:(_bk.products||[]).map(p=>({ten:p.ten||'',nhom:p.nhom||'',gia:p.gia||'',usp:p.usp||'',cam:p.cam||''})).filter(p=>p.ten),
         tuan_thu:(_bk.compliance||{}).cam||'' },
@@ -2409,7 +2410,7 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
     // .md NHÚNG khối ```json``` — Flow đọc thẳng khối JSON, KHÔNG cần AI phân tích
     const md=`# Flow Pack — ${_kenh()}\n\n`+
       `> Nạp file .md này vào "Lò Sản Xuất Video" (Flow). App đọc KHỐI JSON \`flow-pack/v1\` bên dưới để dựng Số thực thể (NV/SP/Cảnh) + danh sách shot. KHÔNG cần "Phân tích thông minh".\n\n`+
-      `## Tóm tắt\n- ${daysOut.length} ngày · ${nShot} shot · mỗi shot 6-8 cú cắt nhanh + voiceover ${_lang}\n- ${nC} nhân vật · ${nP} sản phẩm (user CHỈ upload 2 nhóm này) · bối cảnh AI Flow tự dựng (không cần upload)\n- Mỗi nhân vật/sản phẩm = 1 ID, upload 1 ảnh dùng lại. Shot \`no_product:true\` thì KHÔNG đính ảnh sản phẩm.\n\n`+
+      `## Tóm tắt\n- ${daysOut.length} ngày · ${nShot} shot · mỗi shot 6-8 cú cắt nhanh + voiceover ${_lang}\n- 🗣 Voice: ${_lang}${_langCode?` (${_langCode})`:''}${_voice?` · giọng: ${_voice}`:''} — xem \`meta.voice\` & \`days[].voice\` trong JSON\n- ${nC} nhân vật · ${nP} sản phẩm (user CHỈ upload 2 nhóm này) · bối cảnh AI Flow tự dựng (không cần upload)\n- Mỗi nhân vật/sản phẩm = 1 ID, upload 1 ảnh dùng lại. Shot \`no_product:true\` thì KHÔNG đính ảnh sản phẩm.\n\n`+
       '```json\n'+JSON.stringify(manifest,null,2)+'\n```\n';
     S._flowManifest = manifest;   // lưu để nút ".json" tải mà KHÔNG chạy lại AI
     _dl('flow-pack-'+_kenh().replace(/[^\w]+/g,'_')+'.md', md, 'text/markdown');
@@ -2444,19 +2445,20 @@ function vref(){
 }
 /* 🌐 Thị trường mục tiêu → ngôn ngữ voice-over (localize cả loạt) */
 const VO_MARKETS = [
-  {code:'vi',    label:'🇻🇳 Việt Nam — Tiếng Việt',        lang:'Vietnamese'},
-  {code:'en',    label:'🌎 Quốc tế / 🇺🇸 Mỹ — English',      lang:'English (US)'},
-  {code:'en-gb', label:'🇬🇧 Anh — English (UK)',            lang:'English (UK)'},
-  {code:'zh',    label:'🇨🇳 Trung Quốc — 中文',              lang:'Mandarin Chinese'},
-  {code:'ko',    label:'🇰🇷 Hàn Quốc — 한국어',              lang:'Korean'},
-  {code:'ja',    label:'🇯🇵 Nhật Bản — 日本語',              lang:'Japanese'},
-  {code:'th',    label:'🇹🇭 Thái Lan — ไทย',                lang:'Thai'},
-  {code:'id',    label:'🇮🇩 Indonesia — Bahasa',            lang:'Indonesian'},
-  {code:'es',    label:'🌎 Mỹ Latinh / 🇪🇸 — Español',       lang:'Spanish'},
-  {code:'fr',    label:'🇫🇷 Pháp — Français',               lang:'French'},
+  {code:'vi',    label:'🇻🇳 Việt Nam — Tiếng Việt',        lang:'Vietnamese',         bcp:'vi-VN'},
+  {code:'en',    label:'🌎 Quốc tế / 🇺🇸 Mỹ — English',      lang:'English (US)',       bcp:'en-US'},
+  {code:'en-gb', label:'🇬🇧 Anh — English (UK)',            lang:'English (UK)',       bcp:'en-GB'},
+  {code:'zh',    label:'🇨🇳 Trung Quốc — 中文',              lang:'Mandarin Chinese',   bcp:'zh-CN'},
+  {code:'ko',    label:'🇰🇷 Hàn Quốc — 한국어',              lang:'Korean',             bcp:'ko-KR'},
+  {code:'ja',    label:'🇯🇵 Nhật Bản — 日本語',              lang:'Japanese',           bcp:'ja-JP'},
+  {code:'th',    label:'🇹🇭 Thái Lan — ไทย',                lang:'Thai',               bcp:'th-TH'},
+  {code:'id',    label:'🇮🇩 Indonesia — Bahasa',            lang:'Indonesian',         bcp:'id-ID'},
+  {code:'es',    label:'🌎 Mỹ Latinh / 🇪🇸 — Español',       lang:'Spanish',            bcp:'es-ES'},
+  {code:'fr',    label:'🇫🇷 Pháp — Français',               lang:'French',             bcp:'fr-FR'},
 ];
 function voLang(){ const v=vref(); return (v.lang&&String(v.lang).trim())||'Vietnamese'; }
 function voStyle(){ const v=vref(); return (v.voice&&String(v.voice).trim())||''; }
+function voLangCode(){ const v=vref(); const m=VO_MARKETS.find(x=>x.code===v.market); return (m&&m.bcp)||''; }
 function fillVMarketSelect(){ const sel=document.getElementById('vref-market'); if(!sel) return; const v=vref();
   sel.innerHTML=VO_MARKETS.map(m=>`<option value="${m.code}">${m.label}</option>`).join('')+'<option value="custom">✏️ Ngôn ngữ khác…</option>';
   sel.value = VO_MARKETS.some(m=>m.code===v.market)||v.market==='custom' ? v.market : 'vi';
