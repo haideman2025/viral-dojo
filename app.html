@@ -2707,8 +2707,10 @@ const CUT_COHERENCE_EN = `All 6-8 quick cuts depict the SAME continuous moment o
 async function genVPrompts(title, improve){
   const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const LANG=voLang(), VOICE=voStyle();
-  const _imp = improve ? `\n\n🎬 CHẾ ĐỘ ĐẠO DIỄN NÂNG CHUẨN — bản trước CHƯA đạt chuẩn viral. Tư duy như ĐẠO DIỄN PHIM CHUYÊN NGHIỆP + chuyên gia viral để LÀM LẠI HAY HƠN HẲN: hook 3 giây đầu GIẬT/tò mò ngay (pattern interrupt, câu hỏi sốc, hành động lạ); nhịp dồn dập 6-8 cú cắt đa góc nhưng LIỀN MẠCH, có cao trào + nhịp nghỉ; khung hình ĐIỆN ẢNH (bố cục, ánh sáng, chuyển động máy có chủ đích, chiều sâu trường ảnh); voiceover sắc-đời-đúng insight; CTA/cliffhanger rõ ở cuối; bám brand & nhân vật nhất quán.${improve.yeu?`\nĐIỂM YẾU GIÁM KHẢO CHỈ RA (phải khắc phục): ${improve.yeu}`:''}${improve.sua?`\nVIỆC CẦN SỬA: ${improve.sua}`:''}\nNâng các điểm này lên RÕ RỆT so với bản cũ — đừng lặp công thức cũ.` : '';
+  const _imp = improve ? `\n\n🎬 CHẾ ĐỘ ĐẠO DIỄN NÂNG CHUẨN — bản trước CHƯA đạt chuẩn viral. Tư duy như ĐẠO DIỄN PHIM CHUYÊN NGHIỆP + chuyên gia viral để LÀM LẠI HAY HƠN HẲN: hook 3 giây đầu GIẬT/tò mò ngay (pattern interrupt, câu hỏi sốc, hành động lạ); nhịp dồn dập 6-8 cú cắt đa góc nhưng LIỀN MẠCH (6-8 cú cắt là TRONG MỖI shot 10s — VẪN GIỮ ĐỦ NHIỀU shot 10s để kể trọn kịch bản, TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot); có cao trào + nhịp nghỉ; khung hình ĐIỆN ẢNH (bố cục, ánh sáng, chuyển động máy có chủ đích, chiều sâu trường ảnh); voiceover sắc-đời-đúng insight; CTA/cliffhanger rõ ở cuối; bám brand & nhân vật nhất quán.${improve.yeu?`\nĐIỂM YẾU GIÁM KHẢO CHỈ RA (phải khắc phục): ${improve.yeu}`:''}${improve.sua?`\nVIỆC CẦN SỬA: ${improve.sua}`:''}\nNâng các điểm này lên RÕ RỆT so với bản cũ — đừng lặp công thức cũ.` : '';
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
+  const _prevShots=((S.dna.skuld.vprompts||{})[title]||{}).shots;
+  const _nTarget=Math.max((_prevShots&&_prevShots.length)||0, (sc.scenes||[]).length, 3);   // giữ đủ số shot, không gộp về 1
   const prodName=(v.product||'').trim();
   const PRODUCT_RULE = `- PRODUCT = ĐÚNG sản phẩm trong ẢNH SẢN PHẨM ĐÍNH KÈM (uploaded product reference image) — đây là NGUỒN SỰ THẬT DUY NHẤT về ngoại hình sản phẩm. TUYỆT ĐỐI KHÔNG mô tả / sáng tạo / đổi màu / đổi bao bì / đổi nhãn / đổi logo / đổi hình dạng sản phẩm bằng chữ. Mọi shot CHỈ gọi sản phẩm là "the exact product from the uploaded product reference image"${prodName?` (nhận biết nội bộ: ${prodName} — KHÔNG tả lại ngoại hình)`:''}; chỉ tả CÁCH cầm/đặt/dùng/đặt sản phẩm ở đâu trong khung, KHÔNG tả ngoại hình.`;
   const MANDATORY = `"Use the uploaded product reference image as the SINGLE source of truth for the product — render the product EXACTLY as shown in that image; do NOT recolor, relabel, restyle, redesign, or replace it, and do NOT invent any packaging, color, or logo. Use the uploaded character reference image for the person. Keep both identical across all shots."`;
@@ -2733,10 +2735,15 @@ Mỗi shot 10s, trả 3 trường:
 
 KỊCH BẢN ("${title}"):
 ${body}
-Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]} — số shot vừa đủ kể trọn kịch bản (mỗi shot 10s).`,{json:true,temp:0.55, images: v.productImg?[{mime:'image/jpeg',data:v.productImg.split(',')[1]}]:[]});
+Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]}. SỐ SHOT: phải ĐỦ kể trọn kịch bản — KHOẢNG ${_nTarget} shot (KHÔNG ÍT HƠN ${_nTarget}), mỗi shot = 1 đoạn 10 giây ĐỘC LẬP; TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot (mỗi shot tự nó đã gồm 6-8 cú cắt nhanh bên trong).`,{json:true,temp:0.55, images: v.productImg?[{mime:'image/jpeg',data:v.productImg.split(',')[1]}]:[]});
   S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
   const prev=S.dna.skuld.vprompts[title]||{};
-  S.dna.skuld.vprompts[title]={...prev, shots:(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',voiceover:s.voiceover||'',onscreen:s.onscreen||''})), at:_today()};
+  let newShots=(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',voiceover:s.voiceover||'',onscreen:s.onscreen||''})).filter(s=>s.prompt);
+  const prevN=(prev.shots||[]).length;
+  // lưới an toàn: AI gộp bất thường (ít hơn 1 nửa bản cũ & bản cũ ≥3 shot) → GIỮ bản cũ, không phá
+  if(prevN>=3 && newShots.length < Math.max(2, Math.ceil(prevN*0.5))) newShots=prev.shots;
+  if(!newShots.length) return;   // không có shot hợp lệ → giữ nguyên, không ghi rỗng
+  S.dna.skuld.vprompts[title]={...prev, shots:newShots, at:_today()};
 }
 /* ===== Bộ đăng bài: caption + hashtag + prompt nhạc nền (copy đăng page) ===== */
 function cleanTags(h){ const arr=Array.isArray(h)?h:asText(h).split(/[\s,]+/); return arr.map(x=>asText(x).trim()).filter(Boolean).map(x=>'#'+x.replace(/^#+/,'').replace(/\s+/g,'')); }
