@@ -650,6 +650,18 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
       <div><label>🖼 Ảnh nhân vật (đính kèm thật)</label><input type="file" id="vref-char-img" accept="image/*" onchange="pickRefImg('character',this.files)"><div id="vref-char-prev" style="margin-top:6px"></div></div>
       <div><label>🖼 Ảnh sản phẩm (Veo lấy ĐÚNG từ ảnh này)</label><input type="file" id="vref-prod-img" accept="image/*" onchange="pickRefImg('product',this.files)"><div id="vref-prod-prev" style="margin-top:6px"></div></div>
     </div>
+    <div id="roster-box" style="margin:6px 0 12px;border:1px solid var(--bd);border-radius:10px;padding:10px;background:var(--card2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <b style="color:var(--warn)">🎭 Dàn nhân vật kênh</b>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost sm" onclick="rosterAdd()">➕ Thêm nhân vật</button>
+          <button class="btn ghost sm" onclick="rosterDownloadAll()">⬇️ Tải tất cả ảnh</button>
+        </div>
+      </div>
+      <div class="mut" style="font-size:11.5px;margin:4px 0 8px">Mỗi nhân vật 1 ảnh tham chiếu — <b>AI sinh bằng Nano Banana</b> hoặc <b>upload</b>. App gắn đúng ảnh vào file JSON Flow theo TÊN; bấm "Tải ảnh" rồi upload vào Google Flow → ingredients. (Nhân vật chính vẫn dùng ô 🎭 Nhân vật tham chiếu phía trên — thêm vào dàn nếu muốn quản lý ảnh ở đây.)</div>
+      <div id="roster-list"></div>
+      <div id="roster-fb"></div>
+    </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <button class="btn ghost" id="vref-gen" onclick="genVRef()">✨ Sinh bộ tham chiếu (AI)</button>
       <button class="btn" id="vp-gen" onclick="genVPromptsAll()">🎥 Sinh prompt video (cả loạt)</button>
@@ -1334,7 +1346,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act')); t.classList.add('act');
   ['home','lib','skuld','ops','dist','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
   if(t.dataset.v==='dist'){ renderDistDayOptions(); renderDist(); renderZernioCfg(); }
-  if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderVPrompts(); }
+  if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderRoster(); renderVPrompts(); }
   if(t.dataset.v==='ops'){ renderOps(); }
 });
 
@@ -2379,6 +2391,11 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
     }, _jid);
     AIJob.done(_jid);
     daysOut=daysOut.filter(Boolean);   // bỏ ô trống (nếu có ngày lỗi) + giữ đúng thứ tự
+    // 🎭 Gắn ảnh + mô tả từ Dàn nhân vật (roster) theo TÊN; thêm nhân vật roster chưa được AI phát hiện
+    const _ros=roster();
+    const _matchRos=nm=>_ros.find(rc=>(rc.ten||'').toLowerCase().trim() && (rc.ten||'').toLowerCase().trim()===String(nm||'').toLowerCase().trim());
+    Object.values(charMap).forEach(ch=>{ const m=_matchRos(ch.ten); if(m){ if(m.mo_ta&&!ch.mo_ta)ch.mo_ta=m.mo_ta; ch.co_anh=!!m.img; if(m.img)ch.upload_huong_dan=`Upload ảnh "${_rosterFile(m)}" (tải từ Dàn nhân vật trong app) vào Flow → ingredients`; } });
+    _ros.forEach(rc=>{ if(!(rc.ten||'').trim())return; const id=_idFor(charMap,'NV',rc.ten); const e=Object.values(charMap).find(v=>v.id===id); if(e){ if(rc.mo_ta&&!e.mo_ta)e.mo_ta=rc.mo_ta; e.co_anh=!!rc.img; if(rc.img&&!e.upload_huong_dan)e.upload_huong_dan=`Upload ảnh "${_rosterFile(rc)}" vào Flow → ingredients`; } });
     const _bk=S.dna.brandKit||{}; const _bkB=_bk.brand||{};
     const manifest={ schema:'flow-pack/v1',
       meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters','products'],
@@ -2498,6 +2515,79 @@ function renderRefImgPreviews(){ const v=vref();
   [['character','vref-char-prev'],['product','vref-prod-prev']].forEach(([k,id])=>{ const el=document.getElementById(id); if(!el) return; const url=v[k+'Img'];
     el.innerHTML=url?`<div style="display:flex;align-items:center;gap:8px"><img src="${url}" style="height:62px;border-radius:8px;border:1px solid var(--bd)"><button class="btn ghost sm" onclick="delRefImg('${k}')">✕ Gỡ ảnh</button></div>`:''; });
 }
+/* ---- 🎭 Dàn nhân vật kênh (roster) — nhiều nhân vật, mỗi nhân vật 1 ảnh (AI Nano Banana / upload) ---- */
+function roster(){ S.dna.skuld.roster=S.dna.skuld.roster||[]; return S.dna.skuld.roster; }
+function _rosterFile(c){ return 'NV-'+String((c&&c.ten)||'nhanvat').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,40)+'.jpg'; }
+function _dlDataUrl(name, dataUrl){ const a=document.createElement('a'); a.href=dataUrl; a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+/* thu nhỏ 1 dataUrl về maxDim (giữ tỉ lệ) để tiết kiệm localStorage */
+function dataUrlToScaled(dataUrl, maxDim){ return new Promise((res,rej)=>{ const img=new Image();
+  img.onload=()=>{ let w=img.width,h=img.height; const m=maxDim||512;
+    if(w>h&&w>m){h=Math.round(h*m/w);w=m;} else if(h>=w&&h>m){w=Math.round(w*m/h);h=m;}
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
+    res(cv.toDataURL('image/jpeg',0.85)); };
+  img.onerror=()=>rej(new Error('ảnh hỏng')); img.src=dataUrl; }); }
+/* gọi model ảnh Gemini (Nano Banana) — trả về dataUrl JPEG/PNG */
+async function geminiImage(prompt, images){
+  const key=S.keys.gemini; if(!key) throw new Error('NO_KEY');
+  const parts=[{text:prompt}];
+  (images||[]).forEach(im=>{ if(im&&im.data) parts.push({inline_data:{mime_type:im.mime||'image/jpeg', data:im.data}}); });
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts}], generationConfig:{responseModalities:['IMAGE']}})
+  });
+  if(!r.ok){ let msg='HTTP '+r.status; try{ const e=await r.json(); if(e&&e.error&&e.error.message) msg=e.error.message; }catch(_){} throw new Error(msg); }
+  const cand=(((await r.json()).candidates||[])[0]||{});
+  const ps=(cand.content&&cand.content.parts)||[];
+  const imgPart=ps.find(p=>p.inline_data||p.inlineData); const inl=imgPart&&(imgPart.inline_data||imgPart.inlineData);
+  if(!inl||!inl.data) throw new Error('AI không trả ảnh (thử mô tả khác / kiểm tra key có hỗ trợ tạo ảnh).');
+  return `data:${inl.mime_type||inl.mimeType||'image/png'};base64,${inl.data}`;
+}
+function renderRoster(){ const el=document.getElementById('roster-list'); if(!el) return; const r=roster();
+  if(!r.length){ el.innerHTML='<div class="mut" style="font-size:12px">Chưa có nhân vật. Bấm "➕ Thêm nhân vật".</div>'; return; }
+  el.innerHTML=r.map(c=>{
+    const img=c.img?`<img src="${c.img}" style="width:100%;height:128px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)">`:`<div style="width:100%;height:128px;border:1px dashed var(--bd);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:12px">Chưa có ảnh</div>`;
+    return `<div class="cách" style="margin-bottom:8px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="width:130px">${img}</div>
+        <div style="flex:1;min-width:200px">
+          <input placeholder="Tên nhân vật (vd: Mai 'Glitch')" value="${_escAttr(c.ten||'')}" onchange="rosterField('${c.id}','ten',this.value)" style="margin-bottom:6px">
+          <textarea placeholder="Mô tả ngoại hình/cá tính (EN càng tốt cho video model)" onchange="rosterField('${c.id}','mo_ta',this.value)">${_escAttr(c.mo_ta||'')}</textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn ghost sm" onclick="rosterGenImg('${c.id}')">🧠 AI sinh ảnh</button>
+        <label class="btn ghost sm" style="cursor:pointer;margin:0">🖼 Upload<input type="file" accept="image/*" style="display:none" onchange="rosterUpload('${c.id}',this.files)"></label>
+        ${c.img?`<button class="btn ghost sm" onclick="rosterDownload('${c.id}')">⬇️ Tải ảnh</button>`:''}
+        <button class="btn ghost sm" style="border-color:var(--red);color:var(--red)" onclick="rosterDel('${c.id}')">✕ Xoá</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function rosterAdd(){ roster().push({id:'nv_'+Math.random().toString(36).slice(2,8), ten:'', mo_ta:'', img:''}); save(); renderRoster(); }
+function rosterDel(id){ if(!confirm('Xoá nhân vật này khỏi dàn?'))return; S.dna.skuld.roster=roster().filter(x=>x.id!==id); save(); renderRoster(); }
+function rosterField(id,field,val){ const c=roster().find(x=>x.id===id); if(!c)return; c[field]=val; save(); }
+async function rosterUpload(id, files){ const f=files&&files[0]; if(!f)return; const fb=document.getElementById('roster-fb'); const c=roster().find(x=>x.id===id); if(!c)return;
+  try{ const img=await fileToScaledImg(f,512); c.img=img.dataUrl; save(); renderRoster(); if(fb)fb.innerHTML='<div class="fb">✅ Đã thêm ảnh nhân vật.</div>'; }
+  catch(e){ if(fb)fb.innerHTML='<div class="fb bad">❌ Không đọc được ảnh: '+e.message+'</div>'; } }
+async function rosterGenImg(id){ const fb=document.getElementById('roster-fb'); const c=roster().find(x=>x.id===id); if(!c)return;
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  if(!(c.ten||'').trim() && !(c.mo_ta||'').trim()){ if(fb)fb.innerHTML='<div class="fb bad">Nhập tên hoặc mô tả nhân vật trước khi sinh ảnh.</div>'; return; }
+  if(fb)fb.innerHTML='<div class="fb"><span class="spin"></span>Đang sinh ảnh nhân vật bằng Nano Banana…</div>';
+  const v=vref();
+  const prompt=`Generate a high-quality 9:16 vertical CHARACTER REFERENCE portrait for a TikTok video, used to keep this character IDENTICAL across many videos.
+Character name: ${c.ten||'(unnamed)'}
+Character description: ${c.mo_ta||'(follow brand & channel style)'}
+Channel visual style: ${v.style||'cinematic, modern, vibrant'}
+Brand context: ${brandContext(700)}
+Requirements: clear visible face, consistent recognizable look, upper-body or full-body, clean neutral studio background, even soft lighting, no on-screen text, no watermark, no logo. Vertical 9:16 framing.`;
+  try{ const dataUrl=await geminiImage(prompt); c.img=await dataUrlToScaled(dataUrl,512); save(); renderRoster();
+    const fb2=document.getElementById('roster-fb'); if(fb2)fb2.innerHTML='<div class="fb">✅ Đã sinh ảnh nhân vật. Bấm "⬇️ Tải ảnh" để dùng làm ingredient trong Google Flow.</div>'; }
+  catch(e){ const fb2=document.getElementById('roster-fb'); if(fb2)fb2.innerHTML='<div class="fb bad">❌ Sinh ảnh lỗi: '+(e.message==='NO_KEY'?'chưa có Gemini key':e.message)+'</div>'; } }
+function rosterDownload(id){ const c=roster().find(x=>x.id===id); if(c&&c.img) _dlDataUrl(_rosterFile(c), c.img); }
+function rosterDownloadAll(){ const r=roster().filter(c=>c.img); const fb=document.getElementById('roster-fb');
+  if(!r.length){ if(fb)fb.innerHTML='<div class="fb bad">Chưa có ảnh nào để tải.</div>'; return; }
+  r.forEach((c,i)=> setTimeout(()=>_dlDataUrl(_rosterFile(c), c.img), i*300));
+  if(fb)fb.innerHTML=`<div class="fb">⬇️ Đang tải ${r.length} ảnh nhân vật…</div>`; }
 async function genVRef(){
   const btn=document.getElementById('vref-gen'), fb=document.getElementById('vp-fb');
   if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
