@@ -2343,10 +2343,16 @@ async function exportFlowManifest(){ if(!requirePremium('Xuất cho Flow'))retur
   if(!S.keys.gemini && !confirm('⚠️ Chưa kết nối Gemini → KHÔNG tự nhận diện nhân vật/sản phẩm/cảnh (Số thực thể sẽ RỖNG, mọi shot để no_product). Nên vào ⚡ Kết nối bật key trước.\n\nVẫn xuất thô?')) return;
   const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}; let daysOut=[], _fail=0;
   const _lang=voLang(), _voice=voStyle(), _langCode=voLangCode();
-  // 🎭 SEED nhân vật từ Dàn nhân vật (roster) TRƯỚC khi quét → AI dùng lại ĐÚNG tên (Kai/Leo...), ảnh khớp, KHÔNG tạo nhân vật trùng
+  // 🎭 SEED nhân vật từ Dàn nhân vật (roster) + cho AI CHỌN THEO SỐ (tập đóng) → hết lệch tên / nhân vật ma thiếu ảnh
   const _rosSeed=roster().filter(rc=>(rc.ten||'').trim());
   _rosSeed.forEach(rc=>_idFor(charMap,'NV',rc.ten));
-  const _rosCtx=_rosSeed.length?`\nDÀN NHÂN VẬT CHÍNH THỨC CỦA KÊNH — khi shot có nhân vật KHỚP, BẮT BUỘC dùng ĐÚNG tên dưới đây (KHÔNG đặt tên mới cho cùng một người):\n${_rosSeed.map(rc=>`- ${rc.ten}${rc.mo_ta?': '+rc.mo_ta:''}`).join('\n')}`:'';
+  const _norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'');
+  const _matchRosName=(n)=>{ const k=_norm(n); if(!k) return null; const hit=_rosSeed.find(rc=>_norm(rc.ten)===k); return _idFor(charMap,'NV',hit?hit.ten:n); };
+  const _rosCtx=_rosSeed.length?`\nDÀN NHÂN VẬT CHÍNH THỨC (chọn theo SỐ):\n${_rosSeed.map((rc,i)=>`${i+1}) ${rc.ten}${rc.mo_ta?' — '+rc.mo_ta:''}`).join('\n')}`:'';
+  const _nvInstr=_rosSeed.length
+    ? `- nhan_vat_idx: MẢNG SỐ chọn nhân vật xuất hiện TỪ "DÀN NHÂN VẬT CHÍNH THỨC" ở trên (vd [1,3]); [] nếu shot không có ai trong dàn. CHỈ dùng số CÓ trong danh sách, KHÔNG bịa số.\n- nhan_vat_moi: MẢNG TÊN người KHÔNG có trong dàn (hiếm; [] nếu không có) — đừng lặp người đã chọn ở nhan_vat_idx.`
+    : `- nhan_vat: tên người xuất hiện (đặt tên ngắn ổn định, NHẤT QUÁN giữa các shot). [] nếu không có người.`;
+  const _nvSchemaKey=_rosSeed.length?`"nhan_vat_idx":[],"nhan_vat_moi":[]`:`"nhan_vat":[]`;
   if(btn) btn.disabled=true;
   const _jid=AIJob.start('📦 Xuất manifest Flow', work.length);
   let _dn=0;
@@ -2370,7 +2376,7 @@ ${ideaCtx}
 ${known}${_rosCtx}
 🗣 NGÔN NGỮ ĐẦU RA: viết voiceover + chữ on-screen bằng ${_lang}${_voice?`, giọng đọc: ${_voice}`:''} (dịch từ tiếng Việt sang ${_lang} tự nhiên, đúng văn hoá thị trường — KHÔNG dịch word-by-word).
 NHIỆM VỤ mỗi shot — trả các trường:
-- nhan_vat: tên người xuất hiện — ƯU TIÊN dùng ĐÚNG tên trong DÀN NHÂN VẬT CHÍNH THỨC ở trên nếu khớp người; chỉ đặt tên mới khi thật sự là người CHƯA có trong dàn (đặt tên mô tả ngắn ổn định). LUÔN có ≥1 nhân vật nếu shot có người.
+${_nvInstr}
 - san_pham: tên sản phẩm/biến thể XUẤT HIỆN. Biến thể khác nhau = sản phẩm KHÁC (vd "ONIIZ Peachy","ONIIZ Fresh","ONIIZ Cool" là 3 SP). RỖNG nếu shot không khoe sản phẩm.
 - no_product: true nếu shot KHÔNG có sản phẩm; false nếu overlay/thoại/ý tưởng nhắc tới sản phẩm cụ thể.
 - canh: MÔ TẢ bối cảnh do BẠN tự thiết kế phù hợp nội dung (1 câu) — AI Flow tự dựng cảnh, user KHÔNG upload ảnh cảnh.
@@ -2379,13 +2385,21 @@ NHIỆM VỤ mỗi shot — trả các trường:
 - prompt_en: 1 đoạn TIẾNG ANH cho Veo/Omni mô tả 1 CHUỖI 10 GIÂY gồm 6-8 CÚ CẮT NHANH, MỖI cú 1 GÓC MÁY SÁNG TẠO KHÁC NHAU (extreme close-up, low-angle, POV, overhead/top-down, whip-pan, tracking, macro insert, dutch tilt, snap-zoom) — NHƯNG 6-8 cú cắt PHẢI cùng 1 khoảnh khắc liền mạch, chèn nguyên văn: "${CUT_COHERENCE_EN}"; khớp diễn biến kịch bản; bối cảnh tự thiết kế; nhân vật & sản phẩm LẤY TỪ ẢNH THAM CHIẾU upload (đừng tả ngoại hình SP bằng chữ); LỒNG audio: 'Audio: the character speaks in ${_lang}: "<voiceover>" with clear lip-synced voiceover${_voice?` (voice style: ${_voice})`:''}' + nhạc nền trend + SFX khớp từng cú cắt; chèn on-screen text từ overlay (bằng ${_lang}); dọc 9:16, fast-paced cho Gen Z. Nếu no_product=true thêm "No product appears; do not show any product/packaging/logo". Nếu false thêm "Use the uploaded product reference image as the SINGLE source of truth; do NOT recolor/relabel/restyle/redesign/replace it".
 Dùng TÊN NHẤT QUÁN giữa các shot & các ngày (cùng người/SP = cùng tên). GIỮ trang phục + bối cảnh GIỐNG NHAU giữa các shot trong CÙNG 1 ngày (trừ khi ý tưởng ngày đổi cảnh rõ ràng).
 DANH SÁCH SHOT (Overlay + Thoại + gợi ý EN):\n${body}
-Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,"nhan_vat":[],"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":"","voiceover":"","prompt_en":""}]}`,{temp:0.45,task:'📦 Phân loại Flow: '+x.title});
+Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {"shots":[{"seq":1,${_nvSchemaKey},"san_pham":[],"no_product":true,"canh":"","cam_xuc":"","goc_may":"","voiceover":"","prompt_en":""}]}`,{temp:0.45,task:'📦 Phân loại Flow: '+x.title});
           const out=_tryJson(raw); cls=(out&&_arr(out.shots))||null; if(!cls) _fail++;
         }catch(e){ _fail++; }   // ngày lỗi → bỏ qua, dùng mặc định, vẫn xuất tiếp
       }
       const shotsOut=src.map((s,k)=>{
         const c=(cls&&cls[k])||{};
-        const nv=_arr(c.nhan_vat).map(n=>_idFor(charMap,'NV',n)).filter(Boolean);
+        let nv;
+        if(_rosSeed.length){
+          const fromIdx=_arr(c.nhan_vat_idx).map(i=>{ const idx=parseInt(i,10)-1; const rc=_rosSeed[idx]; return rc?_idFor(charMap,'NV',rc.ten):null; }).filter(Boolean);
+          const fromNew=_arr(c.nhan_vat_moi).map(n=>_matchRosName(n)).filter(Boolean);
+          nv=[...new Set([...fromIdx,...fromNew])];
+          if(!nv.length && c.nhan_vat!=null) nv=_arr(c.nhan_vat).map(n=>_matchRosName(n)).filter(Boolean);   // fallback nếu AI lỡ trả tên
+        } else {
+          nv=_arr(c.nhan_vat).map(n=>_idFor(charMap,'NV',n)).filter(Boolean);
+        }
         const spArr=_arr(c.san_pham);
         const hasSP=spArr.filter(Boolean).length>0;
         const noProd = c.no_product===false ? false : !hasSP;
