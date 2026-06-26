@@ -675,6 +675,12 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
     </div>
     <p class="mut" style="font-size:12px;margin:-2px 0 8px">📋 Mỗi video kèm <b>caption sẵn đăng</b> + <b>hashtag</b> + <b>prompt nhạc nền</b> (Suno/Udio) — bấm Copy là dán thẳng lên page.</p>
     <p class="mut" style="font-size:12px;margin:-2px 0 8px">💡 Tạo thử 1 video: bấm nút 🎥 trên từng dòng ở bảng Dây chuyền. Mỗi shot kèm <b>voice-over</b> lấy đúng từ kịch bản + chỉ dẫn dùng ảnh tham chiếu.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+      <button class="btn ghost" id="vqa-btn" onclick="gradeVPromptsAll()" style="border-color:var(--warn);color:var(--warn)">🧪 Chấm điểm viral (toàn bộ prompt)</button>
+      <button class="btn ghost sm" onclick="regradeVPromptsAll()">🔄 Chấm lại</button>
+    </div>
+    <p class="mut" style="font-size:12px;margin:-2px 0 8px">🧪 AI đóng vai <b>giám khảo viral</b> chấm 100đ từng video (hook 3s · nhịp/quick-cut · liền mạch · voiceover · CTA · brand · sáng tạo) — nên đạt <b>≥70đ</b> mỗi video trước khi xuất JSON sản xuất hàng loạt.</p>
+    <div id="vqa-out" class="mut" style="margin-bottom:8px"></div>
     <div id="vp-fb"></div>
     <div id="vp-out" class="mut">Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".</div>
     <div id="vp-export" style="display:none;gap:10px;margin-top:10px">
@@ -2329,6 +2335,11 @@ async function exportFlowManifest(){ if(!requirePremium('Xuất cho Flow'))retur
   const scripts=S.dna.skuld.scripts||{}, vps=S.dna.skuld.vprompts||{};
   const work=days.filter(x=>scripts[x.title]||(vps[x.title]&&(vps[x.title].shots||[]).length));
   if(!work.length){ if(fb)fb.innerHTML='<div class="fb">⚠️ Chưa có kịch bản/shot. Dựng kịch bản (🎬) + sinh prompt video (🎥) trước.</div>'; return; }
+  // 🧪 Gate QA viral: cảnh báo nếu chưa chấm hoặc điểm thấp trước khi SX hàng loạt
+  { const _q=S.dna.skuld.vqa||{}, _qk=Object.keys(_q);
+    if(!_qk.length){ if(!confirm('⚠️ Bạn CHƯA chấm điểm viral bộ prompt (nút 🧪 "Chấm điểm viral"). Nên chấm để đảm bảo chất lượng trước khi sản xuất hàng loạt.\n\nVẫn xuất JSON luôn?')) return; }
+    else { const _avg=vqaAvg(), _low=_qk.filter(t=>(+_q[t].tong)<70).length;
+      if((_avg<70||_low) && !confirm(`🧪 QA viral: điểm TB ${_avg}/100${_low?` · ${_low} video <70đ`:''}. Nên sửa các video yếu trước khi sản xuất hàng loạt.\n\nVẫn xuất JSON?`)) return; } }
   if(!S.keys.gemini && !confirm('⚠️ Chưa kết nối Gemini → KHÔNG tự nhận diện nhân vật/sản phẩm/cảnh (Số thực thể sẽ RỖNG, mọi shot để no_product). Nên vào ⚡ Kết nối bật key trước.\n\nVẫn xuất thô?')) return;
   const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}; let daysOut=[], _fail=0;
   const _lang=voLang(), _voice=voStyle(), _langCode=voLangCode();
@@ -3032,7 +3043,68 @@ function renderVPrompts(){
   if(el){ el.className='mut'; el.innerHTML = keys.length
     ? '👉 Xem prompt video + caption theo TỪNG NGÀY ở khung <b>🗂 Nội dung theo ngày</b> phía trên (mục Dây chuyền) — có nút Copy từng shot / cả loạt.'
     : 'Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".'; }
-  renderForgeDayBox();
+  renderForgeDayBox(); renderVQA();
+}
+/* ===== 🧪 QA VIRAL — AI chấm điểm toàn bộ bộ prompt video trước khi xuất JSON sản xuất ===== */
+const VQA_CRIT = [
+  {k:'hook',     w:20, label:'Hook 3s'},
+  {k:'nhip',     w:15, label:'Nhịp & quick-cut'},
+  {k:'lienmach', w:15, label:'Liền mạch'},
+  {k:'nv_sp',    w:10, label:'NV & sản phẩm'},
+  {k:'voiceover',w:15, label:'Voice-over'},
+  {k:'cta',      w:10, label:'CTA/chốt'},
+  {k:'brand',    w:10, label:'Bám brand'},
+  {k:'sangtao',  w:5,  label:'Sáng tạo'},
+];
+function vqaAvg(){ const q=S.dna.skuld.vqa||{}; const v=Object.values(q).map(x=>+x.tong).filter(n=>n>=0); return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):0; }
+async function gradeVPrompt(title){
+  const sc=(S.dna.skuld.vprompts||{})[title]; if(!sc||!(sc.shots||[]).length) return;
+  const body=(sc.shots||[]).map(s=>`Shot ${s.seq}: ${s.prompt||''}${s.voiceover?` | VO: ${s.voiceover}`:''}${s.onscreen?` | Overlay: ${s.onscreen}`:''}`).join('\n').slice(0,6000);
+  const o=await geminiCall(`Bạn là GIÁM KHẢO VIRAL khó tính (giả lập người dùng thật + chuyên gia TikTok). Chấm CHẤT LƯỢNG bộ prompt video 10s của 1 video theo thang 100đ, để quyết định có nên SẢN XUẤT HÀNG LOẠT chưa. Chấm THỰC TẾ, KHÓ TÍNH, không cho điểm ảo.
+BRAND:\n${brandContext(1200)}
+TIÊU CHÍ (điểm tối đa): hook=20 (cú mở 3s đầu có giật/tò mò?), nhip=15 (nhịp nhanh, 6-8 quick-cut đa góc?), lienmach=15 (nhân vật/trang phục/bối cảnh NHẤT QUÁN giữa các cú cắt & shot?), nv_sp=10 (nhân vật & sản phẩm rõ, dùng ảnh tham chiếu, không bịa?), voiceover=15 (thoại tự nhiên, thuyết phục, vừa 10s?), cta=10 (có CTA/chốt/cliffhanger?), brand=10 (bám insight/brand/đối tượng?), sangtao=5 (sáng tạo, không công thức nhàm?).
+BỘ PROMPT VIDEO "${title}":\n${body}
+Trả về DUY NHẤT JSON: {"diem":{"hook":0,"nhip":0,"lienmach":0,"nv_sp":0,"voiceover":0,"cta":0,"brand":0,"sangtao":0},"tong":0,"diem_manh":["..."],"diem_yeu":["..."],"sua":["2-4 việc CỤ THỂ cần sửa để tăng viral"]}. "tong" = tổng các điểm thành phần (0-100).`,{json:true,temp:0.3});
+  const d=o.diem||{}; let tong=+o.tong; if(!(tong>=0&&tong<=100)) tong=VQA_CRIT.reduce((t,c)=>t+(+d[c.k]||0),0);
+  S.dna.skuld.vqa=S.dna.skuld.vqa||{};
+  S.dna.skuld.vqa[title]={tong:Math.round(tong), diem:d, yeu:_arr(o.diem_yeu), sua:_arr(o.sua), at:_today()};
+}
+async function gradeVPromptsAll(){ if(!requirePremium('Chấm điểm prompt'))return;
+  const fb=document.getElementById('vp-fb'), btn=document.getElementById('vqa-btn');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const vp=S.dna.skuld.vprompts||{}; const titles=Object.keys(vp).filter(t=>(vp[t].shots||[]).length && !((S.dna.skuld.vqa||{})[t]));
+  if(!titles.length){ const has=Object.keys(vp).filter(t=>(vp[t].shots||[]).length).length;
+    if(fb)fb.innerHTML='<div class="fb">'+(has?'Mọi video đã chấm — xem dashboard bên dưới ("🔄 Chấm lại" nếu muốn chấm mới).':'Chưa có prompt video. Bấm "🎥 Sinh prompt video" trước.')+'</div>'; renderVQA(); return; }
+  if(btn)btn.disabled=true;
+  const _jid=AIJob.start('🧪 Chấm điểm viral', titles.length); let _dn=0;
+  try{
+    await runPool(titles, async(t)=>{ AIJob.setSub(_jid,t); forgeProg(`🧪 Chấm viral: ${t}`,1);
+      try{ await gradeVPrompt(t); }catch(e){} _dn++; if(btn)btn.innerHTML=`<span class="spin"></span>${_dn}/${titles.length}`; save(); renderVQA();
+    }, _jid);
+    AIJob.done(_jid);
+    const avg=vqaAvg(); if(fb)fb.innerHTML=`<div class="fb">✅ Đã chấm ${titles.length} video · điểm TB <b>${avg}/100</b>. ${avg>=70?'Đạt chuẩn sản xuất 👍':'Nên sửa các video <70đ trước khi xuất JSON.'}</div>`;
+  }catch(e){ if(AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng chấm (giữ phần đã xong).</div>'; } else { AIJob.fail(_jid); if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
+  if(btn){btn.disabled=false; btn.innerHTML='🧪 Chấm điểm viral (toàn bộ prompt)';}
+}
+function regradeVPromptsAll(){ if(!confirm('Chấm lại điểm viral cho TẤT CẢ video?'))return; S.dna.skuld.vqa={}; save(); renderVQA(); gradeVPromptsAll(); }
+function renderVQA(){ const el=document.getElementById('vqa-out'); if(!el) return; const q=S.dna.skuld.vqa||{}, keys=Object.keys(q);
+  if(!keys.length){ el.className='mut'; el.innerHTML='Chưa chấm. Bấm "🧪 Chấm điểm viral" để AI đánh giá toàn bộ bộ prompt trước khi xuất JSON.'; return; }
+  el.className='';
+  const avg=vqaAvg(), col=v=>v>=80?'var(--ac)':v>=70?'var(--warn)':'var(--red)';
+  const rows=keys.map(t=>Object.assign({t},q[t])).sort((a,b)=>a.tong-b.tong);
+  const nLow=rows.filter(r=>r.tong<70).length;
+  el.innerHTML=`<div class="cách" style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:13px">Điểm TB bộ prompt:</span><b style="font-size:24px;color:${col(avg)}">${avg}/100</b>
+      <span class="pill" style="border-color:${col(avg)};color:${col(avg)}">${avg>=70?'Đạt chuẩn SX':'Chưa đạt'}</span>
+      ${nLow?`<span class="mut" style="font-size:12px">⚠️ ${nLow} video &lt;70đ</span>`:''}</div></div>`+
+    rows.map(r=>{ const dm=r.diem||{};
+      return `<details class="cách" style="margin-bottom:6px"><summary style="cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <b style="color:${col(r.tong)};font-size:15px;min-width:54px">${r.tong}/100</b><span style="font-size:12.5px">${_escAttr(r.t)}</span></summary>
+      <div style="margin-top:6px;font-size:12px">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">${VQA_CRIT.map(c=>`<span class="pill" style="font-size:10.5px">${c.label}: ${dm[c.k]==null?'–':dm[c.k]}/${c.w}</span>`).join('')}</div>
+        ${r.yeu&&r.yeu.length?`<div style="margin-bottom:3px"><b style="color:var(--red)">Điểm yếu:</b> ${r.yeu.map(_escAttr).join(' · ')}</div>`:''}
+        ${r.sua&&r.sua.length?`<div><b style="color:var(--warn)">Nên sửa:</b><ul style="margin:3px 0 0 16px;padding:0">${r.sua.map(s=>`<li>${_escAttr(s)}</li>`).join('')}</ul></div>`:''}
+      </div></details>`; }).join('');
 }
 function exportVPrompts(fmt){ if(!requirePremium('Tải prompt video'))return;
   const vp=S.dna.skuld.vprompts||{}, keys=Object.keys(vp); if(!keys.length) return;
