@@ -654,6 +654,8 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
         <b style="color:var(--warn)">🎭 Dàn nhân vật kênh</b>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost sm" id="roster-auto" onclick="rosterAutoDesign()" style="border-color:var(--ac);color:var(--ac)">🤖 AI thiết kế dàn (từ kịch bản)</button>
+          <button class="btn ghost sm" id="roster-genall" onclick="rosterGenAllImg()">🎨 Sinh ảnh hàng loạt</button>
           <button class="btn ghost sm" onclick="rosterAdd()">➕ Thêm nhân vật</button>
           <button class="btn ghost sm" onclick="rosterDownloadAll()">⬇️ Tải tất cả ảnh</button>
         </div>
@@ -2395,8 +2397,8 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
     // 🎭 Gắn ảnh + mô tả từ Dàn nhân vật (roster) theo TÊN; thêm nhân vật roster chưa được AI phát hiện
     const _ros=roster();
     const _matchRos=nm=>_ros.find(rc=>(rc.ten||'').toLowerCase().trim() && (rc.ten||'').toLowerCase().trim()===String(nm||'').toLowerCase().trim());
-    Object.values(charMap).forEach(ch=>{ const m=_matchRos(ch.ten); if(m){ if(m.mo_ta&&!ch.mo_ta)ch.mo_ta=m.mo_ta; ch.co_anh=!!m.img; if(m.img)ch.upload_huong_dan=`Upload ảnh "${_rosterFile(m)}" (tải từ Dàn nhân vật trong app) vào Flow → ingredients`; } });
-    _ros.forEach(rc=>{ if(!(rc.ten||'').trim())return; const id=_idFor(charMap,'NV',rc.ten); const e=Object.values(charMap).find(v=>v.id===id); if(e){ if(rc.mo_ta&&!e.mo_ta)e.mo_ta=rc.mo_ta; e.co_anh=!!rc.img; if(rc.img&&!e.upload_huong_dan)e.upload_huong_dan=`Upload ảnh "${_rosterFile(rc)}" vào Flow → ingredients`; } });
+    Object.values(charMap).forEach(ch=>{ const m=_matchRos(ch.ten); if(m){ if(m.mo_ta&&!ch.mo_ta)ch.mo_ta=m.mo_ta; if(m.prompt)ch.prompt_anh=m.prompt; ch.co_anh=!!m.img; if(m.img)ch.upload_huong_dan=`Upload ảnh "${_rosterFile(m)}" (tải từ Dàn nhân vật trong app) vào Flow → ingredients`; } });
+    _ros.forEach(rc=>{ if(!(rc.ten||'').trim())return; const id=_idFor(charMap,'NV',rc.ten); const e=Object.values(charMap).find(v=>v.id===id); if(e){ if(rc.mo_ta&&!e.mo_ta)e.mo_ta=rc.mo_ta; if(rc.prompt&&!e.prompt_anh)e.prompt_anh=rc.prompt; e.co_anh=!!rc.img; if(rc.img&&!e.upload_huong_dan)e.upload_huong_dan=`Upload ảnh "${_rosterFile(rc)}" vào Flow → ingredients`; } });
     const _bk=S.dna.brandKit||{}; const _bkB=_bk.brand||{};
     const manifest={ schema:'flow-pack/v1',
       meta:{ kenh:_kenh(), doi_tuong:'Gen Z VN', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters','products'],
@@ -2553,9 +2555,10 @@ function renderRoster(){ const el=document.getElementById('roster-list'); if(!el
         <div style="width:130px">${img}</div>
         <div style="flex:1;min-width:200px">
           <input placeholder="Tên nhân vật (vd: Mai 'Glitch')" value="${_escAttr(c.ten||'')}" onchange="rosterField('${c.id}','ten',this.value)" style="margin-bottom:6px">
-          <textarea placeholder="Mô tả ngoại hình/cá tính (EN càng tốt cho video model)" onchange="rosterField('${c.id}','mo_ta',this.value)">${_escAttr(c.mo_ta||'')}</textarea>
+          <textarea placeholder="Mô tả ngắn (vai trò/cá tính)" onchange="rosterField('${c.id}','mo_ta',this.value)">${_escAttr(c.mo_ta||'')}</textarea>
         </div>
       </div>
+      <textarea placeholder="📝 Prompt tạo ảnh (EN — AI tự viết từ kịch bản, sửa được trước khi sinh ảnh)" onchange="rosterField('${c.id}','prompt',this.value)" style="margin-top:6px;min-height:62px">${_escAttr(c.prompt||'')}</textarea>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         <button class="btn ghost sm" onclick="rosterGenImg('${c.id}')">🧠 AI sinh ảnh</button>
         <label class="btn ghost sm" style="cursor:pointer;margin:0">🖼 Upload<input type="file" accept="image/*" style="display:none" onchange="rosterUpload('${c.id}',this.files)"></label>
@@ -2576,7 +2579,7 @@ async function rosterGenImg(id){ const fb=document.getElementById('roster-fb'); 
   if(!(c.ten||'').trim() && !(c.mo_ta||'').trim()){ if(fb)fb.innerHTML='<div class="fb bad">Nhập tên hoặc mô tả nhân vật trước khi sinh ảnh.</div>'; return; }
   if(fb)fb.innerHTML='<div class="fb"><span class="spin"></span>Đang sinh ảnh nhân vật bằng Nano Banana…</div>';
   const v=vref();
-  const prompt=`Generate a high-quality 9:16 vertical CHARACTER REFERENCE portrait for a TikTok video, used to keep this character IDENTICAL across many videos.
+  const prompt=(c.prompt||'').trim() || `Generate a high-quality 9:16 vertical CHARACTER REFERENCE portrait for a TikTok video, used to keep this character IDENTICAL across many videos.
 Character name: ${c.ten||'(unnamed)'}
 Character description: ${c.mo_ta||'(follow brand & channel style)'}
 Channel visual style: ${v.style||'cinematic, modern, vibrant'}
@@ -2585,6 +2588,56 @@ Requirements: clear visible face, consistent recognizable look, upper-body or fu
   try{ const dataUrl=await geminiImage(prompt); c.img=await dataUrlToScaled(dataUrl,512); save(); renderRoster();
     const fb2=document.getElementById('roster-fb'); if(fb2)fb2.innerHTML='<div class="fb">✅ Đã sinh ảnh nhân vật. Bấm "⬇️ Tải ảnh" để dùng làm ingredient trong Google Flow.</div>'; }
   catch(e){ const fb2=document.getElementById('roster-fb'); if(fb2)fb2.innerHTML='<div class="fb bad">❌ Sinh ảnh lỗi: '+(e.message==='NO_KEY'?'chưa có Gemini key':e.message)+'</div>'; } }
+/* 🤖 AI đọc kịch bản thật → thiết kế dàn nhân vật + prompt chi tiết từng nhân vật (sửa trước khi sinh ảnh) */
+async function rosterAutoDesign(){ const fb=document.getElementById('roster-fb'), btn=document.getElementById('roster-auto');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  healScripts();
+  const scripts=S.dna.skuld.scripts||{}, titles=Object.keys(scripts);
+  if(!titles.length){ if(fb)fb.innerHTML='<div class="fb bad">Chưa có kịch bản. Dựng kịch bản trước (🎬) để AI biết kênh có những nhân vật nào.</div>'; return; }
+  if(roster().length && !confirm('AI sẽ đọc kịch bản & thiết kế dàn nhân vật. Thêm nhân vật mới vào dàn hiện có (GIỮ nguyên nhân vật + ảnh đã có)?')) return;
+  const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>...';}
+  if(fb)fb.innerHTML='<div class="fb"><span class="spin"></span>AI đang đọc kịch bản & thiết kế dàn nhân vật…</div>';
+  const body=titles.map(t=>{ const sc=scripts[t]||{}; const sh=(sc.scenes||[]).map(c=>`${c.noidung||''} ${c.hinhanh||''}`).join(' '); return `• ${t}: ${sh}`.slice(0,400); }).join('\n').slice(0,9000);
+  const v=vref();
+  try{
+    const o=await geminiCall(`Bạn là ĐẠO DIỄN CASTING. Đọc TOÀN BỘ kịch bản của kênh + thương hiệu, liệt kê TẤT CẢ nhân vật NGƯỜI xuất hiện xuyên suốt (GỘP trùng = 1 nhân vật, đặt TÊN nhất quán). Với MỖI nhân vật viết prompt tạo ảnh tham chiếu chi tiết để giữ nhân vật ĐỒNG NHẤT cả kênh.
+BRAND:\n${brandContext(1500)}
+STYLE kênh: ${v.style||'(theo brand)'}
+KỊCH BẢN (tóm tắt từng video):\n${body}
+Trả về DUY NHẤT JSON: {"characters":[{"ten":"tên ngắn nhất quán","vai_tro":"vai trò trong kênh","mo_ta":"mô tả TIẾNG VIỆT ngắn 1 dòng","prompt":"PROMPT TIẾNG ANH chi tiết tạo ảnh chân dung tham chiếu dọc 9:16: tuổi/giới/sắc tộc/kiểu+màu tóc/đặc điểm khuôn mặt/trang phục/thần thái phù hợp brand & style; nền studio trung tính, ánh sáng đều, KHÔNG chữ/logo/watermark"}]}
+Chỉ liệt kê nhân vật NGƯỜI (bỏ sản phẩm/đồ vật). Tối đa 8 nhân vật, ưu tiên nhân vật xuất hiện nhiều.`,{json:true,temp:0.5});
+    const list=_arr(o&&o.characters).filter(x=>x&&(x.ten||x.mo_ta));
+    if(!list.length){ if(fb)fb.innerHTML='<div class="fb bad">AI không tìm thấy nhân vật rõ ràng — thử lại hoặc thêm tay.</div>'; if(btn){btn.disabled=false;btn.innerHTML=old;} return; }
+    const r=roster(); let added=0, updated=0;
+    list.forEach(x=>{ const nm=String(x.ten||'').trim(); const ex=nm && r.find(c=>(c.ten||'').toLowerCase().trim()===nm.toLowerCase());
+      if(ex){ if(!ex.mo_ta&&x.mo_ta)ex.mo_ta=asText(x.mo_ta); if(!ex.prompt&&x.prompt)ex.prompt=asText(x.prompt); updated++; }
+      else { r.push({id:'nv_'+Math.random().toString(36).slice(2,8), ten:nm||asText(x.mo_ta).slice(0,30), mo_ta:asText(x.mo_ta), prompt:asText(x.prompt), img:''}); added++; } });
+    save(); renderRoster();
+    if(fb)fb.innerHTML=`<div class="fb">✅ AI thiết kế xong: +${added} nhân vật mới${updated?`, cập nhật ${updated}`:''}. Xem/sửa <b>prompt</b> từng nhân vật rồi bấm "🎨 Sinh ảnh hàng loạt".</div>`;
+  }catch(e){ if(fb)fb.innerHTML='<div class="fb bad">❌ AI lỗi: '+(e.message==='NO_KEY'?'chưa có Gemini key':e.message)+'</div>'; }
+  if(btn){btn.disabled=false; btn.innerHTML=old;}
+}
+/* 🎨 Sinh ảnh hàng loạt cho cả dàn nhân vật (dùng prompt từng nhân vật) */
+async function rosterGenAllImg(){ const fb=document.getElementById('roster-fb'), btn=document.getElementById('roster-genall');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const all=roster().filter(c=>(c.ten||c.mo_ta||c.prompt));
+  if(!all.length){ if(fb)fb.innerHTML='<div class="fb bad">Dàn nhân vật trống. Bấm "🤖 AI thiết kế dàn" hoặc "➕ Thêm nhân vật" trước.</div>'; return; }
+  let targets=all.filter(c=>!c.img);
+  if(!targets.length){ if(!confirm('Mọi nhân vật đã có ảnh. Sinh LẠI ảnh cho TẤT CẢ?')) return; targets=all; }
+  const v=vref(); const _jid=AIJob.start('🎨 Sinh ảnh nhân vật', targets.length); let done=0, fail=0;
+  if(btn)btn.disabled=true;
+  if(fb)fb.innerHTML=`<div class="fb"><span class="spin"></span>Đang sinh ${targets.length} ảnh nhân vật…</div>`;
+  try{
+    await runPool(targets, async (c)=>{ AIJob.setSub(_jid, c.ten||'nhân vật');
+      const prompt=(c.prompt||'').trim() || `Generate a high-quality 9:16 vertical character reference portrait. Character: ${c.ten||''} — ${c.mo_ta||'(follow brand & style)'}. Channel style: ${v.style||''}. Clean neutral studio background, even lighting, clear face, no text/logo/watermark.`;
+      try{ const du=await geminiImage(prompt); c.img=await dataUrlToScaled(du,512); done++; save(); renderRoster(); if(btn)btn.innerHTML=`<span class="spin"></span>${done}/${targets.length}`; }
+      catch(e){ fail++; }
+    }, _jid);
+    AIJob.done(_jid);
+    if(fb)fb.innerHTML=`<div class="fb">✅ Sinh xong ${done}/${targets.length} ảnh nhân vật${fail?` · ${fail} lỗi (thử lại từng cái bằng 🧠 trên card)`:''}. Bấm "⬇️ Tải tất cả ảnh" để đưa vào Google Flow.</div>`;
+  }catch(e){ if(AIJob.isCancel(e)){ if(fb)fb.innerHTML=`<div class="fb">⏹ Đã dừng (đã sinh ${done} ảnh).</div>`; } else { AIJob.fail(_jid); if(fb)fb.innerHTML='<div class="fb bad">❌ '+e.message+'</div>'; } }
+  if(btn){btn.disabled=false; btn.innerHTML='🎨 Sinh ảnh hàng loạt';}
+}
 function rosterDownload(id){ const c=roster().find(x=>x.id===id); if(c&&c.img) _dlDataUrl(_rosterFile(c), c.img); }
 function rosterDownloadAll(){ const r=roster().filter(c=>c.img); const fb=document.getElementById('roster-fb');
   if(!r.length){ if(fb)fb.innerHTML='<div class="fb bad">Chưa có ảnh nào để tải.</div>'; return; }
