@@ -567,7 +567,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
     <h2>🚀 Cổng GENERATE <span class="pill">Channel DNA → 30 ngày content</span></h2>
     <p class="mut">Đọc toàn bộ Channel DNA của 6 trạm → AI sinh gói sản xuất: lịch 30 ngày, script 5-beat, prompt ảnh (EN) & prompt video Veo 3 (EN). Sinh theo từng bước, regenerate từng phần được.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0">
-      <button class="btn" id="gen-auto" onclick="runFullPipeline()" style="background:linear-gradient(135deg,#ffc23c,var(--ac))">⚡ AI chạy trọn pipeline → Vận hành</button>
+      <button class="btn" id="gen-auto" onclick="runFullPipeline()" style="background:linear-gradient(135deg,#ffc23c,var(--ac))">⚡ AI dựng + chấm kịch bản (dừng để duyệt)</button>
       <button class="btn ghost" id="gen-all" onclick="generateAll()">✨ Chỉ sinh gói 30 ngày</button>
       <button class="btn ghost sm" onclick="genPart('calendar')">↻ Lịch 30 ngày</button>
       <button class="btn ghost sm" onclick="genPart('scripts')">↻ 10 script 5-beat</button>
@@ -608,7 +608,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
     <h2><span class="tag">🥋 LÒ · Dây chuyền</span> Kế hoạch 30 ngày → kịch bản chi tiết <span class="pill">nạp từ GENERATE → dựng kịch bản → chấm xếp hạng</span></h2>
     <div id="forge-plan" class="mut">Chưa có kế hoạch. Sang cổng 🚀 GENERATE bấm "Sinh gói 30 ngày" — xong sẽ tự nạp về đây.</div>
     <div id="forge-actions" style="display:none;gap:10px;margin-top:10px;flex-wrap:wrap">
-      <button class="btn" id="forge-auto" onclick="runFullPipeline()" style="background:linear-gradient(135deg,#ffc23c,var(--ac))">⚡ Tự động: dựng → chấm → đẩy Vận hành</button>
+      <button class="btn" id="forge-auto" onclick="runFullPipeline()" style="background:linear-gradient(135deg,#ffc23c,var(--ac))">⚡ Tự động: dựng → chấm kịch bản (dừng để duyệt)</button>
       <button class="btn ghost" id="forge-script" onclick="buildScriptsTop()">🎬 Dựng kịch bản (cả loạt)</button>
       <button class="btn ghost" id="forge-score" onclick="scoreForgeBatch()">🧠 Chấm + xếp hạng kịch bản</button>
       <button class="btn ghost" id="forge-regen" onclick="regenWeakScripts()" style="border-color:var(--warn);color:var(--warn)">♻️ Tạo lại kịch bản yếu → chấm lại</button>
@@ -2707,7 +2707,8 @@ const CUT_COHERENCE_EN = `All 6-8 quick cuts depict the SAME continuous moment o
 async function genVPrompts(title, improve){
   const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const LANG=voLang(), VOICE=voStyle();
-  const _imp = improve ? `\n\n🎬 CHẾ ĐỘ ĐẠO DIỄN NÂNG CHUẨN — bản trước CHƯA đạt chuẩn viral. Tư duy như ĐẠO DIỄN PHIM CHUYÊN NGHIỆP + chuyên gia viral để LÀM LẠI HAY HƠN HẲN: hook 3 giây đầu GIẬT/tò mò ngay (pattern interrupt, câu hỏi sốc, hành động lạ); nhịp dồn dập 6-8 cú cắt đa góc nhưng LIỀN MẠCH (6-8 cú cắt là TRONG MỖI shot 10s — VẪN GIỮ ĐỦ NHIỀU shot 10s để kể trọn kịch bản, TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot); có cao trào + nhịp nghỉ; khung hình ĐIỆN ẢNH (bố cục, ánh sáng, chuyển động máy có chủ đích, chiều sâu trường ảnh); voiceover sắc-đời-đúng insight; CTA/cliffhanger rõ ở cuối; bám brand & nhân vật nhất quán.${improve.yeu?`\nĐIỂM YẾU GIÁM KHẢO CHỈ RA (phải khắc phục): ${improve.yeu}`:''}${improve.sua?`\nVIỆC CẦN SỬA: ${improve.sua}`:''}\nNâng các điểm này lên RÕ RỆT so với bản cũ — đừng lặp công thức cũ.` : '';
+  const _directorBase = `\n\n🎬 TƯ DUY ĐẠO DIỄN CHUYÊN NGHIỆP (áp dụng MỌI shot, chuẩn viral cao ngay từ đầu): hook 3 giây đầu GIẬT/tò mò ngay (pattern interrupt, câu hỏi sốc, hành động lạ); nhịp dồn dập 6-8 cú cắt đa góc nhưng LIỀN MẠCH (6-8 cú cắt là TRONG MỖI shot 10s — VẪN GIỮ ĐỦ NHIỀU shot 10s để kể trọn kịch bản, TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot); có cao trào + nhịp nghỉ; khung hình ĐIỆN ẢNH (bố cục, ánh sáng có chủ đích, chuyển động máy, chiều sâu trường ảnh); voiceover sắc-đời-đúng insight; CTA/cliffhanger rõ ở cuối; bám brand & nhân vật nhất quán; tránh công thức nhàm.`;
+  const _imp = improve ? `${_directorBase}\n⚠️ Bản trước CHƯA đạt chuẩn viral — phải LÀM LẠI HAY HƠN HẲN.${improve.yeu?`\nĐIỂM YẾU GIÁM KHẢO CHỈ RA (phải khắc phục): ${improve.yeu}`:''}${improve.sua?`\nVIỆC CẦN SỬA: ${improve.sua}`:''}\nNâng các điểm này lên RÕ RỆT so với bản cũ — đừng lặp công thức cũ.` : _directorBase;
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
   const _prevShots=((S.dna.skuld.vprompts||{})[title]||{}).shots;
   const _nTarget=Math.max((_prevShots&&_prevShots.length)||0, (sc.scenes||[]).length, 3);   // giữ đủ số shot, không gộp về 1
@@ -3806,25 +3807,19 @@ async function runFullPipeline(){ if(!requirePremium('GENERATE 30 ngày'))return
   try{
     // B1: đảm bảo có gói 30 ngày + nạp sang Lò (mang toàn bộ dữ liệu gói)
     if(!(S.dna.skuld.scored||[]).some(x=>x.from==='gen')){
-      if(!(S._pack&&S._pack.calendar&&S._pack.calendar.length)){ note('⚙️ Bước 1/5: AI sinh gói 30 ngày (lịch + script + prompt)...'); await generateAll(); }
+      if(!(S._pack&&S._pack.calendar&&S._pack.calendar.length)){ note('⚙️ Bước 1/3: AI sinh gói 30 ngày (lịch + script + prompt)...'); await generateAll(); }
       else importPlanToForge();
     }
     if(!(S.dna.skuld.scored||[]).some(x=>x.from==='gen')){ note('❌ Chưa tạo được kế hoạch 30 ngày — cần Channel DNA đủ 6 trạm trước.'); if(auto)auto.disabled=false; return; }
     // B2: AI dựng kịch bản chi tiết cả loạt
-    note('🎬 Bước 2/5: AI dựng kịch bản chi tiết cả loạt (mất vài phút)...');
+    note('🎬 Bước 2/3: AI dựng kịch bản chi tiết cả loạt (mất vài phút)...');
     await buildScriptsTop();
-    // B3: AI chấm + xếp hạng kịch bản
-    note('🧠 Bước 3/5: AI chấm + xếp hạng kịch bản...');
+    // B3: AI chấm + xếp hạng kịch bản — DỪNG ở đây để bạn duyệt/chấm trước khi tạo video
+    note('🧠 Bước 3/3: AI chấm + xếp hạng kịch bản...');
     await scoreForgeBatch();
-    // B4: AI sinh bộ prompt video Omni (chuỗi 10s) cho cả loạt
-    note('🎥 Bước 4/5: AI sinh prompt video Omni (chuỗi 10s)...');
-    await genVPromptsAll();
-    // B5: đẩy tự động sang Vận hành
-    note('📊 Bước 5/5: đẩy lịch sang Vận hành...');
-    opsImportPlan();
     const L=(S.dna.skuld.scored||[]).filter(x=>x.from==='gen');
     const scr=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, pass=L.filter(x=>x._sc&&x.score>=600).length;
-    note(`🎉 Xong trọn pipeline! ${scr}/${L.length} kịch bản chi tiết · <b style="color:var(--ac)">${pass} ✅ sẵn sàng sản xuất (≥60%)</b> · đã đẩy ${L.length} video sang 📊 Vận hành. <button class="btn sm" onclick="document.querySelector('.tab[data-v=&quot;skuld&quot;]').click()">🥋 Xem Lò</button> <button class="btn sm" onclick="document.querySelector('.tab[data-v=&quot;ops&quot;]').click()">📊 Mở Vận hành →</button>`);
+    note(`🎉 Xong KỊCH BẢN + chấm điểm! ${scr}/${L.length} kịch bản chi tiết · <b style="color:var(--ac)">${pass} ✅ đạt (≥60%)</b>. Hãy DUYỆT/chấm kịch bản trước, rồi sang "🎥 Sinh prompt video (cả loạt)" để tạo video (KHÔNG tự tạo video ở bước này nữa). <button class="btn sm" onclick="document.querySelector('.tab[data-v=&quot;skuld&quot;]').click()">🥋 Xem Lò + dựng video →</button>`);
   }catch(e){ note('❌ Pipeline lỗi: '+e.message+' — bấm "⚡" lại để chạy tiếp phần dang dở.'); }
   if(auto){ auto.disabled=false; }
 }
