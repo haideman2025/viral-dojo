@@ -678,6 +678,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
       <button class="btn ghost" id="vqa-btn" onclick="gradeVPromptsAll()" style="border-color:var(--warn);color:var(--warn)">🧪 Chấm điểm viral (toàn bộ prompt)</button>
       <button class="btn ghost sm" onclick="regradeVPromptsAll()">🔄 Chấm lại</button>
+      <button class="btn ghost sm" id="vqa-fix" onclick="improveWeakVPrompts()" style="border-color:var(--ac);color:var(--ac)">🎬 Tạo lại video yếu + chấm lại</button>
     </div>
     <p class="mut" style="font-size:12px;margin:-2px 0 8px">🧪 AI đóng vai <b>giám khảo viral</b> chấm 100đ từng video (hook 3s · nhịp/quick-cut · liền mạch · voiceover · CTA · brand · sáng tạo) — nên đạt <b>≥70đ</b> mỗi video trước khi xuất JSON sản xuất hàng loạt.</p>
     <div id="vqa-out" class="mut" style="margin-bottom:8px"></div>
@@ -2703,14 +2704,15 @@ async function ensureVRef(){ if(!asText(vref().character).trim()) await genVRef(
 /* 🔗 Quy tắc LIỀN MẠCH 6-8 cú cắt trong 1 shot 10s — chống lỗi mỗi cú cắt đổi nhân vật/trang phục/bối cảnh */
 const CUT_COHERENCE_VN = `🔗 LIỀN MẠCH 6-8 CÚ CẮT (BẮT BUỘC): trong CÙNG 1 shot 10s, 6-8 cú cắt nhanh chỉ là CÁC GÓC MÁY / CỠ CẢNH KHÁC NHAU của CÙNG MỘT khoảnh khắc liền mạch — GIỮ NGUYÊN: cùng nhân vật (khuôn mặt + tóc), cùng trang phục, cùng bối cảnh/địa điểm, cùng ánh sáng & thời điểm, cùng sản phẩm. CHỈ đổi góc máy/cỡ cảnh giữa các cú cắt; TUYỆT ĐỐI KHÔNG đổi người/trang phục/kiểu tóc/bối cảnh/màu sắc giữa các cú cắt trong cùng 1 shot.`;
 const CUT_COHERENCE_EN = `All 6-8 quick cuts depict the SAME continuous moment of the SAME single character — identical face, hairstyle and outfit, the SAME location, lighting and time of day; ONLY the camera angle and shot size change between cuts. Never swap the person, wardrobe, hairstyle, setting, props, or colors between cuts.`;
-async function genVPrompts(title){
+async function genVPrompts(title, improve){
   const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const LANG=voLang(), VOICE=voStyle();
+  const _imp = improve ? `\n\n🎬 CHẾ ĐỘ ĐẠO DIỄN NÂNG CHUẨN — bản trước CHƯA đạt chuẩn viral. Tư duy như ĐẠO DIỄN PHIM CHUYÊN NGHIỆP + chuyên gia viral để LÀM LẠI HAY HƠN HẲN: hook 3 giây đầu GIẬT/tò mò ngay (pattern interrupt, câu hỏi sốc, hành động lạ); nhịp dồn dập 6-8 cú cắt đa góc nhưng LIỀN MẠCH, có cao trào + nhịp nghỉ; khung hình ĐIỆN ẢNH (bố cục, ánh sáng, chuyển động máy có chủ đích, chiều sâu trường ảnh); voiceover sắc-đời-đúng insight; CTA/cliffhanger rõ ở cuối; bám brand & nhân vật nhất quán.${improve.yeu?`\nĐIỂM YẾU GIÁM KHẢO CHỈ RA (phải khắc phục): ${improve.yeu}`:''}${improve.sua?`\nVIỆC CẦN SỬA: ${improve.sua}`:''}\nNâng các điểm này lên RÕ RỆT so với bản cũ — đừng lặp công thức cũ.` : '';
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
   const prodName=(v.product||'').trim();
   const PRODUCT_RULE = `- PRODUCT = ĐÚNG sản phẩm trong ẢNH SẢN PHẨM ĐÍNH KÈM (uploaded product reference image) — đây là NGUỒN SỰ THẬT DUY NHẤT về ngoại hình sản phẩm. TUYỆT ĐỐI KHÔNG mô tả / sáng tạo / đổi màu / đổi bao bì / đổi nhãn / đổi logo / đổi hình dạng sản phẩm bằng chữ. Mọi shot CHỈ gọi sản phẩm là "the exact product from the uploaded product reference image"${prodName?` (nhận biết nội bộ: ${prodName} — KHÔNG tả lại ngoại hình)`:''}; chỉ tả CÁCH cầm/đặt/dùng/đặt sản phẩm ở đâu trong khung, KHÔNG tả ngoại hình.`;
   const MANDATORY = `"Use the uploaded product reference image as the SINGLE source of truth for the product — render the product EXACTLY as shown in that image; do NOT recolor, relabel, restyle, redesign, or replace it, and do NOT invent any packaging, color, or logo. Use the uploaded character reference image for the person. Keep both identical across all shots."`;
-  const o=await geminiCall(`Bạn là ĐẠO DIỄN đã học toàn bộ VIRAL DOJO — hiểu chuẩn video viral (hook 3 giây đầu, nhịp nhanh, format an toàn, sản phẩm xuất hiện tự nhiên). Nhiệm vụ: chuyển KỊCH BẢN text thành chuỗi SHOT 10 GIÂY để tạo bằng Omni/Veo trên Google Flow; khi ghép các shot 10s lại phải thành 1 video HOÀN CHỈNH, MƯỢT, LIỀN MẠCH, đúng nhịp độ/bối cảnh/trang phục/nhân vật/sản phẩm của kịch bản.${v.productImg?'\n\n(Ảnh sản phẩm thật được đính kèm bên dưới — hãy NHÌN ảnh để hiểu sản phẩm, nhưng KHÔNG mô tả ngoại hình nó bằng chữ trong prompt.)':''}
+  const o=await geminiCall(`Bạn là ĐẠO DIỄN đã học toàn bộ VIRAL DOJO — hiểu chuẩn video viral (hook 3 giây đầu, nhịp nhanh, format an toàn, sản phẩm xuất hiện tự nhiên). Nhiệm vụ: chuyển KỊCH BẢN text thành chuỗi SHOT 10 GIÂY để tạo bằng Omni/Veo trên Google Flow; khi ghép các shot 10s lại phải thành 1 video HOÀN CHỈNH, MƯỢT, LIỀN MẠCH, đúng nhịp độ/bối cảnh/trang phục/nhân vật/sản phẩm của kịch bản.${_imp}${v.productImg?'\n\n(Ảnh sản phẩm thật được đính kèm bên dưới — hãy NHÌN ảnh để hiểu sản phẩm, nhưng KHÔNG mô tả ngoại hình nó bằng chữ trong prompt.)':''}
 
 KHOÁ NHẤT QUÁN — nhắc lại NGUYÊN VĂN trong MỌI shot prompt:
 - CHARACTER (giữ y hệt mọi shot, dùng ảnh tham chiếu): ${v.character||'(theo brand)'}
@@ -3101,6 +3103,36 @@ async function gradeVPromptsAll(){ if(!requirePremium('Chấm điểm prompt'))r
   if(btn){btn.disabled=false; btn.innerHTML='🧪 Chấm điểm viral (toàn bộ prompt)';}
 }
 function regradeVPromptsAll(){ if(!confirm('Chấm lại điểm viral cho TẤT CẢ video?'))return; S.dna.skuld.vqa={}; save(); renderVQA(); gradeVPromptsAll(); }
+/* 🎬 Tạo lại TOÀN BỘ video yếu (<70đ) bằng tư duy đạo diễn nâng chuẩn + tự chấm lại — lặp tối đa 2 vòng */
+async function improveWeakVPrompts(){ if(!requirePremium('Nâng cấp prompt yếu'))return;
+  const fb=document.getElementById('vp-fb'), btn=document.getElementById('vqa-fix');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const q=S.dna.skuld.vqa||{}; const vp=S.dna.skuld.vprompts||{};
+  if(!Object.keys(q).length){ if(fb)fb.innerHTML='<div class="fb bad">Chưa chấm điểm. Bấm "🧪 Chấm điểm viral" trước để biết video nào yếu.</div>'; return; }
+  if(!Object.keys(q).some(t=>(+q[t].tong)<70)){ if(fb)fb.innerHTML='<div class="fb">🎉 Không có video nào <70đ — bộ prompt đã đạt chuẩn.</div>'; return; }
+  if(!confirm('Tạo lại TẤT CẢ video <70đ bằng tư duy đạo diễn nâng chuẩn + tự chấm lại (lặp tối đa 2 vòng). Bản prompt cũ của các video yếu sẽ bị thay. Tiếp tục?')) return;
+  healScripts(); await ensureVRef();
+  if(btn)btn.disabled=true;
+  const MAXR=2; let round=0, fixed=0;
+  try{
+    while(round<MAXR){
+      const weak=Object.keys(q).filter(t=>(+q[t].tong)<70 && vp[t] && (vp[t].shots||[]).length);
+      if(!weak.length) break;
+      round++;
+      const _jid=AIJob.start(`🎬 Nâng cấp video yếu (vòng ${round})`, weak.length); let _dn=0;
+      await runPool(weak, async(t)=>{ AIJob.setSub(_jid,t); forgeProg(`🎬 Nâng cấp: ${t}`,1);
+        const fbk={yeu:(q[t].yeu||[]).join('; '), sua:(q[t].sua||[]).join('; ')};
+        try{ await genVPrompts(t, fbk); await gradeVPrompt(t); fixed++; }catch(e){}
+        _dn++; if(btn)btn.innerHTML=`<span class="spin"></span>V${round}: ${_dn}/${weak.length}`; save(); renderVQA(); renderVPrompts();
+      }, _jid);
+      AIJob.done(_jid);
+    }
+    const avg=vqaAvg(), low=Object.keys(q).filter(t=>(+q[t].tong)<70).length;
+    if(fb)fb.innerHTML=`<div class="fb">✅ Đã nâng cấp + chấm lại ${fixed} lượt video yếu. Điểm TB giờ <b>${avg}/100</b>${low?` · còn ${low} video <70đ (bấm lại để nâng tiếp)`:' · KHÔNG còn video yếu 🎉'}.</div>`;
+    if(typeof vdNotifyDone==='function')vdNotifyDone('Nang cap video yeu xong!');
+  }catch(e){ if(window.AIJob&&AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng (giữ phần đã nâng + chấm).</div>'; } else { if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
+  if(btn){btn.disabled=false; btn.innerHTML='🎬 Tạo lại video yếu + chấm lại';}
+}
 function renderVQA(){ const el=document.getElementById('vqa-out'); if(!el) return; const q=S.dna.skuld.vqa||{}, keys=Object.keys(q);
   if(!keys.length){ el.className='mut'; el.innerHTML='Chưa chấm. Bấm "🧪 Chấm điểm viral" để AI đánh giá toàn bộ bộ prompt trước khi xuất JSON.'; return; }
   el.className='';
