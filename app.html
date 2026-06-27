@@ -968,6 +968,19 @@ Object.defineProperty(S,'dna',{
   set(v){ activeProject().dna=v; }     // giữ importDNA() hoạt động (nạp vào dự án đang mở)
 });
 
+/* 🐞 FIX cô lập dự án: _pack (gói GENERATE: lịch/script/prompt) & _flowManifest (cache xuất Flow)
+   TRƯỚC ĐÂY để ở S._pack / S._flowManifest = cấp WORKSPACE → khi đổi dự án, gói dự án CŨ rò sang
+   dự án MỚI (kế hoạch mới nhưng sản xuất chạy dữ liệu cũ). Giờ chuyển thành GETTER theo TỪNG dự án
+   (giống S.dna). Là cache tái sinh được nên xoá bản global cũ là an toàn. */
+['_pack','_flowManifest'].forEach(function(prop){
+  try{ delete S[prop]; }catch(e){}   // bỏ bản global cũ (rò chéo dự án) khỏi gốc S
+  Object.defineProperty(S, prop, {
+    configurable:true, enumerable:false,   // non-enumerable: KHÔNG ghi vào gốc localStorage, chỉ sống trong projects[id].dna
+    get(){ const p=activeProject(); p.dna=p.dna||{onboard:{},m1:{},scores:{}}; return p.dna[prop]!==undefined?p.dna[prop]:(prop==='_pack'?(p.dna[prop]={}):null); },
+    set(v){ activeProject().dna[prop]=v; }
+  });
+});
+
 const PASS = 70; // điểm tối thiểu mở trạm sau
 function save(){ const p=S.projects&&S.projects[S.activeId]; if(p) p.updatedAt=_today();
   localStorage.setItem('dojo', JSON.stringify(S)); renderDNA(); renderStations(); refreshGates(); renderOverview(); if(typeof xpTick==='function') xpTick(); if(typeof ensureDynamic==='function') ensureDynamic(); }
