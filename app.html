@@ -2094,6 +2094,8 @@ async function skAIScore(){
 /* --- 🥋 LÒ · Dây chuyền 30 ngày (auto-chain GENERATE → chấm cả loạt → kịch bản) --- */
 function forgeFmt(){ return /kiến thức/i.test((S.dna.m1&&S.dna.m1.dinhdang)||'')?'kt':'htkh'; }
 const FORGE_SV='s1'; // phiên bản chấm-trên-kịch-bản; điểm cũ (chấm ý tưởng trống) sẽ tự chấm lại 1 lần
+const FORGE_PASS=800; // ngưỡng ĐẠT chuẩn sản xuất của KỊCH BẢN (thang 1000) = 80%; chỉ ≥80% mới qua
+const FORGE_PASS_PCT=Math.round(FORGE_PASS/10); // = 80 (%)
 function forgeProg(msg,spin){ // hiện tiến trình ở CẢ tab Lò lẫn cổng GENERATE
   ['forge-fb','gen-prog'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=`<div class="fb">${spin?'<span class=\"spin\"></span>':''}${msg}</div>`; });
   if(window.vdOpenWait)vdOpenWait(msg);
@@ -2148,11 +2150,11 @@ function renderForgePlan(){
   const L=S.dna.skuld.scored.filter(x=>x.from==='gen').sort((a,b)=>(a.day||0)-(b.day||0));
   if(!L.length){ el.innerHTML='Chưa có kế hoạch. Sang cổng 🚀 GENERATE bấm "Sinh gói 30 ngày" — xong sẽ tự nạp về đây.'; el.className='mut'; if(act)act.style.display='none'; return; }
   el.className=''; if(act)act.style.display='flex';
-  const scriptN=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, scored=L.filter(x=>x._scv===FORGE_SV).length, pass=L.filter(x=>x._scv===FORGE_SV&&x.score>=600).length;
-  el.innerHTML=`<p class="mut">${L.length} ý tưởng · <b>${scriptN} có kịch bản</b> · ${scored} đã chấm · <b style="color:var(--ac)">${pass} ✅ sẵn sàng sản xuất (≥60%)</b></p>`+
+  const scriptN=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, scored=L.filter(x=>x._scv===FORGE_SV).length, pass=L.filter(x=>x._scv===FORGE_SV&&x.score>=FORGE_PASS).length;
+  el.innerHTML=`<p class="mut">${L.length} ý tưởng · <b>${scriptN} có kịch bản</b> · ${scored} đã chấm · <b style="color:var(--ac)">${pass} ✅ sẵn sàng sản xuất (≥${FORGE_PASS_PCT}%)</b></p>`+
     '<div style="overflow:auto"><table style="font-size:12.5px"><tr><th>Ngày</th><th>Ý tưởng</th><th>Kịch bản</th><th>Điểm</th><th>%</th><th>Công cụ</th></tr>'+
     L.map(x=>{const p=Math.round(x.score/10), has=(S.dna.skuld.scripts||{})[x.title], done=x._scv===FORGE_SV;
-      const badge=done?`<span style="color:${p>=60?'var(--ac)':'var(--warn)'}">${p}%${p>=60?' ✅':''}</span>`:'<span class="mut">—</span>';
+      const badge=done?`<span style="color:${p>=FORGE_PASS_PCT?'var(--ac)':'var(--warn)'}">${p}%${p>=FORGE_PASS_PCT?' ✅':''}</span>`:'<span class="mut">—</span>';
       const tools=`<button class="btn sm ghost" title="Soi & sửa điểm (Lò A)" onclick="forgeEditDay(${x.day})" style="padding:3px 7px">✏</button> <button class="btn sm ghost" title="Phân tích sâu 18 câu (Lò B)" onclick="forgeDeepDay(${x.day})" style="padding:3px 7px">🔎</button> <button class="btn sm ghost" title="Nâng cấp ý tưởng (Lò C)" onclick="forgeUpgradeDay(${x.day})" style="padding:3px 7px">⬆</button> <button class="btn sm ghost" title="Sinh prompt video Omni 10s" onclick="genVPromptDay(${x.day})" style="padding:3px 7px">🎥</button>`;
       return `<tr><td>N${x.day}</td><td>${x.title}</td><td>${has?'✅':'<span class="mut">—</span>'}</td><td>${done?x.score:'—'}</td><td>${badge}</td><td style="white-space:nowrap">${tools}</td></tr>`;}).join('')+'</table></div>';
 }
@@ -2177,7 +2179,7 @@ async function scoreForgeBatch(){ if(!requirePremium('Chấm kịch bản'))retu
       save(); renderForgePlan(); renderBoard();
     }, _jid);
     AIJob.done(_jid);
-    fb.innerHTML='<div class="fb">✅ Đã chấm + xếp hạng kịch bản. Cái nào ≥60% = ✅ sẵn sàng sản xuất; thấp hơn thì dùng "Liên kết ý tưởng" (LÒ C) nâng cấp rồi dựng lại. Điểm sửa tay được ở Scorecard.</div>'; if(typeof vdNotifyDone==='function')vdNotifyDone('Cham xep hang xong!');
+    fb.innerHTML=`<div class="fb">✅ Đã chấm + xếp hạng kịch bản. Cái nào ≥${FORGE_PASS_PCT}% = ✅ sẵn sàng sản xuất; thấp hơn thì dùng "Tạo lại kịch bản yếu" hoặc "Liên kết ý tưởng" (LÒ C) nâng cấp rồi dựng lại. Điểm sửa tay được ở Scorecard.</div>`; if(typeof vdNotifyDone==='function')vdNotifyDone('Cham xep hang xong!');
   }catch(e){ if(AIJob.isCancel(e)){ fb.innerHTML='<div class="fb">⏹ Đã dừng chấm điểm (giữ phần đã chấm).</div>'; } else { AIJob.fail(_jid); fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   btn.disabled=false; btn.innerHTML='🧠 Chấm + xếp hạng kịch bản';
 }
@@ -2201,19 +2203,19 @@ async function buildScriptsTop(){ if(!requirePremium('Dựng kịch bản'))retu
   }catch(e){ if(AIJob.isCancel(e)){ fb.innerHTML='<div class="fb">⏹ Đã dừng dựng kịch bản (giữ phần đã xong).</div>'; } else { AIJob.fail(_jid); fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   btn.disabled=false; btn.innerHTML='🎬 Dựng kịch bản (cả loạt)';
 }
-/* ♻️ Tạo lại HÀNG LOẠT kịch bản chưa đủ điều kiện sản xuất (<60%) rồi tự chấm lại.
+/* ♻️ Tạo lại HÀNG LOẠT kịch bản chưa đủ điều kiện sản xuất (<80%) rồi tự chấm lại.
    Viết lại TRÚNG chỗ yếu: nhồi các tiêu chí đã trượt (từ checks[]) + kịch bản cũ vào prompt. */
 async function regenWeakScripts(){ if(!requirePremium('Tạo lại kịch bản yếu'))return;
   const btn=document.getElementById('forge-regen'), fb=document.getElementById('forge-fb');
   if(!S.keys.gemini){ fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   const sc=S.dna.skuld.scripts=S.dna.skuld.scripts||{};
-  // yếu = gen · CÓ kịch bản · CHƯA đạt ≥60% (score<600 hoặc chưa chấm theo bản hiện tại)
-  const L=S.dna.skuld.scored.filter(x=>x.from==='gen' && sc[x.title] && !(x._scv===FORGE_SV && x.score>=600));
+  // yếu = gen · CÓ kịch bản · CHƯA đạt ≥80% (score<800 hoặc chưa chấm theo bản hiện tại)
+  const L=S.dna.skuld.scored.filter(x=>x.from==='gen' && sc[x.title] && !(x._scv===FORGE_SV && x.score>=FORGE_PASS));
   if(!L.length){
     const noScript=S.dna.skuld.scored.filter(x=>x.from==='gen'&&!sc[x.title]).length;
-    fb.innerHTML='<div class="fb">'+(noScript?('⚠️ Có '+noScript+' ý tưởng chưa có kịch bản — bấm "🎬 Dựng kịch bản" trước. Nút này chỉ TẠO LẠI kịch bản đã có mà <60%.'):'🎉 Mọi kịch bản đều đã đạt ≥60% — không có gì cần tạo lại.')+'</div>'; return;
+    fb.innerHTML='<div class="fb">'+(noScript?('⚠️ Có '+noScript+' ý tưởng chưa có kịch bản — bấm "🎬 Dựng kịch bản" trước. Nút này chỉ TẠO LẠI kịch bản đã có mà <'+FORGE_PASS_PCT+'%.'):('🎉 Mọi kịch bản đều đã đạt ≥'+FORGE_PASS_PCT+'% — không có gì cần tạo lại.'))+'</div>'; return;
   }
-  if(!confirm('Tạo lại '+L.length+' kịch bản đang dưới 60% (ghi đè bản cũ) rồi tự chấm lại loạt?')) return;
+  if(!confirm('Tạo lại '+L.length+' kịch bản đang dưới '+FORGE_PASS_PCT+'% (ghi đè bản cũ) rồi tự chấm lại loạt?')) return;
   btn.disabled=true;
   const _jid=AIJob.start('♻️ Nâng cấp kịch bản yếu', L.length);
   let _dn=0;
@@ -2233,8 +2235,8 @@ async function regenWeakScripts(){ if(!requirePremium('Tạo lại kịch bản 
     AIJob.done(_jid);
     forgeProg(`✅ Đã tạo lại ${L.length} kịch bản. Đang chấm lại loạt...`,1);
     await scoreForgeBatch();   // tự chấm các kịch bản vừa tạo (chỉ chấm cái _scv!==FORGE_SV)
-    const ready=L.filter(x=>x._scv===FORGE_SV && x.score>=600).length;
-    fb.innerHTML=`<div class="fb">✅ Đã tạo lại & chấm lại ${L.length} kịch bản yếu. Giờ <b>${ready}/${L.length}</b> đạt ≥60% ✅. Cái còn yếu: dùng "Liên kết ý tưởng" (Lò C) nâng cấp Ý TƯỞNG gốc rồi tạo lại.</div>`; if(typeof vdNotifyDone==='function')vdNotifyDone('Tao lai kich ban yeu xong!');
+    const ready=L.filter(x=>x._scv===FORGE_SV && x.score>=FORGE_PASS).length;
+    fb.innerHTML=`<div class="fb">✅ Đã tạo lại & chấm lại ${L.length} kịch bản yếu. Giờ <b>${ready}/${L.length}</b> đạt ≥${FORGE_PASS_PCT}% ✅. Cái còn yếu: dùng "Liên kết ý tưởng" (Lò C) nâng cấp Ý TƯỞNG gốc rồi tạo lại.</div>`; if(typeof vdNotifyDone==='function')vdNotifyDone('Tao lai kich ban yeu xong!');
   }catch(e){ if(AIJob.isCancel(e)){ fb.innerHTML='<div class="fb">⏹ Đã dừng nâng cấp kịch bản yếu (giữ phần đã xong).</div>'; } else { AIJob.fail(_jid); fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   btn.disabled=false; btn.innerHTML='♻️ Tạo lại kịch bản yếu → chấm lại';
 }
@@ -2339,8 +2341,8 @@ async function exportFlowManifest(){ if(!requirePremium('Xuất cho Flow'))retur
   // 🧪 Gate QA viral: cảnh báo nếu chưa chấm hoặc điểm thấp trước khi SX hàng loạt
   { const _q=S.dna.skuld.vqa||{}, _qk=Object.keys(_q);
     if(!_qk.length){ if(!confirm('⚠️ Bạn CHƯA chấm điểm viral bộ prompt (nút 🧪 "Chấm điểm viral"). Nên chấm để đảm bảo chất lượng trước khi sản xuất hàng loạt.\n\nVẫn xuất JSON luôn?')) return; }
-    else { const _avg=vqaAvg(), _low=_qk.filter(t=>(+_q[t].tong)<70).length;
-      if((_avg<70||_low) && !confirm(`🧪 QA viral: điểm TB ${_avg}/100${_low?` · ${_low} video <70đ`:''}. Nên sửa các video yếu trước khi sản xuất hàng loạt.\n\nVẫn xuất JSON?`)) return; } }
+    else { const _avg=vqaAvg(), _low=_qk.filter(t=>(+_q[t].tong)<VQA_PASS).length;
+      if((_avg<VQA_PASS||_low) && !confirm(`🧪 QA viral: điểm TB ${_avg}/100 (chuẩn ĐẠT ≥${VQA_PASS})${_low?` · ${_low} video <${VQA_PASS}đ`:''}. Nên sửa các video yếu (nút 🎬 "Tạo lại video yếu") trước khi sản xuất hàng loạt.\n\nVẫn xuất JSON?`)) return; } }
   if(!S.keys.gemini && !confirm('⚠️ Chưa kết nối Gemini → KHÔNG tự nhận diện nhân vật/sản phẩm/cảnh (Số thực thể sẽ RỖNG, mọi shot để no_product). Nên vào ⚡ Kết nối bật key trước.\n\nVẫn xuất thô?')) return;
   const aiOn=!!S.keys.gemini, charMap={}, prodMap={}, sceneMap={}; let daysOut=[], _fail=0;
   const _lang=voLang(), _voice=voStyle(), _langCode=voLangCode();
@@ -2704,14 +2706,17 @@ async function ensureVRef(){ if(!asText(vref().character).trim()) await genVRef(
 /* 🔗 Quy tắc LIỀN MẠCH 6-8 cú cắt trong 1 shot 10s — chống lỗi mỗi cú cắt đổi nhân vật/trang phục/bối cảnh */
 const CUT_COHERENCE_VN = `🔗 LIỀN MẠCH 6-8 CÚ CẮT (BẮT BUỘC): trong CÙNG 1 shot 10s, 6-8 cú cắt nhanh chỉ là CÁC GÓC MÁY / CỠ CẢNH KHÁC NHAU của CÙNG MỘT khoảnh khắc liền mạch — GIỮ NGUYÊN: cùng nhân vật (khuôn mặt + tóc), cùng trang phục, cùng bối cảnh/địa điểm, cùng ánh sáng & thời điểm, cùng sản phẩm. CHỈ đổi góc máy/cỡ cảnh giữa các cú cắt; TUYỆT ĐỐI KHÔNG đổi người/trang phục/kiểu tóc/bối cảnh/màu sắc giữa các cú cắt trong cùng 1 shot.`;
 const CUT_COHERENCE_EN = `All 6-8 quick cuts depict the SAME continuous moment of the SAME single character — identical face, hairstyle and outfit, the SAME location, lighting and time of day; ONLY the camera angle and shot size change between cuts. Never swap the person, wardrobe, hairstyle, setting, props, or colors between cuts.`;
+/* 🪞 GIỐNG THẬT / TỰ NHIÊN — chống cảm giác "AI/giả", ưu tiên chất đời thực (chèn vào MỌI prompt qua _directorBase) */
+const NATURAL_REAL = `\n\n🪞 CẢM GIÁC GIỐNG THẬT (BẮT BUỘC — yếu tố quan trọng nhất, tránh trông như AI/CGI/quảng cáo giả): quay như máy quay/điện thoại đời thực — handheld có rung nhẹ tự nhiên, lia/lấy nét tay không hoàn hảo; con người CHÂN THẬT: da có lỗ chân lông/tì vết/mồ hôi nhẹ, biểu cảm micro-expression đời thường, mắt-miệng-cử chỉ tự nhiên, KHÔNG mặt nhựa/da mịn giả/mắt đờ; ánh sáng thực tế (ánh sáng tự nhiên/đèn phòng có sẵn, đổ bóng & vùng cháy sáng đời thực), KHÔNG studio bóng bẩy quá mức; bối cảnh có chi tiết lộn xộn đời thường (đồ vật, hậu cảnh sống động), KHÔNG sạch trơn vô hồn; chuyển động vật lý đúng trọng lực & quán tính; âm thanh hiện trường tự nhiên (ambient, tiếng thở, tạp âm nhẹ). VOICEOVER nói như người thật trò chuyện: ngắt nghỉ, nhấn nhá, cảm xúc đời thường, KHÔNG giọng đọc robot/quảng cáo sượng. Mục tiêu: người xem TƯỞNG là video người thật tự quay, KHÔNG nhận ra là AI.`;
+const NATURAL_REAL_EN = `Documentary-real, candid, authentic look — natural handheld micro-shake, real human skin texture and micro-expressions, real-world available lighting with honest shadows, lived-in cluttered background, natural ambient sound; avoid any plastic/over-smooth CGI, fake-perfect "AI look".`;
 async function genVPrompts(title, improve){
   const v=vref(), sc=(S.dna.skuld.scripts||{})[title]; if(!sc) return;
   const LANG=voLang(), VOICE=voStyle();
-  const _directorBase = `\n\n🎬 TƯ DUY ĐẠO DIỄN CHUYÊN NGHIỆP (áp dụng MỌI shot, chuẩn viral cao ngay từ đầu): hook 3 giây đầu GIẬT/tò mò ngay (pattern interrupt, câu hỏi sốc, hành động lạ); nhịp dồn dập 6-8 cú cắt đa góc nhưng LIỀN MẠCH (6-8 cú cắt là TRONG MỖI shot 10s — VẪN GIỮ ĐỦ NHIỀU shot 10s để kể trọn kịch bản, TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot); có cao trào + nhịp nghỉ; khung hình ĐIỆN ẢNH (bố cục, ánh sáng có chủ đích, chuyển động máy, chiều sâu trường ảnh); voiceover sắc-đời-đúng insight; CTA/cliffhanger rõ ở cuối; bám brand & nhân vật nhất quán; tránh công thức nhàm.`;
+  const _directorBase = `\n\n🎬 TƯ DUY ĐẠO DIỄN CHUYÊN NGHIỆP (áp dụng MỌI shot, chuẩn viral cao ngay từ đầu): hook 3 giây đầu GIẬT/tò mò ngay (pattern interrupt, câu hỏi sốc, hành động lạ); nhịp dồn dập 6-8 cú cắt đa góc nhưng LIỀN MẠCH (6-8 cú cắt là TRONG MỖI shot 10s — VẪN GIỮ ĐỦ NHIỀU shot 10s để kể trọn kịch bản, TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot); có cao trào + nhịp nghỉ; khung hình ĐIỆN ẢNH (bố cục, ánh sáng có chủ đích, chuyển động máy, chiều sâu trường ảnh); voiceover sắc-đời-đúng insight; CTA/cliffhanger rõ ở cuối; bám brand & nhân vật nhất quán; tránh công thức nhàm.`+NATURAL_REAL;
   const _imp = improve ? `${_directorBase}\n⚠️ Bản trước CHƯA đạt chuẩn viral — phải LÀM LẠI HAY HƠN HẲN.${improve.yeu?`\nĐIỂM YẾU GIÁM KHẢO CHỈ RA (phải khắc phục): ${improve.yeu}`:''}${improve.sua?`\nVIỆC CẦN SỬA: ${improve.sua}`:''}\nNâng các điểm này lên RÕ RỆT so với bản cũ — đừng lặp công thức cũ.` : _directorBase;
   const body=(sc.scenes||[]).map(c=>`${c.phan||''}: ${c.noidung||''} | hình: ${c.hinhanh||''} | trám: ${c.tram||''}`).join('\n');
   const _prevShots=((S.dna.skuld.vprompts||{})[title]||{}).shots;
-  const _nTarget=Math.max((_prevShots&&_prevShots.length)||0, (sc.scenes||[]).length, 3);   // giữ đủ số shot, không gộp về 1
+  const _nTarget=Math.max((_prevShots&&_prevShots.length)||0, (sc.scenes||[]).length, 6);   // TỐI THIỂU 6 shot 10s = video ≥60s (chuẩn short dài), giữ đủ số shot, không gộp về 1
   const prodName=(v.product||'').trim();
   const PRODUCT_RULE = `- PRODUCT = ĐÚNG sản phẩm trong ẢNH SẢN PHẨM ĐÍNH KÈM (uploaded product reference image) — đây là NGUỒN SỰ THẬT DUY NHẤT về ngoại hình sản phẩm. TUYỆT ĐỐI KHÔNG mô tả / sáng tạo / đổi màu / đổi bao bì / đổi nhãn / đổi logo / đổi hình dạng sản phẩm bằng chữ. Mọi shot CHỈ gọi sản phẩm là "the exact product from the uploaded product reference image"${prodName?` (nhận biết nội bộ: ${prodName} — KHÔNG tả lại ngoại hình)`:''}; chỉ tả CÁCH cầm/đặt/dùng/đặt sản phẩm ở đâu trong khung, KHÔNG tả ngoại hình.`;
   const MANDATORY = `"Use the uploaded product reference image as the SINGLE source of truth for the product — render the product EXACTLY as shown in that image; do NOT recolor, relabel, restyle, redesign, or replace it, and do NOT invent any packaging, color, or logo. Use the uploaded character reference image for the person. Keep both identical across all shots."`;
@@ -2730,13 +2735,13 @@ ${PRODUCT_RULE}
 Bám CHÍNH XÁC field của kịch bản: "Nội dung"→hành động & lời thoại · "Hình ảnh"→bối cảnh/góc quay/nhân vật (KHÔNG lấy mô tả ngoại hình sản phẩm) · "TRÁM"→overlay/âm thanh. KHÔNG bịa khác kịch bản.
 
 Mỗi shot 10s, trả 3 trường:
-- prompt (TIẾNG ANH, chuẩn Veo/Omni): 1 đoạn liền mạch gồm — [shot size + camera move + angle] (vd medium tracking shot, slow push-in, eye-level) · [subject = CHARACTER y hệt + wardrobe] · [action cụ thể từ kịch bản] · [PRODUCT: chỉ nêu CÁCH cầm/đặt/dùng — gọi là "the product from the uploaded reference image", KHÔNG tả ngoại hình/màu/bao bì] · [setting/bối cảnh + props] · [lighting + mood + color] · [lens/DOF] · [audio: nhạc/SFX] · [on-screen text nếu có] · và CÂU BẮT BUỘC: ${MANDATORY} · CUT-LOCK (BẮT BUỘC, chèn nguyên văn vào MỌI prompt): "${CUT_COHERENCE_EN}" · CONTINUITY: shot ≥2 mở đầu bằng "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;" để match-cut mượt khi ghép.
+- prompt (TIẾNG ANH, chuẩn Veo/Omni): 1 đoạn liền mạch gồm — [shot size + camera move + angle] (vd medium tracking shot, slow push-in, eye-level) · [subject = CHARACTER y hệt + wardrobe] · [action cụ thể từ kịch bản] · [PRODUCT: chỉ nêu CÁCH cầm/đặt/dùng — gọi là "the product from the uploaded reference image", KHÔNG tả ngoại hình/màu/bao bì] · [setting/bối cảnh + props] · [lighting + mood + color] · [lens/DOF] · [audio: nhạc/SFX] · [on-screen text nếu có] · CÂU GIỐNG-THẬT (BẮT BUỘC, chèn nguyên văn vào MỌI prompt): "${NATURAL_REAL_EN}" · và CÂU BẮT BUỘC: ${MANDATORY} · CUT-LOCK (BẮT BUỘC, chèn nguyên văn vào MỌI prompt): "${CUT_COHERENCE_EN}" · CONTINUITY: shot ≥2 mở đầu bằng "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;" để match-cut mượt khi ghép.
 - voiceover (${LANG}): lời thoại cho shot bám ĐÚNG "Nội dung", dịch/viết tự nhiên sang ${LANG} (chia vừa 10s, không bịa). Không có thì để trống.
 - onscreen (${LANG}): chữ overlay ngắn (từ TRÁM), bằng ${LANG}.
 
 KỊCH BẢN ("${title}"):
 ${body}
-Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]}. SỐ SHOT: phải ĐỦ kể trọn kịch bản — KHOẢNG ${_nTarget} shot (KHÔNG ÍT HƠN ${_nTarget}), mỗi shot = 1 đoạn 10 giây ĐỘC LẬP; TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot (mỗi shot tự nó đã gồm 6-8 cú cắt nhanh bên trong).`,{json:true,temp:0.55, images: v.productImg?[{mime:'image/jpeg',data:v.productImg.split(',')[1]}]:[]});
+Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]}. SỐ SHOT: video hoàn chỉnh PHẢI dài TỐI THIỂU 60 GIÂY = ÍT NHẤT 6 shot 10s (BẮT BUỘC ≥${_nTarget} shot, KHÔNG ÍT HƠN ${_nTarget}); nếu kịch bản ngắn thì GIÃN/khai triển thêm cảnh (mở rộng diễn biến, thêm nhịp, b-roll, phản ứng, bằng chứng) cho ĐỦ ≥6 shot — TUYỆT ĐỐI KHÔNG cắt bớt còn dưới 6. Mỗi shot = 1 đoạn 10 giây ĐỘC LẬP; TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot (mỗi shot tự nó đã gồm 6-8 cú cắt nhanh bên trong).`,{json:true,temp:0.55, images: v.productImg?[{mime:'image/jpeg',data:v.productImg.split(',')[1]}]:[]});
   S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
   const prev=S.dna.skuld.vprompts[title]||{};
   let newShots=(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',voiceover:s.voiceover||'',onscreen:s.onscreen||''})).filter(s=>s.prompt);
@@ -3071,24 +3076,28 @@ function renderVPrompts(){
 }
 /* ===== 🧪 QA VIRAL — AI chấm điểm toàn bộ bộ prompt video trước khi xuất JSON sản xuất ===== */
 const VQA_CRIT = [
-  {k:'hook',     w:20, label:'Hook 3s'},
-  {k:'nhip',     w:15, label:'Nhịp & quick-cut'},
-  {k:'lienmach', w:15, label:'Liền mạch'},
-  {k:'nv_sp',    w:10, label:'NV & sản phẩm'},
-  {k:'voiceover',w:15, label:'Voice-over'},
-  {k:'cta',      w:10, label:'CTA/chốt'},
-  {k:'brand',    w:10, label:'Bám brand'},
+  {k:'hook',     w:18, label:'Hook 3s'},
+  {k:'chanthuc', w:18, label:'Giống thật/Tự nhiên'},
+  {k:'nhip',     w:12, label:'Nhịp & quick-cut'},
+  {k:'lienmach', w:12, label:'Liền mạch'},
+  {k:'voiceover',w:12, label:'Voice-over'},
+  {k:'nv_sp',    w:8,  label:'NV & sản phẩm'},
+  {k:'cta',      w:8,  label:'CTA/chốt'},
+  {k:'brand',    w:7,  label:'Bám brand'},
   {k:'sangtao',  w:5,  label:'Sáng tạo'},
 ];
+const VQA_PASS = 80; // ngưỡng ĐẠT chuẩn sản xuất (%) — >80 mới qua
 function vqaAvg(){ const q=S.dna.skuld.vqa||{}; const v=Object.values(q).map(x=>+x.tong).filter(n=>n>=0); return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):0; }
 async function gradeVPrompt(title){
   const sc=(S.dna.skuld.vprompts||{})[title]; if(!sc||!(sc.shots||[]).length) return;
+  const nShot=(sc.shots||[]).length;
   const body=(sc.shots||[]).map(s=>`Shot ${s.seq}: ${s.prompt||''}${s.voiceover?` | VO: ${s.voiceover}`:''}${s.onscreen?` | Overlay: ${s.onscreen}`:''}`).join('\n').slice(0,6000);
-  const o=await geminiCall(`Bạn là GIÁM KHẢO VIRAL khó tính (giả lập người dùng thật + chuyên gia TikTok). Chấm CHẤT LƯỢNG bộ prompt video 10s của 1 video theo thang 100đ, để quyết định có nên SẢN XUẤT HÀNG LOẠT chưa. Chấm THỰC TẾ, KHÓ TÍNH, không cho điểm ảo.
+  const o=await geminiCall(`Bạn là GIÁM KHẢO VIRAL CỰC KỲ KHÓ TÍNH (giả lập người dùng thật + chuyên gia TikTok). Chấm CHẤT LƯỢNG bộ prompt video 10s của 1 video theo thang 100đ, để quyết định có nên SẢN XUẤT HÀNG LOẠT chưa. Chấm THỰC TẾ, KHẮT KHE, KHÔNG cho điểm ảo — chỉ ≥${VQA_PASS}đ mới được coi là ĐẠT chuẩn sản xuất, nên đừng dễ dãi.
 BRAND:\n${brandContext(1200)}
-TIÊU CHÍ (điểm tối đa): hook=20 (cú mở 3s đầu có giật/tò mò?), nhip=15 (nhịp nhanh, 6-8 quick-cut đa góc?), lienmach=15 (nhân vật/trang phục/bối cảnh NHẤT QUÁN giữa các cú cắt & shot?), nv_sp=10 (nhân vật & sản phẩm rõ, dùng ảnh tham chiếu, không bịa?), voiceover=15 (thoại tự nhiên, thuyết phục, vừa 10s?), cta=10 (có CTA/chốt/cliffhanger?), brand=10 (bám insight/brand/đối tượng?), sangtao=5 (sáng tạo, không công thức nhàm?).
+⚠️ ĐỘ DÀI: video chuẩn phải ≥6 shot (≥60 giây). Video này hiện có ${nShot} shot (~${nShot*10}s).${nShot<6?` → DƯỚI 60s, CHƯA ĐẠT: trừ mạnh điểm "nhip" và "sangtao", và nêu rõ ở diem_yeu + sua "phải tăng lên tối thiểu 6 shot/60s".`:''}
+TIÊU CHÍ (điểm tối đa): hook=18 (cú mở 3s đầu có giật/tò mò?), chanthuc=18 (CẢM GIÁC GIỐNG THẬT/TỰ NHIÊN — trông như người thật tự quay bằng điện thoại, KHÔNG bị lộ "AI/CGI/quảng cáo giả": da & biểu cảm thật, ánh sáng & bối cảnh đời thực, máy quay handheld tự nhiên, voiceover nói như người thật? Đây là tiêu chí QUAN TRỌNG — giả/nhựa thì cho điểm thấp), nhip=12 (nhịp nhanh, 6-8 quick-cut đa góc & đủ ≥6 shot?), lienmach=12 (nhân vật/trang phục/bối cảnh NHẤT QUÁN giữa các cú cắt & shot?), voiceover=12 (thoại tự nhiên, thuyết phục, vừa 10s?), nv_sp=8 (nhân vật & sản phẩm rõ, dùng ảnh tham chiếu, không bịa?), cta=8 (có CTA/chốt/cliffhanger?), brand=7 (bám insight/brand/đối tượng?), sangtao=5 (sáng tạo, không công thức nhàm?).
 BỘ PROMPT VIDEO "${title}":\n${body}
-Trả về DUY NHẤT JSON: {"diem":{"hook":0,"nhip":0,"lienmach":0,"nv_sp":0,"voiceover":0,"cta":0,"brand":0,"sangtao":0},"tong":0,"diem_manh":["..."],"diem_yeu":["..."],"sua":["2-4 việc CỤ THỂ cần sửa để tăng viral"]}. "tong" = tổng các điểm thành phần (0-100).`,{json:true,temp:0.3});
+Trả về DUY NHẤT JSON: {"diem":{"hook":0,"chanthuc":0,"nhip":0,"lienmach":0,"voiceover":0,"nv_sp":0,"cta":0,"brand":0,"sangtao":0},"tong":0,"diem_manh":["..."],"diem_yeu":["..."],"sua":["2-4 việc CỤ THỂ cần sửa để tăng viral & độ giống thật"]}. "tong" = tổng các điểm thành phần (0-100).`,{json:true,temp:0.3});
   const d=o.diem||{}; let tong=+o.tong; if(!(tong>=0&&tong<=100)) tong=VQA_CRIT.reduce((t,c)=>t+(+d[c.k]||0),0);
   S.dna.skuld.vqa=S.dna.skuld.vqa||{};
   S.dna.skuld.vqa[title]={tong:Math.round(tong), diem:d, yeu:_arr(o.diem_yeu), sua:_arr(o.sua), at:_today()};
@@ -3106,25 +3115,25 @@ async function gradeVPromptsAll(){ if(!requirePremium('Chấm điểm prompt'))r
       try{ await gradeVPrompt(t); }catch(e){} _dn++; if(btn)btn.innerHTML=`<span class="spin"></span>${_dn}/${titles.length}`; save(); renderVQA();
     }, _jid);
     AIJob.done(_jid);
-    const avg=vqaAvg(); if(fb)fb.innerHTML=`<div class="fb">✅ Đã chấm ${titles.length} video · điểm TB <b>${avg}/100</b>. ${avg>=70?'Đạt chuẩn sản xuất 👍':'Nên sửa các video <70đ trước khi xuất JSON.'}</div>`;
+    const avg=vqaAvg(); if(fb)fb.innerHTML=`<div class="fb">✅ Đã chấm ${titles.length} video · điểm TB <b>${avg}/100</b>. ${avg>=VQA_PASS?`Đạt chuẩn sản xuất 👍 (≥${VQA_PASS})`:`Nên sửa các video <${VQA_PASS}đ trước khi xuất JSON (chuẩn ĐẠT là ≥${VQA_PASS}).`}</div>`;
   }catch(e){ if(AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng chấm (giữ phần đã xong).</div>'; } else { AIJob.fail(_jid); if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   if(btn){btn.disabled=false; btn.innerHTML='🧪 Chấm điểm viral (toàn bộ prompt)';}
 }
 function regradeVPromptsAll(){ if(!confirm('Chấm lại điểm viral cho TẤT CẢ video?'))return; S.dna.skuld.vqa={}; save(); renderVQA(); gradeVPromptsAll(); }
-/* 🎬 Tạo lại TOÀN BỘ video yếu (<70đ) bằng tư duy đạo diễn nâng chuẩn + tự chấm lại — lặp tối đa 2 vòng */
+/* 🎬 Tạo lại TOÀN BỘ video yếu (<80đ) bằng tư duy đạo diễn nâng chuẩn + tự chấm lại — lặp tối đa 3 vòng */
 async function improveWeakVPrompts(){ if(!requirePremium('Nâng cấp prompt yếu'))return;
   const fb=document.getElementById('vp-fb'), btn=document.getElementById('vqa-fix');
   if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
   const q=S.dna.skuld.vqa||{}; const vp=S.dna.skuld.vprompts||{};
   if(!Object.keys(q).length){ if(fb)fb.innerHTML='<div class="fb bad">Chưa chấm điểm. Bấm "🧪 Chấm điểm viral" trước để biết video nào yếu.</div>'; return; }
-  if(!Object.keys(q).some(t=>(+q[t].tong)<70)){ if(fb)fb.innerHTML='<div class="fb">🎉 Không có video nào <70đ — bộ prompt đã đạt chuẩn.</div>'; return; }
-  if(!confirm('Tạo lại TẤT CẢ video <70đ bằng tư duy đạo diễn nâng chuẩn + tự chấm lại (lặp tối đa 2 vòng). Bản prompt cũ của các video yếu sẽ bị thay. Tiếp tục?')) return;
+  if(!Object.keys(q).some(t=>(+q[t].tong)<VQA_PASS)){ if(fb)fb.innerHTML=`<div class="fb">🎉 Không có video nào <${VQA_PASS}đ — bộ prompt đã đạt chuẩn.</div>`; return; }
+  if(!confirm(`Tạo lại TẤT CẢ video <${VQA_PASS}đ bằng tư duy đạo diễn nâng chuẩn + tự chấm lại (lặp tối đa 3 vòng). Bản prompt cũ của các video yếu sẽ bị thay. Tiếp tục?`)) return;
   healScripts(); await ensureVRef();
   if(btn)btn.disabled=true;
-  const MAXR=2; let round=0, fixed=0;
+  const MAXR=3; let round=0, fixed=0;
   try{
     while(round<MAXR){
-      const weak=Object.keys(q).filter(t=>(+q[t].tong)<70 && vp[t] && (vp[t].shots||[]).length);
+      const weak=Object.keys(q).filter(t=>(+q[t].tong)<VQA_PASS && vp[t] && (vp[t].shots||[]).length);
       if(!weak.length) break;
       round++;
       const _jid=AIJob.start(`🎬 Nâng cấp video yếu (vòng ${round})`, weak.length); let _dn=0;
@@ -3135,8 +3144,8 @@ async function improveWeakVPrompts(){ if(!requirePremium('Nâng cấp prompt y�
       }, _jid);
       AIJob.done(_jid);
     }
-    const avg=vqaAvg(), low=Object.keys(q).filter(t=>(+q[t].tong)<70).length;
-    if(fb)fb.innerHTML=`<div class="fb">✅ Đã nâng cấp + chấm lại ${fixed} lượt video yếu. Điểm TB giờ <b>${avg}/100</b>${low?` · còn ${low} video <70đ (bấm lại để nâng tiếp)`:' · KHÔNG còn video yếu 🎉'}.</div>`;
+    const avg=vqaAvg(), low=Object.keys(q).filter(t=>(+q[t].tong)<VQA_PASS).length;
+    if(fb)fb.innerHTML=`<div class="fb">✅ Đã nâng cấp + chấm lại ${fixed} lượt video yếu. Điểm TB giờ <b>${avg}/100</b>${low?` · còn ${low} video <${VQA_PASS}đ (bấm lại để nâng tiếp)`:' · KHÔNG còn video yếu 🎉'}.</div>`;
     if(typeof vdNotifyDone==='function')vdNotifyDone('Nang cap video yeu xong!');
   }catch(e){ if(window.AIJob&&AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng (giữ phần đã nâng + chấm).</div>'; } else { if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   if(btn){btn.disabled=false; btn.innerHTML='🎬 Tạo lại video yếu + chấm lại';}
@@ -3144,13 +3153,13 @@ async function improveWeakVPrompts(){ if(!requirePremium('Nâng cấp prompt y�
 function renderVQA(){ const el=document.getElementById('vqa-out'); if(!el) return; const q=S.dna.skuld.vqa||{}, keys=Object.keys(q);
   if(!keys.length){ el.className='mut'; el.innerHTML='Chưa chấm. Bấm "🧪 Chấm điểm viral" để AI đánh giá toàn bộ bộ prompt trước khi xuất JSON.'; return; }
   el.className='';
-  const avg=vqaAvg(), col=v=>v>=80?'var(--ac)':v>=70?'var(--warn)':'var(--red)';
+  const avg=vqaAvg(), col=v=>v>=VQA_PASS?'var(--ac)':v>=70?'var(--warn)':'var(--red)';
   const rows=keys.map(t=>Object.assign({t},q[t])).sort((a,b)=>a.tong-b.tong);
-  const nLow=rows.filter(r=>r.tong<70).length;
+  const nLow=rows.filter(r=>r.tong<VQA_PASS).length;
   el.innerHTML=`<div class="cách" style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <span style="font-size:13px">Điểm TB bộ prompt:</span><b style="font-size:24px;color:${col(avg)}">${avg}/100</b>
-      <span class="pill" style="border-color:${col(avg)};color:${col(avg)}">${avg>=70?'Đạt chuẩn SX':'Chưa đạt'}</span>
-      ${nLow?`<span class="mut" style="font-size:12px">⚠️ ${nLow} video &lt;70đ</span>`:''}</div></div>`+
+      <span class="pill" style="border-color:${col(avg)};color:${col(avg)}">${avg>=VQA_PASS?`Đạt chuẩn SX (≥${VQA_PASS})`:`Chưa đạt (<${VQA_PASS})`}</span>
+      ${nLow?`<span class="mut" style="font-size:12px">⚠️ ${nLow} video &lt;${VQA_PASS}đ</span>`:''}</div></div>`+
     rows.map(r=>{ const dm=r.diem||{};
       return `<details class="cách" style="margin-bottom:6px"><summary style="cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <b style="color:${col(r.tong)};font-size:15px;min-width:54px">${r.tong}/100</b><span style="font-size:12.5px">${_escAttr(r.t)}</span></summary>
@@ -3818,8 +3827,8 @@ async function runFullPipeline(){ if(!requirePremium('GENERATE 30 ngày'))return
     note('🧠 Bước 3/3: AI chấm + xếp hạng kịch bản...');
     await scoreForgeBatch();
     const L=(S.dna.skuld.scored||[]).filter(x=>x.from==='gen');
-    const scr=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, pass=L.filter(x=>x._sc&&x.score>=600).length;
-    note(`🎉 Xong KỊCH BẢN + chấm điểm! ${scr}/${L.length} kịch bản chi tiết · <b style="color:var(--ac)">${pass} ✅ đạt (≥60%)</b>. Hãy DUYỆT/chấm kịch bản trước, rồi sang "🎥 Sinh prompt video (cả loạt)" để tạo video (KHÔNG tự tạo video ở bước này nữa). <button class="btn sm" onclick="document.querySelector('.tab[data-v=&quot;skuld&quot;]').click()">🥋 Xem Lò + dựng video →</button>`);
+    const scr=L.filter(x=>(S.dna.skuld.scripts||{})[x.title]).length, pass=L.filter(x=>x._sc&&x.score>=FORGE_PASS).length;
+    note(`🎉 Xong KỊCH BẢN + chấm điểm! ${scr}/${L.length} kịch bản chi tiết · <b style="color:var(--ac)">${pass} ✅ đạt (≥${FORGE_PASS_PCT}%)</b>. Hãy DUYỆT/chấm kịch bản trước, rồi sang "🎥 Sinh prompt video (cả loạt)" để tạo video (KHÔNG tự tạo video ở bước này nữa). <button class="btn sm" onclick="document.querySelector('.tab[data-v=&quot;skuld&quot;]').click()">🥋 Xem Lò + dựng video →</button>`);
   }catch(e){ note('❌ Pipeline lỗi: '+e.message+' — bấm "⚡" lại để chạy tiếp phần dang dở.'); }
   if(auto){ auto.disabled=false; }
 }
