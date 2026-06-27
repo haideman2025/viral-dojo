@@ -612,6 +612,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
       <button class="btn ghost" id="forge-script" onclick="buildScriptsTop()">🎬 Dựng kịch bản (cả loạt)</button>
       <button class="btn ghost" id="forge-score" onclick="scoreForgeBatch()">🧠 Chấm + xếp hạng kịch bản</button>
       <button class="btn ghost" id="forge-regen" onclick="regenWeakScripts()" style="border-color:var(--warn);color:var(--warn)">♻️ Tạo lại kịch bản yếu → đạt chuẩn (tự động)</button>
+      <button class="btn ghost" id="forge-clone" onclick="cloneIdeaVariants()" style="border-color:var(--blue);color:var(--blue)">📑 Nhân bản ý tưởng → biến thể góc nhìn</button>
       <button class="btn ghost sm" onclick="forgeReset()">🔄 Làm lại từ đầu</button>
       <button class="btn ghost sm" onclick="forgeWipePlan()" style="border-color:var(--red);color:var(--red)">🧹 Xoá kế hoạch + gói (dự án này)</button>
     </div>
@@ -675,6 +676,13 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
       <button class="btn ghost sm" onclick="regenPostKitAll()">🔄 Tạo lại bộ đăng bài</button>
     </div>
     <p class="mut" style="font-size:12px;margin:-2px 0 8px">📋 Mỗi video kèm <b>caption sẵn đăng</b> + <b>hashtag</b> + <b>prompt nhạc nền</b> (Suno/Udio) — bấm Copy là dán thẳng lên page.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+      <button class="btn ghost sm" id="ttqa-btn" onclick="gradeTitleTagsAll()" style="border-color:var(--blue);color:var(--blue)">🏷 Chấm điểm Tiêu đề + Hashtag</button>
+      <button class="btn ghost sm" onclick="regradeTitleTagsAll()">🔄 Chấm lại</button>
+      <button class="btn ghost sm" id="ttqa-fix" onclick="improveTitleTagsWeak()" style="border-color:var(--ac);color:var(--ac)">✨ Tối ưu tiêu đề/hashtag yếu</button>
+    </div>
+    <p class="mut" style="font-size:12px;margin:-2px 0 8px">🏷 AI chấm <b>tiềm năng viral của HOOK/tiêu đề + bộ hashtag</b> (cần "Sinh bộ đăng bài" trước) — đạt ≥80đ. Bấm "✨ Tối ưu" để AI viết lại hook + hashtag mạnh hơn cho video yếu.</p>
+    <div id="ttqa-out" class="mut" style="margin-bottom:8px"></div>
     <p class="mut" style="font-size:12px;margin:-2px 0 8px">💡 Tạo thử 1 video: bấm nút 🎥 trên từng dòng ở bảng Dây chuyền. Mỗi shot kèm <b>voice-over</b> lấy đúng từ kịch bản + chỉ dẫn dùng ảnh tham chiếu.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
       <button class="btn ghost" id="vqa-btn" onclick="gradeVPromptsAll()" style="border-color:var(--warn);color:var(--warn)">🧪 Chấm điểm viral (toàn bộ prompt)</button>
@@ -2315,6 +2323,54 @@ async function regenWeakScripts(){ if(!requirePremium('Tạo lại kịch bản 
   }catch(e){ if(window.AIJob&&AIJob.isCancel(e)){ fb.innerHTML='<div class="fb">⏹ Đã dừng nâng cấp kịch bản yếu (giữ phần đã xong).</div>'; } else { if(_jid&&AIJob.fail)AIJob.fail(_jid); fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
   btn.disabled=false; btn.innerHTML='♻️ Tạo lại kịch bản yếu → đạt chuẩn (tự động)';
 }
+/* 📑 NHÂN BẢN Ý TƯỞNG → BIẾN THỂ GÓC NHÌN: lấy ý tưởng MẠNH (đã đạt ≥80%, fallback tất cả) nhân ra N biến thể
+   mỗi cái ĐỔI GÓC TIẾP CẬN (mẹo/case study/so sánh/POV/nỗi đau/hậu trường) → ý tưởng mới chạy tiếp pipeline bình thường. */
+async function cloneIdeaVariants(){ if(!requirePremium('Nhân bản ý tưởng'))return;
+  const fb=document.getElementById('forge-fb'), btn=document.getElementById('forge-clone');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const sk=S.dna.skuld=S.dna.skuld||{}; const gen=(sk.scored||[]).filter(x=>x.from==='gen');
+  if(!gen.length){ if(fb)fb.innerHTML='<div class="fb">Chưa có ý tưởng nào. Sang 🚀 GENERATE sinh gói 30 ngày trước.</div>'; return; }
+  const passed=gen.filter(x=>x._scv===FORGE_SV && x.score>=FORGE_PASS);
+  const src=passed.length?passed:gen;
+  const ans=prompt('📑 Nhân bản ý tưởng → biến thể góc nhìn.\n\nLấy '+src.length+' ý tưởng '+(passed.length?'ĐÃ ĐẠT ≥'+FORGE_PASS_PCT+'% (mạnh nhất)':'(chưa có cái nào đạt ≥'+FORGE_PASS_PCT+'% nên lấy TẤT CẢ)')+' để nhân thành biến thể GÓC NHÌN MỚI.\n\nMỗi ý tưởng nhân ra mấy biến thể? (1–3):', '2');
+  if(ans===null) return;
+  let N=Math.round(+ans); if(!(N>=1)) N=1; if(N>3) N=3;
+  const totalNew=src.length*N;
+  if(totalNew>60 && !confirm('Sẽ tạo '+totalNew+' ý tưởng mới (='+src.length+'×'+N+'). Hơi nhiều — vẫn tiếp tục?')) return;
+  if(!confirm('Tạo '+totalNew+' ý tưởng MỚI (mỗi ý tưởng gốc → '+N+' biến thể đổi góc nhìn), đánh số ngày tiếp theo. Sau đó dựng kịch bản + chấm như bình thường. Tiếp tục?')) return;
+  const fmt=forgeFmt(), at=_today();
+  const maxDay=Math.max(0,...gen.map(x=>+x.day||0));
+  const ANGLES='Mẹo nhanh · Case study thực tế · So sánh trước-sau · Kể chuyện POV · Giải quyết nỗi đau cụ thể · Hậu trường (BTS) · Phản biện quan niệm sai · Checklist/Quy trình';
+  if(btn)btn.disabled=true;
+  const _jid=AIJob.start('📑 Nhân bản ý tưởng', src.length); let _dn=0; const added=[];
+  try{
+    await runPool(src, async (x)=>{
+      const base=maxDay + src.indexOf(x)*N;   // dải ngày riêng cho mỗi ý tưởng gốc → không đụng nhau, không cần khoá
+      AIJob.setSub(_jid, x.title); forgeProg(`📑 Nhân bản: ${x.title}`,1);
+      try{
+        const out=await geminiCall(`Bạn là chiến lược gia nội dung VIRAL DOJO. Từ 1 ý tưởng video GỐC, đẻ ra ${N} BIẾN THỂ MỚI — GIỮ cùng chủ đề/sản phẩm nhưng MỖI biến thể đổi sang 1 GÓC TIẾP CẬN KHÁC HẲN (chọn trong: ${ANGLES}). Mỗi biến thể phải đứng độc lập, đủ sức thành 1 video viral riêng, bám BRAND.
+BRAND:\n${brandContext(2000)}
+Ý TƯỞNG GỐC: "${x.title}" — ${(x.desc||'').slice(0,500)}
+Trả về DUY NHẤT JSON: {"bien_the":[{"goc":"tên góc tiếp cận","tieu_de":"tiêu đề/hook ý tưởng mới (ngắn, giật)","mo_ta":"2-3 câu: nội dung chính + vì sao viral + CTA"}]} — đúng ${N} phần tử.`,{json:true,temp:0.85,hi:true,task:'📑 Nhân bản: '+x.title});
+        (_arr(out.bien_the)).slice(0,N).forEach((v,k)=>{
+          if(!v||(!v.tieu_de&&!v.mo_ta)) return;
+          const day=base+k+1;
+          const title=`N${day}: ${asText(v.tieu_de||x.title).replace(/\s+/g,' ').trim()}`.slice(0,80);
+          added.push({ title, desc:`[Biến thể ${asText(v.goc||'')} từ "${x.title}"] ${asText(v.mo_ta||'')}`.slice(0,900), link:'', fmt, score:0, checks:[], from:'gen', day, _sc:false, at, _clonedFrom:x.title });
+        });
+      }catch(e){}
+      _dn++; if(btn)btn.innerHTML=`<span class="spin"></span>${_dn}/${src.length}`;
+    }, _jid);
+    // gộp 1 lần để tránh trùng title (nếu AI lỡ trả tiêu đề giống nhau thì thêm hậu tố)
+    const seen=new Set(sk.scored.map(s=>s.title));
+    added.forEach(it=>{ let t=it.title, i=2; while(seen.has(t)){ t=(it.title.slice(0,76)+' #'+i); i++; } it.title=t; seen.add(t); sk.scored.push(it); });
+    save(); AIJob.done(_jid);
+    renderForgePlan(); if(typeof renderBoard==='function')renderBoard();
+    if(fb)fb.innerHTML=`<div class="fb">✅ Đã thêm <b>${added.length}</b> ý tưởng biến thể mới (N${maxDay+1}…). Bấm "🎬 Dựng kịch bản" để dựng kịch bản cho chúng, rồi "🧠 Chấm + xếp hạng".</div>`;
+    if(typeof vdNotifyDone==='function')vdNotifyDone('Nhan ban y tuong xong!');
+  }catch(e){ if(window.AIJob&&AIJob.isCancel(e)){ if(added.length){ const seen=new Set(sk.scored.map(s=>s.title)); added.forEach(it=>{ if(!seen.has(it.title)){sk.scored.push(it);seen.add(it.title);} }); save(); renderForgePlan(); } if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng (giữ '+added.length+' biến thể đã tạo).</div>'; } else { if(_jid&&AIJob.fail)AIJob.fail(_jid); if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
+  if(btn){btn.disabled=false; btn.innerHTML='📑 Nhân bản ý tưởng → biến thể góc nhìn';}
+}
 function renderScripts(){
   healScripts(); // tự chữa kịch bản cũ bị lưu dạng object
   const ex=document.getElementById('forge-export'); const keys=Object.keys(S.dna.skuld.scripts||{});
@@ -3147,7 +3203,95 @@ function renderVPrompts(){
   if(el){ el.className='mut'; el.innerHTML = keys.length
     ? '👉 Xem prompt video + caption theo TỪNG NGÀY ở khung <b>🗂 Nội dung theo ngày</b> phía trên (mục Dây chuyền) — có nút Copy từng shot / cả loạt.'
     : 'Chưa có prompt video. Dựng kịch bản trước, rồi bấm "🎥 Sinh prompt video".'; }
-  renderForgeDayBox(); renderVQA();
+  renderForgeDayBox(); renderVQA(); renderTitleTags();
+}
+/* ===== 🏷 CHẤM ĐIỂM TIÊU ĐỀ + HASHTAG (tiềm năng viral) ===== */
+async function gradeTitleTags(title){
+  const vp=(S.dna.skuld.vprompts||{})[title]||{};
+  const caption=asText(vp.caption||''), hashtags=(vp.hashtags||[]).join(' ');
+  if(!caption && !hashtags) return;   // cần bộ đăng bài trước
+  const o=await geminiCall(`Bạn là GIÁM KHẢO VIRAL TikTok/Reels CỰC KHÓ TÍNH. Chấm tiềm năng viral của HOOK/TIÊU ĐỀ và bộ HASHTAG của 1 video, thang 100đ mỗi phần. Chấm thực tế, chỉ ≥${VQA_PASS} mới coi là ĐẠT.
+BRAND:\n${brandContext(1000)}
+VIDEO: "${title}"
+HOOK/CAPTION:\n${caption.slice(0,600)}
+HASHTAG: ${hashtags||'(chưa có)'}
+TIÊU CHÍ: tieu_de (dòng hook 3 giây đầu có GIẬT/tò mò/đúng insight khách, khiến phải dừng xem & muốn xem hết?), hashtag (trộn hashtag RỘNG đang trend + NGÁCH sản phẩm/insight, đúng thị trường, đủ 8-12, không spam?).
+Trả về DUY NHẤT JSON: {"tieu_de":{"diem":0,"sua":["1-2 cách viết hook mạnh hơn"]},"hashtag":{"diem":0,"sua":["1 bộ hashtag tốt hơn — mỗi tag bắt đầu bằng #"]},"tong":0}. "tong" = trung bình 2 phần.`,{json:true,temp:0.3});
+  const td=Math.round(+((o.tieu_de||{}).diem)||0), ht=Math.round(+((o.hashtag||{}).diem)||0);
+  let tong=+o.tong; if(!(tong>=0&&tong<=100)) tong=Math.round((td+ht)/2);
+  S.dna.skuld.ttqa=S.dna.skuld.ttqa||{};
+  S.dna.skuld.ttqa[title]={tong:Math.round(tong), td, ht, td_sua:_arr((o.tieu_de||{}).sua), ht_sua:_arr((o.hashtag||{}).sua), at:_today()};
+}
+async function gradeTitleTagsAll(){ if(!requirePremium('Chấm tiêu đề+hashtag'))return;
+  const fb=document.getElementById('vp-fb'), btn=document.getElementById('ttqa-btn');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const vp=S.dna.skuld.vprompts||{};
+  const titles=Object.keys(vp).filter(t=>(vp[t].caption||(vp[t].hashtags||[]).length) && !((S.dna.skuld.ttqa||{})[t]));
+  if(!titles.length){ const has=Object.keys(vp).filter(t=>vp[t].caption||(vp[t].hashtags||[]).length).length;
+    if(fb)fb.innerHTML='<div class="fb">'+(has?'Mọi video đã chấm tiêu đề/hashtag — "🔄 Chấm lại" nếu muốn.':'Chưa có bộ đăng bài. Bấm "📋 Sinh bộ đăng bài" trước.')+'</div>'; renderTitleTags(); return; }
+  if(btn)btn.disabled=true;
+  const _jid=AIJob.start('🏷 Chấm tiêu đề+hashtag', titles.length); let _dn=0;
+  try{
+    await runPool(titles, async(t)=>{ AIJob.setSub(_jid,t); forgeProg(`🏷 Chấm tiêu đề/hashtag: ${t}`,1);
+      try{ await gradeTitleTags(t); }catch(e){} _dn++; if(btn)btn.innerHTML=`<span class="spin"></span>${_dn}/${titles.length}`; save(); renderTitleTags();
+    }, _jid);
+    AIJob.done(_jid);
+    if(fb)fb.innerHTML='<div class="fb">✅ Đã chấm tiêu đề + hashtag. Video <80đ → bấm "✨ Tối ưu tiêu đề/hashtag yếu".</div>';
+  }catch(e){ if(window.AIJob&&AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng (giữ phần đã chấm).</div>'; } else { AIJob.fail(_jid); if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
+  if(btn){btn.disabled=false; btn.innerHTML='🏷 Chấm điểm Tiêu đề + Hashtag';}
+}
+function regradeTitleTagsAll(){ if(!confirm('Chấm lại tiêu đề + hashtag cho TẤT CẢ video?'))return; S.dna.skuld.ttqa={}; save(); renderTitleTags(); gradeTitleTagsAll(); }
+async function improveTitleTagsWeak(){ if(!requirePremium('Tối ưu tiêu đề+hashtag'))return;
+  const fb=document.getElementById('vp-fb'), btn=document.getElementById('ttqa-fix');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const tq=S.dna.skuld.ttqa||{}, vp=S.dna.skuld.vprompts||{};
+  const weak=Object.keys(tq).filter(t=>(+tq[t].tong)<VQA_PASS && vp[t]);
+  if(!weak.length){ if(fb)fb.innerHTML=`<div class="fb">${Object.keys(tq).length?'🎉 Không có video nào <'+VQA_PASS+'đ.':'Chưa chấm. Bấm "🏷 Chấm điểm Tiêu đề + Hashtag" trước.'}</div>`; return; }
+  if(!confirm('Tối ưu hook (caption) + hashtag cho '+weak.length+' video <'+VQA_PASS+'đ rồi tự chấm lại? Bản caption/hashtag cũ của các video này sẽ bị thay.')) return;
+  if(btn)btn.disabled=true;
+  const LANG=voLang();
+  const _jid=AIJob.start('✨ Tối ưu tiêu đề+hashtag', weak.length); let _dn=0;
+  try{
+    await runPool(weak, async(t)=>{ AIJob.setSub(_jid,t); forgeProg(`✨ Tối ưu: ${t}`,1);
+      const cur=vp[t]||{}; const fbk=[...(tq[t].td_sua||[]),...(tq[t].ht_sua||[])].join('; ');
+      try{
+        const o=await geminiCall(`Viết lại CHO MẠNH HƠN phần đăng bài của 1 video để tăng tiềm năng viral, bám BRAND. Ngôn ngữ: ${LANG}.
+BRAND:\n${brandContext(1500)}
+VIDEO: "${t}"
+CAPTION CŨ:\n${asText(cur.caption||'').slice(0,500)}
+HASHTAG CŨ: ${(cur.hashtags||[]).join(' ')}
+GỢI Ý GIÁM KHẢO (khắc phục): ${fbk||'hook mạnh hơn, hashtag trúng trend+ngách hơn'}
+Yêu cầu: DÒNG HOOK đầu phải giật/tò mò mạnh hơn hẳn; giữ ý/insight & CTA; 8-12 hashtag trộn rộng-trend + ngách.
+Trả về DUY NHẤT JSON: {"caption":"caption ${LANG} sẵn đăng, hook đầu mạnh, dùng \\n xuống dòng, 2-4 emoji, KHÔNG nhồi hashtag vào caption","hashtags":["#...","..."]}`,{json:true,temp:0.7,hi:true});
+        if(o.caption) cur.caption=asText(o.caption);
+        if(o.hashtags) cur.hashtags=cleanTags(o.hashtags);
+        vp[t]=cur;
+        await gradeTitleTags(t);
+      }catch(e){}
+      _dn++; if(btn)btn.innerHTML=`<span class="spin"></span>${_dn}/${weak.length}`; save(); renderVPrompts();
+    }, _jid);
+    AIJob.done(_jid);
+    const low=Object.keys(S.dna.skuld.ttqa||{}).filter(t=>(+S.dna.skuld.ttqa[t].tong)<VQA_PASS).length;
+    if(fb)fb.innerHTML=`<div class="fb">✅ Đã tối ưu + chấm lại ${weak.length} video.${low?` Còn ${low} video <${VQA_PASS}đ (bấm lại để tối ưu tiếp).`:' KHÔNG còn video yếu 🎉'}</div>`;
+  }catch(e){ if(window.AIJob&&AIJob.isCancel(e)){ if(fb)fb.innerHTML='<div class="fb">⏹ Đã dừng (giữ phần đã tối ưu).</div>'; } else { if(_jid&&AIJob.fail)AIJob.fail(_jid); if(fb)fb.innerHTML=`<div class="fb bad">❌ ${e.message}</div>`; } }
+  if(btn){btn.disabled=false; btn.innerHTML='✨ Tối ưu tiêu đề/hashtag yếu';}
+}
+function renderTitleTags(){ const el=document.getElementById('ttqa-out'); if(!el) return; const q=S.dna.skuld.ttqa||{}, keys=Object.keys(q);
+  if(!keys.length){ el.className='mut'; el.innerHTML='Chưa chấm tiêu đề/hashtag. Sinh bộ đăng bài rồi bấm "🏷 Chấm điểm Tiêu đề + Hashtag".'; return; }
+  el.className='';
+  const col=v=>v>=VQA_PASS?'var(--ac)':v>=65?'var(--warn)':'var(--red)';
+  const rows=keys.map(t=>Object.assign({t},q[t])).sort((a,b)=>a.tong-b.tong);
+  const avg=Math.round(rows.reduce((s,r)=>s+(+r.tong||0),0)/rows.length), nLow=rows.filter(r=>r.tong<VQA_PASS).length;
+  el.innerHTML=`<div class="cách" style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:13px">Điểm TB tiêu đề+hashtag:</span><b style="font-size:22px;color:${col(avg)}">${avg}/100</b>
+      ${nLow?`<span class="mut" style="font-size:12px">⚠️ ${nLow} video &lt;${VQA_PASS}đ</span>`:'<span class="pill" style="border-color:var(--ac);color:var(--ac)">Đạt chuẩn</span>'}</div></div>`+
+    rows.map(r=>`<details class="cách" style="margin-bottom:6px"><summary style="cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <b style="color:${col(r.tong)};font-size:15px;min-width:54px">${r.tong}/100</b><span style="font-size:12.5px">${_escAttr(r.t)}</span>
+        <span class="pill" style="font-size:10.5px">Tiêu đề ${r.td==null?'–':r.td}</span><span class="pill" style="font-size:10.5px">Hashtag ${r.ht==null?'–':r.ht}</span></summary>
+      <div style="margin-top:6px;font-size:12px">
+        ${r.td_sua&&r.td_sua.length?`<div style="margin-bottom:3px"><b style="color:var(--warn)">Hook nên sửa:</b><ul style="margin:3px 0 0 16px;padding:0">${r.td_sua.map(s=>`<li>${_escAttr(s)}</li>`).join('')}</ul></div>`:''}
+        ${r.ht_sua&&r.ht_sua.length?`<div><b style="color:var(--blue)">Hashtag gợi ý:</b> ${r.ht_sua.map(_escAttr).join(' · ')}</div>`:''}
+      </div></details>`).join('');
 }
 /* ===== 🧪 QA VIRAL — AI chấm điểm toàn bộ bộ prompt video trước khi xuất JSON sản xuất ===== */
 const VQA_CRIT = [
