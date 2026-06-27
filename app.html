@@ -2589,6 +2589,7 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
 function exportFlowJson(){ if(!requirePremium('Xuất cho Flow'))return;
   if(!S._flowManifest){ alert('Bấm "📦 Xuất cho Flow (.md)" trước để phân loại, rồi mới tải .json.'); return; }
   const man=JSON.parse(JSON.stringify(S._flowManifest));   // clone tạm để nhúng ảnh, không đụng bản gốc nhẹ
+  (man.days||[]).forEach(d=>(d.shots||[]).forEach(s=>{ s.prompt_en=ensureSafeEN(s.prompt_en); }));  // 🛡 chống Flow chặn kể cả manifest cũ
   const ros=roster(); let nImg=0;
   (man.characters||[]).forEach(ch=>{ const m=ros.find(rc=>(rc.ten||'').toLowerCase().trim() && (rc.ten||'').toLowerCase().trim()===String(ch.ten||'').toLowerCase().trim());
     if(m&&m.img){ ch.anh_base64=m.img; ch.co_anh=true; nImg++; } });
