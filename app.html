@@ -613,6 +613,7 @@ footer{color:var(--mut);font-size:14px;text-align:center;padding:24px;font-weigh
       <button class="btn ghost" id="forge-score" onclick="scoreForgeBatch()">🧠 Chấm + xếp hạng kịch bản</button>
       <button class="btn ghost" id="forge-regen" onclick="regenWeakScripts()" style="border-color:var(--warn);color:var(--warn)">♻️ Tạo lại kịch bản yếu → chấm lại</button>
       <button class="btn ghost sm" onclick="forgeReset()">🔄 Làm lại từ đầu</button>
+      <button class="btn ghost sm" onclick="forgeWipePlan()" style="border-color:var(--red);color:var(--red)">🧹 Xoá kế hoạch + gói (dự án này)</button>
     </div>
     <div id="forge-fb"></div>
     <div id="forge-scripts"></div>
@@ -2120,6 +2121,25 @@ function forgeReset(){
   sk.scripts=sk.scripts||{}; Object.keys(sk.scripts).forEach(t=>{ if(titles.has(t)) delete sk.scripts[t]; });
   save(); renderForgePlan(); renderScripts();
   const f=document.getElementById('forge-fb'); if(f) f.innerHTML='<div class="fb">🔄 Đã làm sạch. Bấm "⚡ Tự động" để xem AI dựng kịch bản → chấm từ đầu.</div>';
+}
+/* 🧹 XOÁ SẠCH kế hoạch của DỰ ÁN HIỆN TẠI: bỏ hẳn ý tưởng GENERATE (N1…) + kịch bản + prompt video +
+   điểm + gói GENERATE + cache Flow. GIỮ Channel DNA/brand. Dùng khi kế hoạch bị sai/dính dữ liệu dự án cũ. */
+function forgeWipePlan(){
+  const sk=S.dna.skuld=S.dna.skuld||{};
+  const genTitles=new Set((sk.scored||[]).filter(x=>x.from==='gen').map(x=>x.title));
+  const n=genTitles.size, hasPack=!!(S._pack&&S._pack.calendar&&S._pack.calendar.length);
+  const fb=document.getElementById('forge-fb');
+  if(!n && !hasPack){ if(fb)fb.innerHTML='<div class="fb">Dự án này chưa có kế hoạch nào để xoá.</div>'; return; }
+  if(!confirm('🧹 XOÁ TOÀN BỘ kế hoạch của DỰ ÁN "'+activeProject().name+'":\n• '+n+' ý tưởng (N1…) + kịch bản + prompt video + điểm\n• Gói GENERATE 30 ngày + cache xuất Flow\n\nGIỮ NGUYÊN Channel DNA/brand. KHÔNG hồi lại được.\nDùng khi kế hoạch bị sai/dính dữ liệu dự án cũ — xoá xong sang 🚀 GENERATE sinh lại sạch.\n\nTiếp tục?')) return;
+  sk.scored=(sk.scored||[]).filter(x=>x.from!=='gen');                                  // bỏ ý tưởng GENERATE
+  sk.scripts=sk.scripts||{}; Object.keys(sk.scripts).forEach(t=>{ if(genTitles.has(t)) delete sk.scripts[t]; });
+  sk.vprompts=sk.vprompts||{}; Object.keys(sk.vprompts).forEach(t=>{ if(genTitles.has(t)) delete sk.vprompts[t]; });
+  sk.vqa=sk.vqa||{}; Object.keys(sk.vqa).forEach(t=>{ if(genTitles.has(t)) delete sk.vqa[t]; });
+  S._pack={}; activeProject().dna._flowManifest=undefined;                              // xoá gói + cache Flow (đã theo dự án)
+  _fDay=null;
+  save(); renderForgePlan(); renderScripts();
+  if(typeof renderVPrompts==='function')renderVPrompts(); if(typeof renderVQA==='function')renderVQA(); if(typeof renderPack==='function')renderPack();
+  if(fb)fb.innerHTML='<div class="fb">🧹 Đã xoá sạch kế hoạch của dự án này ('+n+' ý tưởng + kịch bản/prompt/điểm + gói GENERATE). Sang 🚀 <b>GENERATE</b> bấm "✨ Sinh gói 30 ngày" để tạo lại đúng brand của dự án này.</div>';
 }
 /* --- nút ngữ cảnh trên từng dòng kịch bản: tự nạp data vào Lò A/B/C, không gõ tay --- */
 function loToggle(id){ const e=document.getElementById(id); if(e) e.style.display = e.style.display==='none'?'':'none'; }
