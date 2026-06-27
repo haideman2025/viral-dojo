@@ -1325,6 +1325,15 @@ async function adminSaveSheet(){
 /* ================= GEMINI HELPER (dùng chung mọi trạm) ================= */
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_PRO   = 'gemini-2.5-pro';   // model "chất lượng cao" cho khâu não (kịch bản, phân loại Flow)
+const THINK_BRAIN  = -1;                 // thinkingBudget = -1 → suy nghĩ ĐỘNG (sâu) cho khâu não; 0 = TẮT (việc vặt → nhanh+rẻ)
+const _sleep = ms => new Promise(r=>setTimeout(r,ms));
+/* parse JSON chịu lỗi: gỡ ```json fence / cắt từ { đến } nếu model trả kèm rác */
+function _parseAiJson(txt){
+  try{ return JSON.parse(txt); }catch(e){}
+  const m=txt.match(/```(?:json)?\s*([\s\S]*?)```/i); if(m){ try{ return JSON.parse(m[1]); }catch(e){} }
+  const a=txt.indexOf('{'), b=txt.lastIndexOf('}'); if(a>=0&&b>a){ try{ return JSON.parse(txt.slice(a,b+1)); }catch(e){} }
+  throw new Error('JSON không hợp lệ');
+}
 async function geminiCall(prompt, opt){
   opt = opt || {};
   const key = S.keys.gemini;
@@ -1334,16 +1343,34 @@ async function geminiCall(prompt, opt){
   window.__aiTask = opt.task || 'Tác vụ AI';   // nhãn cho AI Monitor
   const cfg = { temperature: opt.temp==null?0.4:opt.temp };
   if(opt.json) cfg.responseMimeType = 'application/json';
+  // 🧠 Suy nghĩ: opt.think chỉ định → dùng; KHÔNG có → khâu não (hi) suy nghĩ sâu, việc vặt TẮT (nhanh+rẻ)
+  let tb = (opt.think!=null) ? opt.think : (opt.hi ? THINK_BRAIN : 0);
+  if(model===GEMINI_PRO && tb===0) tb=THINK_BRAIN;   // Pro không tắt thinking được → để động
+  cfg.thinkingConfig = { thinkingBudget: tb };
   const parts=[{text:prompt}];
   (opt.images||[]).forEach(im=>{ if(im&&im.data) parts.push({inline_data:{mime_type:im.mime||'image/jpeg', data:im.data}}); });
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({contents:[{parts}], generationConfig:cfg})
-  });
-  if(!r.ok) throw new Error('HTTP '+r.status);
-  const txt = (((await r.json()).candidates||[])[0]||{}).content?.parts?.[0]?.text || '';
-  if(!txt) throw new Error('Phản hồi rỗng');
-  return opt.json ? JSON.parse(txt) : txt;
+  const body = JSON.stringify({contents:[{parts}], generationConfig:cfg});
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const MAXTRY=3; let lastErr;
+  for(let attempt=1; attempt<=MAXTRY; attempt++){
+    try{
+      const r = await fetch(url,{method:'POST', headers:{'Content-Type':'application/json'}, body});
+      if(!r.ok){
+        // 429 (quá tải/giới hạn) hoặc 5xx → chờ tăng dần rồi thử lại; lỗi khác → ném luôn
+        if((r.status===429 || r.status>=500) && attempt<MAXTRY){ lastErr=new Error('HTTP '+r.status); await _sleep(900*Math.pow(2,attempt-1)); continue; }
+        throw new Error('HTTP '+r.status);
+      }
+      const txt = (((await r.json()).candidates||[])[0]||{}).content?.parts?.[0]?.text || '';
+      if(!txt) throw new Error('Phản hồi rỗng');
+      return opt.json ? _parseAiJson(txt) : txt;
+    }catch(e){
+      lastErr=e;
+      const neterr = e && (e.name==='TypeError' || /Failed to fetch|NetworkError|network/i.test(e.message||''));
+      if(neterr && attempt<MAXTRY){ await _sleep(900*Math.pow(2,attempt-1)); continue; }   // lỗi mạng → retry
+      throw e;
+    }
+  }
+  throw lastErr || new Error('AI lỗi');
 }
 
 /* ===== CHẠY SONG SONG có pool — tôn trọng cổng pause/cancel của AIJob ===== */
@@ -2789,7 +2816,7 @@ Mỗi shot 10s, trả 3 trường:
 
 KỊCH BẢN ("${title}"):
 ${body}
-Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]}. SỐ SHOT: video hoàn chỉnh PHẢI dài TỐI THIỂU 60 GIÂY = ÍT NHẤT 6 shot 10s (BẮT BUỘC ≥${_nTarget} shot, KHÔNG ÍT HƠN ${_nTarget}); nếu kịch bản ngắn thì GIÃN/khai triển thêm cảnh (mở rộng diễn biến, thêm nhịp, b-roll, phản ứng, bằng chứng) cho ĐỦ ≥6 shot — TUYỆT ĐỐI KHÔNG cắt bớt còn dưới 6. Mỗi shot = 1 đoạn 10 giây ĐỘC LẬP; TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot (mỗi shot tự nó đã gồm 6-8 cú cắt nhanh bên trong).`,{json:true,temp:0.55, images: v.productImg?[{mime:'image/jpeg',data:v.productImg.split(',')[1]}]:[]});
+Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]}. SỐ SHOT: video hoàn chỉnh PHẢI dài TỐI THIỂU 60 GIÂY = ÍT NHẤT 6 shot 10s (BẮT BUỘC ≥${_nTarget} shot, KHÔNG ÍT HƠN ${_nTarget}); nếu kịch bản ngắn thì GIÃN/khai triển thêm cảnh (mở rộng diễn biến, thêm nhịp, b-roll, phản ứng, bằng chứng) cho ĐỦ ≥6 shot — TUYỆT ĐỐI KHÔNG cắt bớt còn dưới 6. Mỗi shot = 1 đoạn 10 giây ĐỘC LẬP; TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot (mỗi shot tự nó đã gồm 6-8 cú cắt nhanh bên trong).`,{json:true,temp:0.55, hi:true, images: v.productImg?[{mime:'image/jpeg',data:v.productImg.split(',')[1]}]:[]});
   S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
   const prev=S.dna.skuld.vprompts[title]||{};
   let newShots=(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:s.prompt||'',voiceover:s.voiceover||'',onscreen:s.onscreen||''})).filter(s=>s.prompt);
