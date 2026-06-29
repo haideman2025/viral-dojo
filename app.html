@@ -291,6 +291,7 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
     <button class="tab act" data-v="home">Dojo</button>
     <button class="tab" data-v="lib">📚 Tri thức</button>
     <button class="tab" data-v="skuld">🥋 LÒ LUYỆN</button>
+    <button class="tab" data-v="ocean">🧭 Đại Hải Trình</button>
     <button class="tab" data-v="ops">📊 Vận hành</button>
     <button class="tab" data-v="dist">📤 Phân phối</button>
     <button class="tab" data-v="conn">⚡ Kết nối</button>
@@ -929,6 +930,43 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
 </div>
 
 <!-- ============ VIEW: PHÂN PHỐI ============ -->
+<div id="v-ocean" style="display:none">
+  <div class="note">🧭 <b>Đại Hải Trình</b> — không gian sáng tạo tự do: gõ 1 ý tưởng sản phẩm → VIRAL DOJO sinh nhiều ý tưởng kịch bản chất lượng cao → chấm điểm COREVIRAL & nâng cấp ≥80% → hướng dẫn sản xuất cho <b>người thật + AI</b> → sinh prompt video an toàn → xuất JSON cho Flow. Sản xuất ít hay nhiều đều giữ chuẩn cao nhất.</div>
+
+  <div class="sec" id="oc-input">
+    <h2>🧭 Nhập ý tưởng — ra cả loạt kịch bản</h2>
+    <p class="mut">Mô tả sản phẩm / dịch vụ / chủ đề bạn muốn làm video. Càng rõ insight khách + điểm mạnh, AI càng trúng.</p>
+    <textarea id="oc-idea" rows="3" placeholder="VD: Bột rau củ detox cho dân văn phòng — đẹp da, đỡ táo bón, pha nhanh 30 giây, vị dễ uống..."></textarea>
+    <div class="row" style="margin-top:10px">
+      <div><label>Số ý tưởng kịch bản</label><select id="oc-n"><option>3</option><option>5</option><option selected>8</option><option>10</option><option>15</option></select></div>
+      <div><label>Định dạng ưu tiên</label><select id="oc-fmt"><option value="đa dạng" selected>Đa dạng (mỗi cái 1 góc)</option><option value="kể chuyện POV">Kể chuyện / POV</option><option value="review trải nghiệm">Review / Trải nghiệm</option><option value="mẹo hướng dẫn">Mẹo / Hướng dẫn</option><option value="so sánh trước-sau">So sánh / Trước-sau</option><option value="bán hàng trực diện">Bán hàng trực diện</option></select></div>
+      <div><label>Ngôn ngữ đầu ra</label><input id="oc-lang" placeholder="Vietnamese"></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="oc-gen" onclick="ocGenIdeas()">✨ Sinh ý tưởng kịch bản</button>
+      <button class="btn ghost sm" onclick="ocWipe()">🧹 Xoá hết</button>
+    </div>
+    <div id="oc-fb"></div>
+  </div>
+
+  <div class="sec" id="oc-actions" style="display:none">
+    <h2>⚙️ Dây chuyền nhanh <span class="pill" id="oc-count"></span></h2>
+    <p class="mut">Chạy cả loạt, hoặc bấm từng nút trên mỗi thẻ bên dưới. Mỗi bước đều do engine VIRAL DOJO nâng cấp.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn sm" onclick="ocBuildAll()">🎬 Dựng kịch bản (tất cả)</button>
+      <button class="btn sm ghost" onclick="ocScoreAll()">🧠 Chấm COREVIRAL (tất cả)</button>
+      <button class="btn sm ghost" onclick="ocUpgradeWeakAll()">♻️ Nâng cấp cái &lt;80% → đạt chuẩn</button>
+      <button class="btn sm ghost" onclick="ocPromptsAll()">🎥 Sinh prompt video (tất cả)</button>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn sm ghost" style="border-color:var(--blue);color:var(--blue)" onclick="ocExportJson()">🧩 Xuất JSON cho Flow</button>
+      <button class="btn sm ghost" style="border-color:var(--blue);color:var(--blue)" onclick="ocExportMd()">📄 Xuất .md (kịch bản + hướng dẫn + prompt)</button>
+    </div>
+  </div>
+
+  <div class="sec" id="oc-board"></div>
+</div>
+
 <div id="v-dist" style="display:none">
   <div class="note">📤 <b>Phân phối tự động qua Zernio</b> — lên lịch video + caption/hashtag rồi đẩy thẳng lên TikTok/FB/YouTube qua Worker trung gian (giữ key an toàn). Chưa có Worker? Vẫn dùng được chế độ xuất CSV/JSON để đăng tay.</div>
   <div class="sec">
@@ -1448,9 +1486,10 @@ async function runPool(items, worker, jid){
 /* ================= NAV ================= */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act')); t.classList.add('act');
-  ['home','lib','skuld','ops','dist','conn','dna'].forEach(v=>document.getElementById('v-'+v).style.display = (t.dataset.v===v?'':'none'));
+  ['home','lib','skuld','ocean','ops','dist','conn','dna'].forEach(v=>{ const c=document.getElementById('v-'+v); if(c) c.style.display = (t.dataset.v===v?'':'none'); });
   if(t.dataset.v==='dist'){ renderDistDayOptions(); renderDist(); renderZernioCfg(); }
   if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderRoster(); renderVPrompts(); }
+  if(t.dataset.v==='ocean'){ if(typeof ocRender==='function') ocRender(); }
   if(t.dataset.v==='ops'){ renderOps(); }
 });
 
@@ -4797,6 +4836,191 @@ function ensureDynamic(){
 })();
 </script>
 
+<script>
+/* ===================== 🧭 ĐẠI HẢI TRÌNH — không gian sáng tạo tự do (super app) =====================
+   Người dùng nhập ý tưởng → sinh nhiều ý tưởng kịch bản → chấm COREVIRAL → nâng cấp ≥80%
+   → hướng dẫn sản xuất (người thật + AI) → prompt video an toàn → xuất JSON Flow.
+   Tái dùng engine sẵn có: geminiCall, normScenes, ensureSafeEN, NATURAL_REAL_EN, CUT_COHERENCE_EN,
+   SAFE_COMPLIANCE_*, runPool, AIJob, brandContext, vref, voLang/voStyle, _arr/asText/_escAttr/_clip. */
+const OC_PASS = 80;
+function OC(){ const d=S.dna; d.ocean=d.ocean||{idea:'',items:[]}; if(!Array.isArray(d.ocean.items)) d.ocean.items=[]; return d.ocean; }
+function ocFb(msg,bad){ const e=document.getElementById('oc-fb'); if(e) e.innerHTML=msg?('<div class="fb'+(bad?' bad':'')+'">'+msg+'</div>'):''; }
+function ocLang(){ const i=document.getElementById('oc-lang'); const v=(i&&i.value.trim())||(typeof voLang==='function'?voLang():'Vietnamese'); return v||'Vietnamese'; }
+function ocVoice(){ return (typeof voStyle==='function'?voStyle():'')||''; }
+function ocItem(id){ return OC().items.find(x=>x.id===id); }
+function ocNewId(){ return 'oc'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
+function ocDl(name,data,mime){ const b=new Blob([data],{type:mime||'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+function ocCtx(){ let s='Ý TƯỞNG/SẢN PHẨM GỐC của người dùng (nguồn sáng tạo — bám sát cái này):\n'+(OC().idea||'').slice(0,1400);
+  try{ const b=brandContext(600); if(b&&b.trim()&&/[A-Za-zÀ-ỹ0-9]/.test(b)) s+='\n\nGỢI Ý THƯƠNG HIỆU (dùng nếu hợp, không bắt buộc):\n'+b.slice(0,600); }catch(e){}
+  return s; }
+function ocScenes(out){ return (typeof normScenes==='function'?normScenes(out&&out.scenes):_arr(out&&out.scenes)); }
+
+async function ocGenIdeas(){ if(typeof requirePremium==='function'&&!requirePremium('Đại Hải Trình'))return;
+  if(!S.keys.gemini){ ocFb('Cần Gemini key — tab ⚡ Kết nối.',1); return; }
+  const ta=document.getElementById('oc-idea'); const idea=(ta&&ta.value.trim())||'';
+  if(idea.length<6){ ocFb('Nhập ý tưởng sản phẩm/chủ đề rõ hơn (≥6 ký tự).',1); return; }
+  OC().idea=idea;
+  const N=Math.max(1,Math.min(20, parseInt((document.getElementById('oc-n')||{}).value,10)||8));
+  const fmt=(document.getElementById('oc-fmt')||{}).value||'đa dạng';
+  const btn=document.getElementById('oc-gen'); if(btn)btn.disabled=true;
+  ocFb('<span class="spin"></span>Đang sinh '+N+' ý tưởng kịch bản...');
+  try{
+    const o=await geminiCall('Bạn là chiến lược gia nội dung VIRAL DOJO (phương pháp COREVIRAL). Từ ý tưởng/sản phẩm của người dùng, đẻ ra '+N+' Ý TƯỞNG KỊCH BẢN video ngắn (TikTok/Reels) CHẤT LƯỢNG CAO, mỗi cái 1 GÓC TIẾP CẬN KHÁC HẲN, đủ sức viral & bán hàng. Định dạng ưu tiên: '+fmt+'.\n'+ocCtx()+'\nMỗi ý tưởng: tieu_de (hook/tiêu đề giật, ngắn), goc (góc tiếp cận: Mẹo/Case study/So sánh/POV/Giải quyết nỗi đau/Hậu trường/Phản biện...), mo_ta (2-3 câu: nội dung chính + vì sao viral + CTA).\nTrả về DUY NHẤT JSON: {"items":[{"tieu_de":"","goc":"","mo_ta":""}]} — đúng '+N+' phần tử, KHÔNG trùng góc.',{json:true,hi:true,temp:0.9});
+    const arr=_arr(o.items).slice(0,N); const at=_today();
+    arr.forEach((v,i)=>{ if(!v||(!v.tieu_de&&!v.mo_ta))return;
+      OC().items.push({ id:ocNewId(), title:asText(v.tieu_de||('Ý tưởng '+(i+1))).slice(0,90), goc:asText(v.goc||''), mo_ta:asText(v.mo_ta||''), fmt:fmt, at:at, score:0, _scored:false, script:null, shots:[], guide:null }); });
+    save(); ocRender();
+    ocFb('✅ Đã sinh '+arr.length+' ý tưởng. Bấm "🎬 Dựng kịch bản (tất cả)" hoặc xử lý từng thẻ bên dưới.');
+    if(typeof vdNotifyDone==='function')vdNotifyDone('Sinh y tuong xong!');
+  }catch(e){ ocFb('❌ '+e.message,1); }
+  if(btn)btn.disabled=false;
+}
+
+async function ocBuildScript(id){ const x=ocItem(id); if(!x)return;
+  const out=await geminiCall('Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT cho 1 video TikTok ~60s từ Ý TƯỞNG dưới, bám sản phẩm/insight người dùng. Chia 3 phần MỞ BÀI/THÂN BÀI/KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh: noidung (lời thoại/diễn biến), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/âm thanh overlay), note (gợi ý quay/dựng). Ngôn ngữ thoại: '+ocLang()+'.\n'+ocCtx()+'\nÝ TƯỞNG: "'+x.title+'" ['+x.goc+'] — '+x.mo_ta+'\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"","hinhanh":"","tram":"","note":""}]}.',{json:true,hi:true,temp:0.6});
+  x.script={scenes:ocScenes(out), at:_today()}; x._scored=false; x.score=0; save(); ocRender();
+}
+
+async function ocScoreItem(id){ const x=ocItem(id); if(!x||!x.script)return;
+  const body=((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' [hình:'+(c.hinhanh||'')+'; trám:'+(c.tram||'')+']').join('\n').slice(0,1600);
+  const o=await geminiCall('Bạn là GIÁM KHẢO VIRAL DOJO cực khó tính. Chấm KỊCH BẢN video theo COREVIRAL, thang 100đ — chỉ ≥'+OC_PASS+' mới ĐẠT chuẩn sản xuất, đừng dễ dãi.\nTIÊU CHÍ: hook (3s đầu giật/tò mò), insight (đúng nỗi đau/mong muốn khách), cau_chuyen (mạch & cao trào), nhip (nhịp nhanh hợp video ngắn), san_pham (xuất hiện tự nhiên không gượng), chan_thuc (giống thật/đời thường), cta (chốt/cliffhanger rõ), sang_tao (không công thức nhàm).\n'+ocCtx()+'\nKỊCH BẢN "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"diem":{"hook":0,"insight":0,"cau_chuyen":0,"nhip":0,"san_pham":0,"chan_thuc":0,"cta":0,"sang_tao":0},"tong":0,"manh":["..."],"yeu":["..."],"sua":["2-4 việc cụ thể cần sửa để đạt ≥'+OC_PASS+'"]}. "tong" 0-100.',{json:true,temp:0.3});
+  let tong=+o.tong; if(!(tong>=0&&tong<=100)){ const d=o.diem||{}; tong=Object.values(d).reduce((a,b)=>a+(+b||0),0); }
+  x.score=Math.round(tong); x.diem=o.diem||{}; x.manh=_arr(o.manh); x.yeu=_arr(o.yeu); x.sua=_arr(o.sua); x._scored=true; x.scoredAt=_today(); save(); ocRender();
+}
+
+async function ocUpgradeItem(id){ const x=ocItem(id); if(!x||!x.script)return;
+  if(!x._scored) await ocScoreItem(id);
+  let round=0, last=-1;
+  while(round<3 && x.score<OC_PASS){ round++;
+    const oldText=((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' [hình:'+(c.hinhanh||'')+'; trám:'+(c.tram||'')+']').join('\n').slice(0,1500);
+    const fix=(x.yeu&&x.yeu.length?('ĐIỂM YẾU: '+x.yeu.join('; ')+'. '):'')+(x.sua&&x.sua.length?('VIỆC CẦN SỬA: '+x.sua.join('; ')):'nâng mạnh hook, insight, cao trào, CTA');
+    const out=await geminiCall('Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN cho đạt chuẩn sản xuất ≥'+OC_PASS+'đ, bám ý tưởng/sản phẩm. Khắc phục đúng điểm yếu, đừng lặp lỗi cũ. Thoại '+ocLang()+'.\n'+ocCtx()+'\nÝ TƯỞNG: "'+x.title+'" ['+x.goc+'] — '+x.mo_ta+'\n'+fix+'\nKỊCH BẢN CŨ (làm tốt hơn):\n'+oldText+'\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"","hinhanh":"","tram":"","note":""}]}.',{json:true,hi:true,temp:0.6});
+    x.script={scenes:ocScenes(out), at:_today()};
+    last=x.score; await ocScoreItem(id);
+    if(x.score<=last && round>=2) break;
+  }
+  save(); ocRender();
+}
+
+async function ocGuide(id){ const x=ocItem(id); if(!x)return;
+  const body=x.script?((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')).join(' | ').slice(0,1200):(x.mo_ta||'');
+  const o=await geminiCall('Bạn là đạo diễn/nhà sản xuất VIRAL DOJO. Viết HƯỚNG DẪN SẢN XUẤT chi tiết cho 1 video từ kịch bản dưới, 2 cách: (1) quay bằng NGƯỜI THẬT, (2) dựng bằng AI (Google Flow/Veo). Thực dụng, từng bước, cho người không chuyên.\nKỊCH BẢN "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"nguoi_that":"hướng dẫn quay người thật (gạch đầu dòng, xuống dòng bằng \\\\n): thiết bị (điện thoại đủ), bối cảnh, đạo cụ, ánh sáng, diễn xuất/thoại, số cảnh, mẹo giữ chân người xem, dựng & nhạc","ai":"hướng dẫn dựng bằng AI Flow/Veo (gạch đầu dòng, \\\\n): chuẩn bị ảnh nhân vật + sản phẩm, dùng prompt video (mỗi shot 10s, ≥6 shot), khoá nhân vật/sản phẩm, lồng tiếng '+ocLang()+', ghép shot, lưu ý chống lỗi/bị chặn"}',{json:true,hi:true,temp:0.5});
+  x.guide={human:asText(o.nguoi_that||''), ai:asText(o.ai||''), at:_today()}; save(); ocRender();
+}
+
+async function ocPrompts(id){ const x=ocItem(id); if(!x||!x.script)return;
+  const LANG=ocLang(), VOICE=ocVoice(), v=(typeof vref==='function'?vref():{})||{};
+  const body=((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' | hình: '+(c.hinhanh||'')+' | trám: '+(c.tram||'')).join('\n');
+  const nT=Math.max(6,((x.script.scenes)||[]).length);
+  const o=await geminiCall('Bạn là ĐẠO DIỄN VIRAL DOJO. Chuyển KỊCH BẢN thành chuỗi SHOT 10 GIÂY cho Omni/Veo (Google Flow); ghép lại thành 1 video ≥60s mượt, liền mạch.\nNHÂN VẬT (giữ y hệt mọi shot): '+(v.character||'nhân vật hư cấu nhất quán do bạn thiết kế, hợp ý tưởng')+'\nSTYLE: '+(v.style||'cinematic, hợp TikTok')+' · NGÔN NGỮ thoại/overlay: '+LANG+(VOICE?(' · giọng: '+VOICE):'')+'\n'+ocCtx()+'\nMỗi shot trả: prompt (TIẾNG ANH chuẩn Veo: [shot size+camera move+angle]·[subject=nhân vật y hệt+trang phục]·[hành động]·[bối cảnh+props]·[ánh sáng+mood]·[audio] · chèn nguyên văn vào MỌI prompt: "'+NATURAL_REAL_EN+'" · "'+SAFE_COMPLIANCE_EN+'" · "'+CUT_COHERENCE_EN+'" · shot≥2 mở đầu "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;"), voiceover ('+LANG+', ~10s), onscreen ('+LANG+', ngắn).'+SAFE_COMPLIANCE_VN+'\nKỊCH BẢN "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"","voiceover":"","onscreen":""}]}. PHẢI ≥'+nT+' shot (tối thiểu 6, ≥60s); kịch bản ngắn thì giãn thêm cảnh/b-roll. Mỗi shot 10s độc lập.',{json:true,hi:true,temp:0.55});
+  let shots=_arr(o.shots).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:ensureSafeEN(s.prompt||''),voiceover:asText(s.voiceover||''),onscreen:asText(s.onscreen||'')})).filter(s=>s.prompt);
+  if(shots.length) x.shots=shots; x.shotsAt=_today(); save(); ocRender();
+}
+
+/* ---- chạy 1 thẻ (có spinner) ---- */
+async function ocOne(act,id,btn){ if(typeof requirePremium==='function'&&!requirePremium('Đại Hải Trình'))return;
+  if(!S.keys.gemini){ ocFb('Cần Gemini key — tab ⚡ Kết nối.',1); return; }
+  const map={build:ocBuildScript,score:ocScoreItem,upgrade:ocUpgradeItem,guide:ocGuide,prompts:ocPrompts}; const fn=map[act]; if(!fn)return;
+  const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>';}
+  try{ await fn(id); }catch(e){ ocFb('❌ '+e.message,1); }
+  if(btn){btn.disabled=false; btn.innerHTML=old;}
+}
+
+/* ---- chạy cả loạt (runPool + AIJob) ---- */
+async function ocRunBulk(label,fn,filter){ if(typeof requirePremium==='function'&&!requirePremium(label))return;
+  if(!S.keys.gemini){ ocFb('Cần Gemini key — tab ⚡ Kết nối.',1); return; }
+  const list=OC().items.filter(filter||function(){return true;}); if(!list.length){ ocFb('Không có mục phù hợp cho bước này.'); return; }
+  const jid=AIJob.start(label, list.length); let dn=0;
+  try{ await runPool(list, async(x)=>{ AIJob.setSub(jid,x.title); if(typeof forgeProg==='function')forgeProg(label+': '+x.title,1);
+      try{ await fn(x.id); }catch(e){} dn++; ocFb('<span class="spin"></span>'+label+' '+dn+'/'+list.length+'...'); }, jid);
+    AIJob.done(jid); ocFb('✅ Xong: '+label+' ('+dn+' mục).'); if(typeof vdNotifyDone==='function')vdNotifyDone(label+' xong!');
+  }catch(e){ if(window.AIJob&&AIJob.isCancel(e)){ ocFb('⏹ Đã dừng (giữ phần đã xong).'); } else { if(AIJob.fail)AIJob.fail(jid); ocFb('❌ '+e.message,1); } }
+  ocRender();
+}
+function ocBuildAll(){ ocRunBulk('🎬 Dựng kịch bản', ocBuildScript, x=>!x.script); }
+function ocScoreAll(){ ocRunBulk('🧠 Chấm COREVIRAL', ocScoreItem, x=>x.script && !x._scored); }
+function ocUpgradeWeakAll(){ ocRunBulk('♻️ Nâng cấp yếu', ocUpgradeItem, x=>x.script && x._scored && x.score<OC_PASS); }
+function ocPromptsAll(){ ocRunBulk('🎥 Sinh prompt video', ocPrompts, x=>x.script && (!x.shots||!x.shots.length)); }
+
+function ocDel(id){ const o=OC(); o.items=o.items.filter(x=>x.id!==id); save(); ocRender(); }
+function ocWipe(){ if(!OC().items.length){ const ta=document.getElementById('oc-idea'); if(ta)ta.value=''; OC().idea=''; save(); return; } if(!confirm('Xoá toàn bộ ý tưởng trong Đại Hải Trình?'))return; OC().items=[]; save(); ocRender(); ocFb(''); }
+
+function ocCopy(id,kind,btn){ const x=ocItem(id); if(!x)return; let t='';
+  if(kind==='script'&&x.script) t=(x.script.scenes||[]).map(c=>'【'+(c.phan||'')+'】\n'+(c.noidung||'')+'\nHình: '+(c.hinhanh||'')+'\nTrám: '+(c.tram||'')+(c.note?('\nNote: '+c.note):'')).join('\n\n');
+  else if(kind==='prompts') t=(x.shots||[]).map(s=>'# Shot '+s.seq+' ('+s.dur+'s)\n'+s.prompt+(s.voiceover?('\nVO: '+s.voiceover):'')+(s.onscreen?('\nText: '+s.onscreen):'')).join('\n\n---\n\n');
+  else if(kind==='guide'&&x.guide) t='— NGƯỜI THẬT —\n'+(x.guide.human||'')+'\n\n— AI (Flow/Veo) —\n'+(x.guide.ai||'');
+  if(t&&typeof _clip==='function') _clip(t,btn); else if(t) ocDl('copy.txt',t,'text/plain');
+}
+
+function ocExportMd(){ const o=OC(); if(!o.items.length){ ocFb('Chưa có gì để xuất.',1); return; }
+  let md='# Đại Hải Trình — '+(o.idea||'').slice(0,80)+'\n\n> Ý tưởng gốc: '+(o.idea||'')+'\n\n';
+  o.items.forEach((x,i)=>{ md+='## '+(i+1)+'. '+x.title+(x._scored?(' — '+x.score+'/100'):'')+'\n'+(x.goc?('*Góc: '+x.goc+'*\n'):'')+(x.mo_ta?(x.mo_ta+'\n'):'')+'\n';
+    if(x.script&&x.script.scenes) md+='### Kịch bản\n'+x.script.scenes.map(c=>'- **'+(c.phan||'')+'**: '+(c.noidung||'')+(c.hinhanh?(' _(hình: '+c.hinhanh+')_'):'')+(c.tram?(' _(trám: '+c.tram+')_'):'')).join('\n')+'\n\n';
+    if(x.guide) md+='### Hướng dẫn sản xuất\n**Người thật:**\n'+(x.guide.human||'')+'\n\n**AI (Flow/Veo):**\n'+(x.guide.ai||'')+'\n\n';
+    if(x.shots&&x.shots.length) md+='### Prompt video\n'+x.shots.map(s=>'#### Shot '+s.seq+' ('+s.dur+'s)\n'+(s.voiceover?('**VO:** '+s.voiceover+'\n\n'):'')+(s.onscreen?('**Text:** '+s.onscreen+'\n\n'):'')+'```\n'+s.prompt+'\n```').join('\n')+'\n\n';
+  });
+  ocDl('dai-hai-trinh.md', md, 'text/markdown'); ocFb('✅ Đã tải dai-hai-trinh.md');
+}
+
+function ocExportJson(){ const o=OC(); const withShots=o.items.filter(x=>x.shots&&x.shots.length);
+  if(!withShots.length){ ocFb('Chưa có prompt video nào. Bấm "🎥 Sinh prompt video (tất cả)" trước.',1); return; }
+  const v=(typeof vref==='function'?vref():{})||{}; const LANG=ocLang(); const VOICE=ocVoice();
+  const langCode=/anh|english/i.test(LANG)?'en-US':(/nh[aậ]t|japan/i.test(LANG)?'ja-JP':(/h[aà]n|korea/i.test(LANG)?'ko-KR':'vi-VN'));
+  const hasProd=!!(v.product&&String(v.product).trim());
+  const characters=[{ id:'NV1', ten:(v.character&&String(v.character).slice(0,40))||'NV chính', mo_ta:(v.character||'Nhân vật hư cấu nhất quán cho toàn bộ video.'), upload_huong_dan:'Upload 1 ảnh nhân vật vào Flow → ingredients (giữ nguyên mọi shot)', xuat_hien_o:[], prompt_anh:(v.character||''), co_anh:!!v.charImg }];
+  if(v.charImg) characters[0].anh_base64=v.charImg;
+  const products=hasProd?[{ id:'SP1', ten:String(v.product), mo_ta:'', upload_huong_dan:'Upload ảnh sản phẩm thật vào Flow → ingredients', xuat_hien_o:[] }]:[];
+  const days=withShots.map((x,di)=>{ const ngay='N'+(di+1);
+    const shots=x.shots.map((s,k)=>{ const tag=ngay+'-S'+(k+1); characters[0].xuat_hien_o.push(tag);
+      const useProd=hasProd && /product|sản phẩm/i.test(s.prompt); if(useProd) products[0].xuat_hien_o.push(tag);
+      return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:['NV1'], san_pham:useProd?['SP1']:[], no_product:!useProd, canh:'', cam_xuc:'', goc_may:'', overlay:{text:s.onscreen||'',do_hoa:'',sfx:'',nhac:''}, ly_do_gan:'', prompt_en:ensureSafeEN(s.prompt), voiceover:s.voiceover||'' }; });
+    return { ngay:ngay, series:x.title, voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE}, arc_cam_xuc:[], shots:shots }; });
+  const man={ schema:'flow-pack/v1', meta:{ kenh:'@daihaitrinh', doi_tuong:'', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters'].concat(hasProd?['products']:[]), voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE,ghi_chu:'Voiceover + on-screen + caption theo ngôn ngữ này'}, y_tuong_goc:(o.idea||''), anh_nhan_vat_nhung:!!v.charImg }, characters:characters, products:products, scenes:[], days:days };
+  ocDl('flow-pack-dai-hai-trinh.json', JSON.stringify(man,null,2), 'application/json');
+  ocFb('✅ Đã tải JSON Flow ('+days.length+' video · '+days.reduce((a,d)=>a+d.shots.length,0)+' shot). Nạp vào Lò Video Pro / Google Flow.');
+}
+
+function ocRender(){ const o=OC();
+  const act=document.getElementById('oc-actions'); if(act) act.style.display=o.items.length?'':'none';
+  const cnt=document.getElementById('oc-count'); if(cnt) cnt.textContent=o.items.length+' ý tưởng';
+  const ta=document.getElementById('oc-idea'); if(ta && !ta.value && o.idea) ta.value=o.idea;
+  const el=document.getElementById('oc-board'); if(!el)return; el.className='sec';
+  if(!o.items.length){ el.innerHTML='<p class="mut" style="margin:0">Chưa có ý tưởng. Nhập ý tưởng ở trên rồi bấm "✨ Sinh ý tưởng kịch bản".</p>'; return; }
+  const col=v=>v>=OC_PASS?'var(--ac)':v>=60?'var(--warn)':'var(--red)';
+  const scored=o.items.filter(x=>x._scored), pass=scored.filter(x=>x.score>=OC_PASS).length;
+  let h='<h2>🗂 Ý tưởng &amp; kịch bản <span class="pill">'+pass+'/'+o.items.length+' đạt ≥'+OC_PASS+'%</span></h2>';
+  h+=o.items.map((x,i)=>{ const hasS=!!x.script, hasP=!!(x.shots&&x.shots.length), hasG=!!x.guide;
+    const badge=x._scored?('<b style="color:'+col(x.score)+'">'+x.score+'/100'+(x.score>=OC_PASS?' ✅':'')+'</b>'):'<span class="mut">chưa chấm</span>';
+    return '<details class="cách" style="margin-bottom:8px"><summary style="cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +'<b style="font-size:13px">#'+(i+1)+'</b> '+badge+' <span style="font-size:13px">'+_escAttr(x.title)+'</span>'
+      +(x.goc?'<span class="pill" style="font-size:10px">'+_escAttr(x.goc)+'</span>':'')
+      +(hasS?'<span class="pill" style="font-size:10px;border-color:var(--ac);color:var(--ac2)">🎬</span>':'')
+      +(hasP?'<span class="pill" style="font-size:10px;border-color:var(--blue);color:var(--blue)">🎥 '+x.shots.length+'</span>':'')
+      +(hasG?'<span class="pill" style="font-size:10px">📋</span>':'')
+      +'</summary><div style="margin-top:8px;font-size:12.5px">'
+      +(x.mo_ta?'<p class="mut" style="margin:0 0 8px">'+_escAttr(x.mo_ta)+'</p>':'')
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'
+      +'<button class="btn sm" onclick="ocOne(\''+(hasS?'upgrade':'build')+'\',\''+x.id+'\',this)">'+(hasS?'♻️ Nâng cấp':'🎬 Dựng kịch bản')+'</button>'
+      +(hasS?'<button class="btn sm ghost" onclick="ocOne(\'score\',\''+x.id+'\',this)">🧠 Chấm</button>':'')
+      +(hasS?'<button class="btn sm ghost" onclick="ocOne(\'guide\',\''+x.id+'\',this)">📋 Hướng dẫn SX</button>':'')
+      +(hasS?'<button class="btn sm ghost" style="border-color:var(--blue);color:var(--blue)" onclick="ocOne(\'prompts\',\''+x.id+'\',this)">🎥 Prompt video</button>':'')
+      +'<button class="del" title="Xoá" onclick="ocDel(\''+x.id+'\')">🗑</button>'
+      +'</div>'+ocItemDetail(x)+'</div></details>';
+  }).join('');
+  el.innerHTML=h;
+}
+function ocItemDetail(x){ let h='';
+  if(x._scored && ((x.yeu&&x.yeu.length)||(x.sua&&x.sua.length))){
+    h+='<div style="margin-bottom:6px">'+((x.yeu&&x.yeu.length)?('<b style="color:var(--red)">Điểm yếu:</b> '+x.yeu.map(_escAttr).join(' · ')+'<br>'):'')+((x.sua&&x.sua.length)?('<b style="color:var(--warn)">Nên sửa:</b> '+x.sua.map(_escAttr).join(' · ')):'')+'</div>'; }
+  if(x.script&&x.script.scenes&&x.script.scenes.length){
+    h+='<details style="margin:4px 0"><summary style="cursor:pointer;color:var(--ac2)">🎬 Kịch bản ('+x.script.scenes.length+' cảnh) · <a onclick="ocCopy(\''+x.id+'\',\'script\',this);event.preventDefault()" style="cursor:pointer;text-decoration:underline">copy</a></summary><div style="white-space:pre-wrap;font-size:12px;margin-top:6px">'+_escAttr(x.script.scenes.map(c=>'【'+(c.phan||'')+'】 '+(c.noidung||'')+(c.hinhanh?('\n   Hình: '+c.hinhanh):'')+(c.tram?('\n   Trám: '+c.tram):'')).join('\n\n'))+'</div></details>'; }
+  if(x.guide){
+    h+='<details style="margin:4px 0"><summary style="cursor:pointer;color:var(--ac2)">📋 Hướng dẫn sản xuất · <a onclick="ocCopy(\''+x.id+'\',\'guide\',this);event.preventDefault()" style="cursor:pointer;text-decoration:underline">copy</a></summary><div style="font-size:12px;margin-top:6px"><b>🧑 Người thật:</b><div style="white-space:pre-wrap;margin:3px 0 8px">'+_escAttr(x.guide.human||'')+'</div><b>🤖 AI (Flow/Veo):</b><div style="white-space:pre-wrap;margin-top:3px">'+_escAttr(x.guide.ai||'')+'</div></div></details>'; }
+  if(x.shots&&x.shots.length){
+    h+='<details style="margin:4px 0"><summary style="cursor:pointer;color:var(--blue)">🎥 Prompt video ('+x.shots.length+' shot) · <a onclick="ocCopy(\''+x.id+'\',\'prompts\',this);event.preventDefault()" style="cursor:pointer;text-decoration:underline">copy</a></summary><div style="font-size:11.5px;margin-top:6px">'+x.shots.map(s=>'<div style="margin-bottom:8px"><b>Shot '+s.seq+' ('+s.dur+'s)</b>'+(s.voiceover?(' <span class="mut">VO: '+_escAttr(s.voiceover)+'</span>'):'')+'<div style="white-space:pre-wrap;background:var(--glass);border-radius:6px;padding:6px;margin-top:3px">'+_escAttr(s.prompt)+'</div></div>').join('')+'</div></details>'; }
+  return h;
+}
+</script>
 <script>
 /* 🪶 THU GỌN THÔNG TIN — chèn nút ▾ vào MỌI section ở mọi tab (trừ Trạm m1-6 đã có cơ chế riêng qua refreshGates),
    + nút "thu gọn / mở tất cả" ở HUD; nhớ trạng thái qua localStorage. KHÔNG đụng id/handler/logic cũ. */
