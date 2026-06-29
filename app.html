@@ -5213,26 +5213,33 @@ async function ocBuildScript(id){ const x=ocItem(id); if(!x)return;
 
 async function ocScoreItem(id){ const x=ocItem(id); if(!x||!x.script)return;
   const body=((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' [hình:'+(c.hinhanh||'')+'; trám:'+(c.tram||'')+']').join('\n').slice(0,1600);
-  const o=await geminiCall('Bạn là GIÁM KHẢO VIRAL DOJO cực khó tính. Chấm KỊCH BẢN video theo COREVIRAL (khung 19 câu B9), thang 100đ — chỉ ≥'+OC_PASS+' mới ĐẠT chuẩn sản xuất, đừng dễ dãi.\nTIÊU CHÍ (mỗi cái 0-100): hook (3s đầu giật/tò mò), insight (đúng nỗi đau/mong muốn khách), cau_chuyen (mạch & cao trào), nhip (nhịp nhanh, đủ cú cắt), san_pham (xuất hiện tự nhiên không gượng), chan_thuc (chất đời/giống thật, nhân vật có cá tính), cta (chốt/cliffhanger rõ), sang_tao (không công thức nhàm, có drama/trend), goc_quay (góc quay LẠ + bối cảnh HIẾM, đưa người xem VÀO câu chuyện), am_thanh (âm thanh mở đầu hút, tạo dấu ấn nhận diện).\nĐỐI CHIẾU KHUNG B9 (chấm sát các câu này): '+b9Brief()+'\n'+ocCtx()+'\nKỊCH BẢN "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"diem":{"hook":0,"insight":0,"cau_chuyen":0,"nhip":0,"san_pham":0,"chan_thuc":0,"cta":0,"sang_tao":0,"goc_quay":0,"am_thanh":0},"tong":0,"manh":["..."],"yeu":["..."],"sua":["2-4 việc cụ thể cần sửa để đạt ≥'+OC_PASS+'"]}. "tong" 0-100 (đánh giá tổng thể, KHÔNG phải cộng dồn).',{json:true,temp:0.3});
+  const o=await geminiCall('Bạn là GIÁM KHẢO VIRAL DOJO cực khó tính. Chấm KỊCH BẢN video theo COREVIRAL (khung 19 câu B9), thang 100đ — chỉ ≥'+OC_PASS+' mới ĐẠT chuẩn sản xuất, đừng dễ dãi.\nTIÊU CHÍ (mỗi cái 0-100): hook (3s đầu giật/tò mò), insight (đúng nỗi đau/mong muốn khách), cau_chuyen (mạch & cao trào), nhip (nhịp nhanh, đủ cú cắt), san_pham (xuất hiện tự nhiên không gượng), chan_thuc (chất đời/giống thật, nhân vật có cá tính), cta (chốt/cliffhanger rõ), sang_tao (không công thức nhàm, có drama/trend), goc_quay (kịch bản CÓ GỢI Ý góc quay LẠ + bối cảnh HIẾM trong trường "hình ảnh"?), am_thanh (kịch bản CÓ GỢI Ý âm thanh hook/nhạc/SFX trong trường "trám"?). Chấm trên Ý ĐỒ thể hiện trong KỊCH BẢN (chưa cần dựng video), CÔNG BẰNG đúng thực lực — sửa tới đâu cộng điểm tới đó, ĐỪNG nén điểm.\nĐỐI CHIẾU KHUNG B9 (chấm sát các câu này): '+b9Brief()+'\n'+ocCtx()+'\nKỊCH BẢN "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"diem":{"hook":0,"insight":0,"cau_chuyen":0,"nhip":0,"san_pham":0,"chan_thuc":0,"cta":0,"sang_tao":0,"goc_quay":0,"am_thanh":0},"tong":0,"manh":["..."],"yeu":["..."],"sua":["2-4 việc cụ thể cần sửa để đạt ≥'+OC_PASS+'"]}. "tong" 0-100 (đánh giá tổng thể, KHÔNG phải cộng dồn).',{json:true,temp:0.2});
   let tong=+o.tong; if(!(tong>=0&&tong<=100)){ const vals=Object.values(o.diem||{}).map(v=>+v||0); tong=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length):0; }
   x.score=Math.round(tong); x.diem=o.diem||{}; x.manh=_arr(o.manh); x.yeu=_arr(o.yeu); x.sua=_arr(o.sua); x._scored=true; x.scoredAt=_today(); save(); ocRender();
 }
 
 const OC_LBL={hook:'Hook 3s',insight:'Insight khách',cau_chuyen:'Câu chuyện/cao trào',nhip:'Nhịp',san_pham:'Sản phẩm tự nhiên',chan_thuc:'Chất đời/giống thật',cta:'CTA/chốt',sang_tao:'Sáng tạo',goc_quay:'Góc quay/bối cảnh lạ',am_thanh:'Âm thanh hook'};
+/* hướng dẫn sửa cho TỪNG chiều điểm — để AI biết cách nâng đúng chỗ yếu (đủ 10 chiều) */
+const OC_FIXTIP={hook:'viết lại 3s đầu giật hơn (pattern-interrupt/câu hỏi sốc)',insight:'chạm ĐÚNG nỗi đau/mong muốn khách hơn, cụ thể hoá',cau_chuyen:'thêm cao trào + mạch rõ, bỏ đoạn lê thê',nhip:'cắt gọn, dồn dập hơn, mỗi cảnh 1 nhịp',san_pham:'gắn sản phẩm tự nhiên vào diễn biến (không nhồi)',chan_thuc:'đời thường hơn — lời thoại + tình huống như thật, bỏ giọng quảng cáo',cta:'chốt mạnh/cliffhanger rõ ở cuối',sang_tao:'bỏ công thức nhàm, thêm bất ngờ/drama/trend',goc_quay:'thêm GỢI Ý góc máy LẠ + bối cảnh HIẾM vào trường "hình ảnh"',am_thanh:'thêm GỢI Ý âm thanh hook/nhạc/SFX vào trường "trám"'};
 async function ocUpgradeItem(id){ const x=ocItem(id); if(!x||!x.script)return;
   if(!x._scored) await ocScoreItem(id);
-  let round=0, last=-1;
-  while(round<4 && x.score<OC_PASS){ round++;
-    const oldText=((x.script.scenes)||[]).map((c,i)=>'['+(i+1)+'] '+(c.phan||'')+': '+(c.noidung||'')+' [hình:'+(c.hinhanh||'')+'; trám:'+(c.tram||'')+']').join('\n').slice(0,1700);
-    const dm=x.diem||{}; const dims=Object.keys(OC_LBL).filter(k=>dm[k]!=null).map(k=>({k:k,v:+dm[k]||0})).sort((a,b)=>a.v-b.v);
-    const weakDims=dims.slice(0,4).map(d=>OC_LBL[d.k]+'='+d.v).join(', ');
-    const fix=(weakDims?('ĐIỂM THÀNH PHẦN THẤP NHẤT — ƯU TIÊN SỬA ĐÚNG CÁC PHẦN NÀY: '+weakDims+'. '):'')+(x.yeu&&x.yeu.length?('ĐIỂM YẾU: '+x.yeu.join('; ')+'. '):'')+(x.sua&&x.sua.length?('VIỆC CẦN SỬA: '+x.sua.join('; ')+'.'):'nâng mạnh hook, insight, cao trào, CTA.');
-    const out=await geminiCall('Bạn là biên kịch VIRAL DOJO đang NÂNG CẤP TỪNG PHẦN một kịch bản (KHÔNG viết lại từ đầu theo hướng khác). Dựa CHÍNH XÁC vào phân tích chấm điểm vòng trước: SỬA TRÚNG các phần/tiêu chí điểm thấp, GIỮ NGUYÊN những cảnh/phần đã tốt. Mục tiêu đạt ≥'+OC_PASS+'/100. Bám ý tưởng/sản phẩm/nhân vật. Thoại '+ocLang()+'.\n'+ocCtx()+'\nÝ TƯỞNG: "'+x.title+'" ['+x.goc+'] — '+x.mo_ta+'\nĐIỂM HIỆN TẠI: '+x.score+'/100. '+fix+'\nNGUYÊN TẮC: Hook thấp→viết lại 3s đầu giật hơn; Câu chuyện thấp→thêm cao trào/mạch; Sản phẩm thấp→gắn sản phẩm tự nhiên hơn; CTA thấp→chốt mạnh/cliffhanger; Giống thật thấp→đời thường hơn. KHÔNG đụng phần đã tốt.\nKỊCH BẢN CŨ (sửa trúng chỗ yếu, giữ phần tốt):\n'+oldText+'\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"","hinhanh":"","tram":"","note":""}]}.',{json:true,hi:true,temp:0.55});
-    x.script={scenes:ocScenes(out), at:_today()};
-    last=x.score; await ocScoreItem(id);
-    if(x.score<=last && round>=2) break;
+  let best={score:x.score, script:x.script, diem:x.diem, yeu:x.yeu, sua:x.sua}; let stall=0;
+  for(let round=1; round<=5 && best.score<OC_PASS && stall<2; round++){
+    // luôn nâng cấp TỪ BẢN TỐT NHẤT (hill-climbing, không để bản tệ ghi đè)
+    const dm=best.diem||{}; const dims=Object.keys(OC_LBL).filter(k=>dm[k]!=null).map(k=>({k:k,v:+dm[k]||0})).sort((a,b)=>a.v-b.v);
+    const weak=dims.slice(0,4);
+    const weakDims=weak.map(d=>OC_LBL[d.k]+'='+d.v).join(', ');
+    const tips=weak.map(d=>'• '+OC_LBL[d.k]+' → '+(OC_FIXTIP[d.k]||'làm mạnh hơn')).join('\n');
+    const oldText=((best.script.scenes)||[]).map((c,i)=>'['+(i+1)+'] '+(c.phan||'')+': '+(c.noidung||'')+' [hình:'+(c.hinhanh||'')+'; trám:'+(c.tram||'')+']').join('\n').slice(0,1700);
+    const fix=(weakDims?('ĐIỂM THÀNH PHẦN THẤP NHẤT — ƯU TIÊN SỬA ĐÚNG CÁC PHẦN NÀY: '+weakDims+'.\nCÁCH SỬA TỪNG CHIỀU:\n'+tips+'\n'):'')+((best.yeu&&best.yeu.length)?('ĐIỂM YẾU GIÁM KHẢO: '+best.yeu.join('; ')+'. '):'')+((best.sua&&best.sua.length)?('VIỆC CẦN SỬA: '+best.sua.join('; ')+'.'):'');
+    const out=await geminiCall('Bạn là biên kịch VIRAL DOJO đang NÂNG CẤP TỪNG PHẦN một kịch bản (KHÔNG viết lại từ đầu theo hướng khác). Dựa CHÍNH XÁC vào phân tích chấm điểm: SỬA TRÚNG các chiều điểm thấp theo HƯỚNG DẪN dưới, GIỮ NGUYÊN những cảnh/phần đã tốt — bản mới phải TỐT HƠN HẲN bản cũ, không được tệ đi. Mục tiêu ≥'+OC_PASS+'/100. Bám ý tưởng/sản phẩm/nhân vật. Thoại '+ocLang()+'.\n'+ocCtx()+'\nÝ TƯỞNG: "'+x.title+'" ['+x.goc+'] — '+x.mo_ta+'\nĐIỂM HIỆN TẠI: '+best.score+'/100.\n'+fix+'\nKỊCH BẢN CẦN NÂNG (sửa trúng chỗ yếu, giữ phần tốt):\n'+oldText+'\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"","hinhanh":"","tram":"","note":""}]}.',{json:true,hi:true,temp:0.55});
+    const cand=ocScenes(out); if(cand&&cand.length){ x.script={scenes:cand, at:_today()}; } else { stall++; continue; }
+    await ocScoreItem(id);   // chấm bản mới → cập nhật x.score/x.diem/...
+    if(x.score>best.score){ best={score:x.score, script:x.script, diem:x.diem, yeu:x.yeu, sua:x.sua}; stall=0; }
+    else { stall++; }
   }
-  save(); ocRender();
+  // luôn KẾT THÚC bằng bản điểm cao nhất
+  x.script=best.script; x.score=best.score; x.diem=best.diem; x.yeu=best.yeu; x.sua=best.sua; x._scored=true; save(); ocRender();
 }
 
 async function ocGuide(id){ const x=ocItem(id); if(!x)return;
