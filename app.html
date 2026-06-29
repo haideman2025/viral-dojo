@@ -721,7 +721,8 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
   <div class="sec">
     <h2><span class="tag">🥋 LÒ · Dây chuyền</span> Kế hoạch 30 ngày → kịch bản chi tiết <span class="pill">nạp từ GENERATE → dựng kịch bản → chấm xếp hạng</span></h2>
     <div id="forge-plan" class="mut">Chưa có kế hoạch. Sang cổng 🚀 GENERATE bấm "Sinh gói 30 ngày" — xong sẽ tự nạp về đây.</div>
-    <div id="forge-actions" style="display:none;gap:10px;margin-top:10px;flex-wrap:wrap">
+    <div id="forge-actions" style="display:none;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">
+      <span style="display:inline-flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--line);border-radius:8px;padding:5px 9px" title="Ngưỡng % để kịch bản/prompt được coi là ĐẠT (tối thiểu 60). Dùng chung mọi bước."><label style="margin:0;color:var(--ac2)">🎯 Đạt</label><input id="pass-pct" type="number" min="60" max="95" value="80" onchange="applyPassPct(this.value)" style="width:64px"><span class="mut" style="font-size:11px">%</span></span>
       <button class="btn" id="forge-auto" onclick="runFullPipeline()" style="background:linear-gradient(135deg,#ffc23c,var(--ac))">⚡ Tự động: dựng → chấm kịch bản (dừng để duyệt)</button>
       <button class="btn ghost" id="forge-script" onclick="buildScriptsTop()">🎬 Dựng kịch bản (cả loạt)</button>
       <button class="btn ghost" id="forge-score" onclick="scoreForgeBatch()">🧠 Chấm + xếp hạng kịch bản</button>
@@ -1009,10 +1010,14 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
   <div class="sec" id="oc-actions" style="display:none">
     <h2>⚙️ Dây chuyền nhanh <span class="pill" id="oc-count"></span></h2>
     <p class="mut">Chạy cả loạt, hoặc bấm từng nút trên mỗi thẻ bên dưới. Mỗi bước đều do engine VIRAL DOJO nâng cấp.</p>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;background:var(--glass);border:1px solid var(--line);border-radius:8px;padding:7px 10px">
+      <label style="margin:0;color:var(--ac2)">🎯 Ngưỡng đạt</label><input id="pass-pct-oc" type="number" min="60" max="95" value="80" onchange="applyPassPct(this.value)" style="width:78px">
+      <span class="mut" style="font-size:11.5px">% — áp cho CHẤM kịch bản + prompt ở mọi bước (tối thiểu 60). Dùng chung với LÒ.</span>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn sm" onclick="ocBuildAll()">🎬 Dựng kịch bản (tất cả)</button>
       <button class="btn sm ghost" onclick="ocScoreAll()">🧠 Chấm COREVIRAL (tất cả)</button>
-      <button class="btn sm ghost" onclick="ocUpgradeWeakAll()">♻️ Nâng cấp cái &lt;80% → đạt chuẩn</button>
+      <button class="btn sm ghost" onclick="ocUpgradeWeakAll()">♻️ Nâng cấp cái chưa đạt → đạt chuẩn</button>
       <button class="btn sm ghost" onclick="ocPromptsAll()">🎥 Sinh prompt video (tất cả)</button>
     </div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
@@ -2286,8 +2291,8 @@ async function skAIScore(){
 /* --- 🥋 LÒ · Dây chuyền 30 ngày (auto-chain GENERATE → chấm cả loạt → kịch bản) --- */
 function forgeFmt(){ return /kiến thức/i.test((S.dna.m1&&S.dna.m1.dinhdang)||'')?'kt':'htkh'; }
 const FORGE_SV='s1'; // phiên bản chấm-trên-kịch-bản; điểm cũ (chấm ý tưởng trống) sẽ tự chấm lại 1 lần
-const FORGE_PASS=800; // ngưỡng ĐẠT chuẩn sản xuất của KỊCH BẢN (thang 1000) = 80%; chỉ ≥80% mới qua
-const FORGE_PASS_PCT=Math.round(FORGE_PASS/10); // = 80 (%)
+let FORGE_PASS=800; // ngưỡng ĐẠT chuẩn sản xuất của KỊCH BẢN (thang 1000); điều chỉnh qua passPct (min 60%)
+let FORGE_PASS_PCT=Math.round(FORGE_PASS/10); // = % đạt (đồng bộ với passPct)
 function forgeProg(msg,spin){ // hiện tiến trình ở CẢ tab Lò lẫn cổng GENERATE
   ['forge-fb','gen-prog'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=`<div class="fb">${spin?'<span class=\"spin\"></span>':''}${msg}</div>`; });
   if(window.vdOpenWait)vdOpenWait(msg);
@@ -3481,7 +3486,7 @@ const VQA_CRIT = [
   {k:'brand',    w:7,  label:'Bám brand'},
   {k:'sangtao',  w:5,  label:'Sáng tạo'},
 ];
-const VQA_PASS = 80; // ngưỡng ĐẠT chuẩn sản xuất (%) — >80 mới qua
+let VQA_PASS = 80; // ngưỡng ĐẠT chuẩn (%) — đồng bộ passPct (min 60%)
 function vqaAvg(){ const q=S.dna.skuld.vqa||{}; const v=Object.values(q).map(x=>+x.tong).filter(n=>n>=0); return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):0; }
 async function gradeVPrompt(title){
   const sc=(S.dna.skuld.vprompts||{})[title]; if(!sc||!(sc.shots||[]).length) return;
@@ -5025,7 +5030,18 @@ async function ugcCreate(){
    → hướng dẫn sản xuất (người thật + AI) → prompt video an toàn → xuất JSON Flow.
    Tái dùng engine sẵn có: geminiCall, normScenes, ensureSafeEN, NATURAL_REAL_EN, CUT_COHERENCE_EN,
    SAFE_COMPLIANCE_*, runPool, AIJob, brandContext, vref, voLang/voStyle, _arr/asText/_escAttr/_clip. */
-const OC_PASS = 80;
+let OC_PASS = 80;
+/* 🎯 NGƯỠNG ĐẠT % do người dùng chọn (tối thiểu 60) — áp cho MỌI bước sản xuất (kịch bản LÒ + Đại Hải Trình + QA prompt). */
+function passPct(){ try{ return (+S.passPct>=60)?Math.min(95,+S.passPct):80; }catch(e){ return 80; } }
+function applyPassPct(p){ p=Math.max(60,Math.min(95,Math.round(+p||80))); try{ S.passPct=p; }catch(e){}
+  FORGE_PASS_PCT=p; FORGE_PASS=p*10; VQA_PASS=p; OC_PASS=p; try{ save(); }catch(e){}
+  ['pass-pct','pass-pct-oc'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=p; });
+  try{ if(typeof renderForgePlan==='function')renderForgePlan(); }catch(e){}
+  try{ if(typeof renderVQA==='function')renderVQA(); }catch(e){}
+  try{ if(typeof renderTitleTags==='function')renderTitleTags(); }catch(e){}
+  try{ if(typeof ocRender==='function')ocRender(); }catch(e){} }
+function passPctInit(){ try{ if(+S.passPct>=60) applyPassPct(S.passPct); else { ['pass-pct','pass-pct-oc'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=passPct(); }); } }catch(e){} }
+if(document.readyState!=='loading') setTimeout(passPctInit,0); else document.addEventListener('DOMContentLoaded',passPctInit);
 function OC(){ const d=S.dna; d.ocean=d.ocean||{idea:'',items:[]}; if(!Array.isArray(d.ocean.items)) d.ocean.items=[]; return d.ocean; }
 function ocFb(msg,bad){ const e=document.getElementById('oc-fb'); if(e) e.innerHTML=msg?('<div class="fb'+(bad?' bad':'')+'">'+msg+'</div>'):''; }
 function ocLang(){ const i=document.getElementById('oc-lang'); const v=(i&&i.value.trim())||(typeof voLang==='function'?voLang():'Vietnamese'); return v||'Vietnamese'; }
@@ -5086,13 +5102,16 @@ async function ocScoreItem(id){ const x=ocItem(id); if(!x||!x.script)return;
   x.score=Math.round(tong); x.diem=o.diem||{}; x.manh=_arr(o.manh); x.yeu=_arr(o.yeu); x.sua=_arr(o.sua); x._scored=true; x.scoredAt=_today(); save(); ocRender();
 }
 
+const OC_LBL={hook:'Hook 3s',insight:'Insight khách',cau_chuyen:'Câu chuyện/cao trào',nhip:'Nhịp',san_pham:'Sản phẩm tự nhiên',chan_thuc:'Giống thật',cta:'CTA/chốt',sang_tao:'Sáng tạo'};
 async function ocUpgradeItem(id){ const x=ocItem(id); if(!x||!x.script)return;
   if(!x._scored) await ocScoreItem(id);
   let round=0, last=-1;
-  while(round<3 && x.score<OC_PASS){ round++;
-    const oldText=((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' [hình:'+(c.hinhanh||'')+'; trám:'+(c.tram||'')+']').join('\n').slice(0,1500);
-    const fix=(x.yeu&&x.yeu.length?('ĐIỂM YẾU: '+x.yeu.join('; ')+'. '):'')+(x.sua&&x.sua.length?('VIỆC CẦN SỬA: '+x.sua.join('; ')):'nâng mạnh hook, insight, cao trào, CTA');
-    const out=await geminiCall('Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN cho đạt chuẩn sản xuất ≥'+OC_PASS+'đ, bám ý tưởng/sản phẩm. Khắc phục đúng điểm yếu, đừng lặp lỗi cũ. Thoại '+ocLang()+'.\n'+ocCtx()+'\nÝ TƯỞNG: "'+x.title+'" ['+x.goc+'] — '+x.mo_ta+'\n'+fix+'\nKỊCH BẢN CŨ (làm tốt hơn):\n'+oldText+'\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"","hinhanh":"","tram":"","note":""}]}.',{json:true,hi:true,temp:0.6});
+  while(round<4 && x.score<OC_PASS){ round++;
+    const oldText=((x.script.scenes)||[]).map((c,i)=>'['+(i+1)+'] '+(c.phan||'')+': '+(c.noidung||'')+' [hình:'+(c.hinhanh||'')+'; trám:'+(c.tram||'')+']').join('\n').slice(0,1700);
+    const dm=x.diem||{}; const dims=Object.keys(OC_LBL).filter(k=>dm[k]!=null).map(k=>({k:k,v:+dm[k]||0})).sort((a,b)=>a.v-b.v);
+    const weakDims=dims.slice(0,4).map(d=>OC_LBL[d.k]+'='+d.v).join(', ');
+    const fix=(weakDims?('ĐIỂM THÀNH PHẦN THẤP NHẤT — ƯU TIÊN SỬA ĐÚNG CÁC PHẦN NÀY: '+weakDims+'. '):'')+(x.yeu&&x.yeu.length?('ĐIỂM YẾU: '+x.yeu.join('; ')+'. '):'')+(x.sua&&x.sua.length?('VIỆC CẦN SỬA: '+x.sua.join('; ')+'.'):'nâng mạnh hook, insight, cao trào, CTA.');
+    const out=await geminiCall('Bạn là biên kịch VIRAL DOJO đang NÂNG CẤP TỪNG PHẦN một kịch bản (KHÔNG viết lại từ đầu theo hướng khác). Dựa CHÍNH XÁC vào phân tích chấm điểm vòng trước: SỬA TRÚNG các phần/tiêu chí điểm thấp, GIỮ NGUYÊN những cảnh/phần đã tốt. Mục tiêu đạt ≥'+OC_PASS+'/100. Bám ý tưởng/sản phẩm/nhân vật. Thoại '+ocLang()+'.\n'+ocCtx()+'\nÝ TƯỞNG: "'+x.title+'" ['+x.goc+'] — '+x.mo_ta+'\nĐIỂM HIỆN TẠI: '+x.score+'/100. '+fix+'\nNGUYÊN TẮC: Hook thấp→viết lại 3s đầu giật hơn; Câu chuyện thấp→thêm cao trào/mạch; Sản phẩm thấp→gắn sản phẩm tự nhiên hơn; CTA thấp→chốt mạnh/cliffhanger; Giống thật thấp→đời thường hơn. KHÔNG đụng phần đã tốt.\nKỊCH BẢN CŨ (sửa trúng chỗ yếu, giữ phần tốt):\n'+oldText+'\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"","hinhanh":"","tram":"","note":""}]}.',{json:true,hi:true,temp:0.55});
     x.script={scenes:ocScenes(out), at:_today()};
     last=x.score; await ocScoreItem(id);
     if(x.score<=last && round>=2) break;
