@@ -314,6 +314,7 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
 
 <!-- ============ VIEW: HOME ============ -->
 <div id="v-home">
+<section class="sec" id="qs-launch" style="border-color:var(--ac)"></section>
 <section class="sec" id="cap-nhat-ky">
   <h2>📜 Nhật ký thuyền trưởng — Cách dùng</h2>
   <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
@@ -1520,6 +1521,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.v==='dist'){ renderDistDayOptions(); renderDist(); renderZernioCfg(); }
   if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderRoster(); renderVPrompts(); }
   if(t.dataset.v==='ocean'){ if(typeof ocRender==='function') ocRender(); }
+  if(t.dataset.v==='home'){ if(typeof qsRender==='function') qsRender(); }
   if(t.dataset.v==='ops'){ renderOps(); }
 });
 
@@ -5136,6 +5138,41 @@ function ocItemDetail(x){ let h='';
     h+='<details style="margin:4px 0"><summary style="cursor:pointer;color:var(--blue)">🎥 Prompt video ('+x.shots.length+' shot) · <a onclick="ocCopy(\''+x.id+'\',\'prompts\',this);event.preventDefault()" style="cursor:pointer;text-decoration:underline">copy</a></summary><div style="font-size:11.5px;margin-top:6px">'+x.shots.map(s=>'<div style="margin-bottom:8px"><b>Shot '+s.seq+' ('+s.dur+'s)</b>'+(s.voiceover?(' <span class="mut">VO: '+_escAttr(s.voiceover)+'</span>'):'')+'<div style="white-space:pre-wrap;background:var(--glass);border-radius:6px;padding:6px;margin-top:3px">'+_escAttr(s.prompt)+'</div></div>').join('')+'</div></details>'; }
   return h;
 }
+</script>
+<script>
+/* ===================== 🚀 KHỞI TẠO NHANH — cổng dẫn 1 mạch (Phase B super app) =====================
+   Dò trạng thái funnel (Thương hiệu → Nhân vật → Chiến lược → Sản xuất) + nhảy đúng chỗ,
+   để người dùng không phải tự đi tìm tab. Tái dùng các mảnh đã có. */
+function qsGo(view, anchor, cb){ const tab=document.querySelector('.tab[data-v="'+view+'"]'); if(tab)tab.click(); setTimeout(function(){ if(anchor){ const el=document.getElementById(anchor); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); } if(cb)cb(); }, 80); }
+function qsToOcean(){ const v=(document.getElementById('qs-idea')||{}).value||''; qsGo('ocean', null, function(){ const ta=document.getElementById('oc-idea'); if(ta) ta.value=v; if(typeof ocRender==='function')ocRender(); }); }
+function qsOpenUgc(){ qsGo('skuld','roster-list', function(){ const e=document.getElementById('ugc-studio'); if(e) e.style.display=''; }); }
+function qsState(){ const ob=S.dna.onboard||{}; const vc=((S.dna.skuld&&S.dna.skuld.vref&&S.dna.skuld.vref.character)||'').trim();
+  let pass=0; for(let i=1;i<=6;i++){ if(((S.dna.scores||{})['m'+i]||0)>=70) pass++; }
+  return { brand:!!ob.nganh, chars:(typeof roster==='function'?roster().length:0), vchar:!!vc, pass:pass,
+           hasPack:!!(S._pack&&S._pack.calendar&&S._pack.calendar.length),
+           oceanN:(S.dna.ocean&&S.dna.ocean.items&&S.dna.ocean.items.length)||0 }; }
+function qsRender(){ const el=document.getElementById('qs-launch'); if(!el) return; const s=qsState();
+  const dot=ok=>ok?'<span style="color:var(--ac)">●</span>':'<span style="color:var(--mut)">○</span>';
+  const charsOK=s.chars>0||s.vchar;
+  const card=(n,title,ok,sub,btns)=>'<div class="cách" style="flex:1;min-width:180px;margin:0">'
+    +'<div style="font-weight:800;font-size:13px;margin-bottom:4px">'+dot(ok)+' '+n+'. '+title+'</div>'
+    +'<div class="mut" style="font-size:11.5px;margin-bottom:7px">'+sub+'</div>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+btns+'</div></div>';
+  el.innerHTML='<h2>🚀 Khởi tạo nhanh <span class="pill">đi 1 mạch, không cần nhảy tab</span></h2>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'
+    +card(1,'Thương hiệu', s.brand, s.brand?'Đã có ngành / khách hàng.':'Khai báo kênh + sản phẩm + insight.',
+        '<button class="btn sm '+(s.brand?'ghost':'')+'" onclick="qsGo(\'home\',\'onboard\')">'+(s.brand?'Sửa brand':'Thiết lập')+'</button>')
+    +card(2,'Nhân vật UGC', charsOK, charsOK?(s.chars+' nhân vật trong Dàn.'):'Tạo nhân vật ảo (Xưởng UGC) hoặc nhập từ Muse.',
+        '<button class="btn sm '+(charsOK?'ghost':'')+'" onclick="qsOpenUgc()">🎨 Xưởng nhân vật</button>')
+    +card(3,'Chiến lược', s.pass>=6, s.pass>=6?'6 Trạm COREVIRAL đã đạt.':(s.pass+'/6 Trạm đạt — hoàn tất để mở GENERATE.'),
+        '<button class="btn sm '+(s.pass>=6?'ghost':'')+'" onclick="qsGo(\'home\',\'m1\')">Vào 6 Trạm</button>')
+    +card(4,'Sản xuất', s.hasPack||s.oceanN>0, (s.hasPack?'Đã có gói 30 ngày. ':'')+(s.oceanN?(s.oceanN+' ý tưởng ở Đại Hải Trình.'):'Chọn cách sản xuất.'),
+        '<button class="btn sm" onclick="qsGo(\'home\',\'gen\')">🚀 GENERATE</button> <button class="btn sm ghost" onclick="qsGo(\'ocean\',null)">🧭 Đại Hải Trình</button>')
+    +'</div>'
+    +'<div style="background:var(--glass);border:1.5px solid var(--line);border-radius:var(--r-md,10px);padding:12px">'
+    +'<div style="font-weight:700;font-size:12.5px;margin-bottom:6px">⚡ Lối tắt: có ý tưởng sẵn? Vào thẳng Đại Hải Trình để ra cả loạt kịch bản</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="qs-idea" placeholder="VD: Bột rau củ detox cho dân văn phòng..." style="flex:1;min-width:220px"><button class="btn sm" onclick="qsToOcean()">🧭 Tạo nhanh</button></div></div>'; }
+if(document.readyState!=='loading') setTimeout(qsRender,0); else document.addEventListener('DOMContentLoaded',qsRender);
 </script>
 <script>
 /* 🪶 THU GỌN THÔNG TIN — chèn nút ▾ vào MỌI section ở mọi tab (trừ Trạm m1-6 đã có cơ chế riêng qua refreshGates),
