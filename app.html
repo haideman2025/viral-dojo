@@ -706,12 +706,14 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
           <button class="btn ghost sm" id="roster-auto" onclick="rosterAutoDesign()" style="border-color:var(--ac);color:var(--ac)">🤖 AI thiết kế dàn (từ kịch bản)</button>
           <button class="btn ghost sm" id="roster-genall" onclick="rosterGenAllImg()">🎨 Sinh ảnh hàng loạt</button>
           <button class="btn ghost sm" onclick="rosterAdd()">➕ Thêm nhân vật</button>
+          <button class="btn ghost sm" onclick="museOpen()" style="border-color:var(--blue);color:var(--blue)">📥 Nhập từ Muse</button>
           <button class="btn ghost sm" onclick="rosterDownloadAll()">⬇️ Tải tất cả ảnh</button>
         </div>
       </div>
       <div class="mut" style="font-size:11.5px;margin:4px 0 8px">Mỗi nhân vật 1 ảnh tham chiếu — <b>AI sinh bằng Nano Banana</b> hoặc <b>upload</b>. App gắn đúng ảnh vào file JSON Flow theo TÊN; bấm "Tải ảnh" rồi upload vào Google Flow → ingredients. (Nhân vật chính vẫn dùng ô 🎭 Nhân vật tham chiếu phía trên — thêm vào dàn nếu muốn quản lý ảnh ở đây.)</div>
       <div id="roster-list"></div>
       <div id="roster-fb"></div>
+      <div id="muse-panel" style="margin-top:8px"></div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <button class="btn ghost" id="vref-gen" onclick="genVRef()">✨ Sinh bộ tham chiếu (AI)</button>
@@ -4836,6 +4838,55 @@ function ensureDynamic(){
 })();
 </script>
 
+<script>
+/* ===================== 🌉 CẦU NỐI MUSE → DÀN NHÂN VẬT (brand-safe) =====================
+   Đọc nhân vật từ app Muse (My Muse AI) qua localStorage CÙNG ORIGIN
+   (key my-muse-ai-characters-<user>), hoặc dán/upload JSON (khác origin).
+   Map BRAND-SAFE: chỉ lấy ngoại hình cơ bản + nghề + tính cách + ảnh tham chiếu;
+   BỎ breastSize/buttSize/fetish/relationship/lingerie. */
+const MUSE_ETH={Asian:'châu Á',Black:'da đen',White:'da trắng',Latina:'Latin',Arab:'Ả Rập',Indian:'Ấn Độ'};
+const MUSE_ETH_EN={Asian:'East/Southeast Asian',Black:'Black',White:'White',Latina:'Latina',Arab:'Arab',Indian:'South Asian'};
+const MUSE_BODY={Slim:'mảnh mai',Athletic:'khỏe khoắn',Voluptuous:'đầy đặn',Curvy:'đường cong',Muscular:'cơ bắp'};
+const MUSE_BODY_EN={Slim:'slim',Athletic:'athletic',Voluptuous:'full-figured',Curvy:'curvy',Muscular:'muscular'};
+function museRead(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i);
+  if(k&&k.indexOf('my-muse-ai-characters-')===0){ try{ const arr=JSON.parse(localStorage.getItem(k)); if(Array.isArray(arr)&&arr.length) out.push({user:k.slice(22), chars:arr}); }catch(e){} } } }catch(e){} return out; }
+function museImg(c){ return c.referenceImage||(c.singleImages&&c.singleImages[0]&&c.singleImages[0].url)||c.anh_base64||c.img||''; }
+function museMap(c){ if(!c) return null;
+  if(c.ten && !c.name){ return { id:'nv_'+Math.random().toString(36).slice(2,8), ten:String(c.ten).slice(0,40), mo_ta:asText(c.mo_ta||c.mo_ta_en||''), img:museImg(c), prompt:asText(c.prompt_anh||c.prompt||'') }; }
+  const sex=c.gender==='Male'?'nam':'nữ', sexEn=c.gender==='Male'?'man':'woman';
+  const eth=c.ethnicity==='Custom'?(c.customEthnicity||''):(MUSE_ETH[c.ethnicity]||'');
+  const ethEn=c.ethnicity==='Custom'?(c.customEthnicity||''):(MUSE_ETH_EN[c.ethnicity]||'');
+  const hair=c.hairStyle==='Custom'?(c.customHairStyle||''):(c.hairStyle||'');
+  const mo=[]; mo.push((c.age?c.age+' tuổi, ':'')+sex+(eth?', '+eth:''));
+  if(c.bodyType) mo.push('dáng '+(MUSE_BODY[c.bodyType]||c.bodyType));
+  if(hair) mo.push('tóc '+String(hair).toLowerCase());
+  if(c.occupation) mo.push('nghề: '+c.occupation);
+  if(c.personality) mo.push('tính cách: '+c.personality);
+  if(c.publicDescription) mo.push(asText(c.publicDescription));
+  if(c.customPhysicalDetails) mo.push(asText(c.customPhysicalDetails));
+  const mo_ta=mo.filter(Boolean).join(' · ').slice(0,420);
+  const prompt=['A '+(c.age?c.age+'-year-old ':'')+ethEn+' '+sexEn, (MUSE_BODY_EN[c.bodyType]?MUSE_BODY_EN[c.bodyType]+' build':''), hair?String(hair).toLowerCase()+' hair':'', c.occupation?'occupation: '+c.occupation:'', c.personality?'vibe: '+c.personality:'', 'modest professional attire, advertising-safe, original fictional person — not resembling any real or famous person'].filter(Boolean).join(', ');
+  return { id:'nv_'+Math.random().toString(36).slice(2,8), ten:String(c.name||'Nhân vật').slice(0,40), mo_ta:mo_ta, img:museImg(c), prompt:prompt }; }
+function museOpen(){ const p=document.getElementById('muse-panel'); if(!p)return;
+  const groups=museRead(); const all=[]; groups.forEach(g=>g.chars.forEach(c=>all.push(c)));
+  if(!all.length){ p.innerHTML=museFallbackHtml(); return; }
+  let h='<div class="fb"><b>📥 Tìm thấy '+all.length+' nhân vật từ Muse'+(groups.length>1?(' ('+groups.length+' tài khoản)'):'')+'.</b> Chọn để nạp vào Dàn — đã lọc <b>brand-safe</b> (bỏ field nhạy cảm).</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:6px;margin:8px 0">'+all.map((c,i)=>{ const img=museImg(c);
+    return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--glass);border:1.5px solid var(--line);border-radius:8px;padding:6px 8px"><input type="checkbox" class="muse-pick" data-i="'+i+'" checked style="width:auto;flex:0 0 auto">'+(img?'<img src="'+img+'" style="width:34px;height:34px;border-radius:6px;object-fit:cover">':'<span style="width:34px;height:34px;border-radius:6px;background:var(--lo);display:inline-flex;align-items:center;justify-content:center">🎭</span>')+'<span style="font-size:12.5px"><b>'+_escAttr(c.name||c.ten||'Nhân vật')+'</b> <span class="mut">'+_escAttr([(c.age?c.age+'t':''),c.occupation,c.personality].filter(Boolean).join(' · ').slice(0,60))+'</span></span></label>'; }).join('')+'</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" onclick="museDoImport()">✅ Nạp nhân vật đã chọn</button><button class="btn ghost sm" onclick="document.getElementById(\'muse-panel\').innerHTML=\'\'">Đóng</button></div>';
+  p.innerHTML=h; p._all=all; }
+function museFallbackHtml(){ return '<div class="fb">Không thấy dữ liệu Muse ở trình duyệt này (khác origin / chưa tạo nhân vật). Hãy xuất JSON nhân vật từ Muse rồi <b>dán</b> hoặc <b>tải lên</b>:</div><textarea id="muse-json" rows="4" placeholder="Dán JSON nhân vật Muse hoặc {&quot;characters&quot;:[...]}..."></textarea><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><input type="file" id="muse-file" accept="application/json,.json" onchange="museLoadFile(this.files)" style="width:auto"><button class="btn sm" onclick="museFromText()">📥 Nạp từ JSON đã dán</button><button class="btn ghost sm" onclick="document.getElementById(\'muse-panel\').innerHTML=\'\'">Đóng</button></div>'; }
+function museParse(raw){ let d; try{ d=JSON.parse(raw); }catch(e){ return null; } return Array.isArray(d)?d:(Array.isArray(d.characters)?d.characters:(Array.isArray(d.chars)?d.chars:null)); }
+function museFromText(){ const t=(document.getElementById('muse-json')||{}).value||''; const arr=museParse(t); if(!arr||!arr.length){ alert('JSON không hợp lệ hoặc rỗng.'); return; } museAddMapped(arr); }
+function museLoadFile(files){ const f=files&&files[0]; if(!f)return; const r=new FileReader(); r.onload=function(){ const arr=museParse(r.result); if(!arr||!arr.length){ alert('File JSON không hợp lệ.'); return; } museAddMapped(arr); }; r.readAsText(f); }
+function museDoImport(){ const p=document.getElementById('muse-panel'); const all=p&&p._all; if(!all)return;
+  const picks=[].slice.call(document.querySelectorAll('.muse-pick:checked')).map(cb=>all[+cb.dataset.i]).filter(Boolean);
+  if(!picks.length){ alert('Chưa chọn nhân vật nào.'); return; } museAddMapped(picks); }
+function museAddMapped(arr){ const r=roster(); const seen=new Set(r.map(x=>(x.ten||'').toLowerCase().trim())); let added=0;
+  arr.forEach(c=>{ const m=museMap(c); if(!m)return; const key=(m.ten||'').toLowerCase().trim(); if(key&&seen.has(key))return; if(key)seen.add(key); r.push(m); added++; });
+  save(); if(typeof renderRoster==='function')renderRoster();
+  const p=document.getElementById('muse-panel'); if(p) p.innerHTML='<div class="fb">✅ Đã nạp <b>'+added+'</b> nhân vật vào Dàn nhân vật'+((added<arr.length)?(' ('+(arr.length-added)+' bị bỏ vì trùng tên)'):'')+'. Cuộn xuống Dàn để xem/sửa/sinh ảnh, rồi dùng cho prompt video + nhúng vào JSON Flow.</div>'; }
+</script>
 <script>
 /* ===================== 🧭 ĐẠI HẢI TRÌNH — không gian sáng tạo tự do (super app) =====================
    Người dùng nhập ý tưởng → sinh nhiều ý tưởng kịch bản → chấm COREVIRAL → nâng cấp ≥80%
