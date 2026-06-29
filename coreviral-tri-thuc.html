@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VIRAL DOJO — Lộ Trình Tri Thức Xây Kênh TikTok Viral</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Be+Vietnam+Pro:wght@500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Space+Mono:wght@400;700&family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap');
 
-:root{
-  --bg:#e3cd97; --bg2:#ecdbac; --card:#f4e7c5; --card2:#ecdbac;
-  --line:#c9a868; --txt:#241407; --mut:#6a4f20; --dim:#866a36;
-  --acc:#a3261f; --acc2:#c8962f; --grn:#1f7a6b; --blu:#1f6f7a; --pur:#7a3b1f;
-  --rad:10px; --sh:6px 6px 0 #4a2f12;
-  --wood:#7a5023; --px:#4a2f12; --hi:#fffaf0; --gold:#d9a93a; --orange:#c8631f;
+:root{                              /* đồng bộ palette với app (charcoal tối) */
+  --bg:#13110c; --bg2:#1a1711; --card:#201c15; --card2:#272118;
+  --line:#2c2619; --txt:#f4ece0; --mut:#a89a83; --dim:#857862;
+  --acc:#d8584b; --acc2:#e0a93a; --grn:#54bf85; --blu:#57b6c9; --pur:#9a8cd6;
+  --rad:12px; --sh:0 4px 14px rgba(0,0,0,.34);
+  --wood:#3a3325; --px:#0a0805; --hi:#f4ece0; --gold:#e6b84a; --orange:#d08a3a;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:'Be Vietnam Pro',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6;font-size:16px;font-weight:600;
-  background-image:radial-gradient(circle at 50% -10%, rgba(255,255,255,.2), transparent 55%),repeating-linear-gradient(45deg, rgba(0,0,0,.025) 0 2px, transparent 2px 10px);
+  background-image:radial-gradient(900px 480px at 80% -8%,rgba(224,169,58,.10),transparent),radial-gradient(720px 420px at 8% 2%,rgba(63,174,143,.07),transparent);
   background-attachment:fixed}
 a{color:var(--blu);text-decoration:none;font-weight:700}
 a:hover{text-decoration:underline}
@@ -30,8 +30,8 @@ header{background:
   radial-gradient(900px 400px at 20% -10%,rgba(163,38,31,.14),transparent),
   radial-gradient(700px 400px at 90% 0%,rgba(200,150,47,.18),transparent),
   var(--bg2);border-bottom:3px solid var(--wood);padding:48px 0 40px;box-shadow:inset 0 -6px 0 rgba(74,47,18,.18)}
-.badge{display:inline-block;background:var(--acc);color:var(--hi);font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;padding:7px 15px;border:2px solid var(--px);border-radius:6px;text-transform:uppercase;box-shadow:3px 3px 0 var(--px);transform:rotate(-1.5deg)}
-h1{font-size:56px;line-height:1.05;margin:18px 0 12px;text-shadow:2px 2px 0 var(--hi),4px 4px 0 rgba(74,47,18,.25)}
+.badge{display:inline-block;background:var(--acc);color:#fff;font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;padding:7px 15px;border:none;border-radius:999px;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:none}
+h1{font-size:56px;line-height:1.05;margin:18px 0 12px;text-shadow:none}
 h1 span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .sub{color:var(--mut);font-size:17px;max-width:760px}
 .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
@@ -45,7 +45,7 @@ nav{position:sticky;top:0;z-index:50;background:rgba(227,205,151,.92);backdrop-f
 
 section{padding:48px 0;border-bottom:3px solid var(--wood)}
 .eyebrow{color:var(--acc);font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
-h2{font-size:40px;margin-bottom:8px;text-shadow:1px 1px 0 var(--hi)}
+h2{font-size:40px;margin-bottom:8px;text-shadow:none}
 .lead{color:var(--mut);max-width:780px;margin-bottom:26px;font-size:16px}
 
 .grid{display:grid;gap:16px}
@@ -54,7 +54,7 @@ h2{font-size:40px;margin-bottom:8px;text-shadow:1px 1px 0 var(--hi)}
 .g4{grid-template-columns:repeat(4,1fr)}
 @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}h1{font-size:40px}h2{font-size:30px}}
 .box{background:var(--card);border:2px solid var(--wood);border-radius:var(--rad);padding:20px;box-shadow:var(--sh),inset 0 0 0 2px var(--bg2)}
-.box h3{font-size:22px;margin-bottom:8px;display:flex;align-items:center;gap:9px;text-shadow:1px 1px 0 var(--hi)}
+.box h3{font-size:22px;margin-bottom:8px;display:flex;align-items:center;gap:9px;text-shadow:none}
 .box p{color:var(--mut);font-size:14.5px}
 .ic{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--bg2)!important;border:2px solid var(--wood);box-shadow:2px 2px 0 var(--px);color:var(--acc2)!important}
 
@@ -62,7 +62,7 @@ h2{font-size:40px;margin-bottom:8px;text-shadow:1px 1px 0 var(--hi)}
 .step{background:var(--card);border:2px solid var(--wood);border-radius:var(--rad);margin-bottom:16px;overflow:hidden;transition:.2s;box-shadow:var(--sh)}
 .step:hover{transform:translate(-1px,-1px)}
 .step-head{display:flex;align-items:center;gap:16px;padding:18px 22px;cursor:pointer;user-select:none}
-.step-num{width:50px;height:50px;flex-shrink:0;border-radius:8px;font-family:'Bungee',sans-serif;font-weight:400;font-size:22px;display:flex;align-items:center;justify-content:center;color:var(--hi)!important;background:linear-gradient(135deg,var(--acc),var(--acc2))!important;border:2px solid var(--px);box-shadow:3px 3px 0 var(--px);text-shadow:1px 1px 0 rgba(0,0,0,.25)}
+.step-num{width:50px;height:50px;flex-shrink:0;border-radius:10px;font-family:'Bungee',sans-serif;font-weight:400;font-size:22px;display:flex;align-items:center;justify-content:center;color:#fff!important;background:linear-gradient(135deg,var(--acc),var(--acc2))!important;border:none;box-shadow:0 2px 8px rgba(0,0,0,.35);text-shadow:1px 1px 0 rgba(0,0,0,.25)}
 .step-meta{flex:1;min-width:0}
 .step-meta .k{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-weight:700}
 .step-meta h3{font-size:24px;margin:2px 0}
@@ -77,7 +77,7 @@ h2{font-size:40px;margin-bottom:8px;text-shadow:1px 1px 0 var(--hi)}
 .step-inner li{padding:6px 0 6px 24px;position:relative;color:var(--mut);font-size:14.5px}
 .step-inner li::before{content:'⚓';position:absolute;left:2px;color:var(--acc);font-weight:700}
 .step-inner li b{color:var(--txt)}
-.callout{background:var(--bg2);border-left:4px solid var(--acc2);border-radius:6px;padding:13px 16px;margin:14px 0;font-size:14.5px;color:var(--mut);box-shadow:inset 0 0 0 2px rgba(255,250,240,.4)}
+.callout{background:var(--card2);border:1.5px solid var(--line);border-left:4px solid var(--acc2);border-radius:var(--rad);padding:13px 16px;margin:14px 0;font-size:14.5px;color:var(--mut);box-shadow:var(--sh1,0 1px 2px rgba(0,0,0,.4))}
 .callout b{color:var(--txt)}
 
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
