@@ -445,7 +445,11 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
       </div>
       <div class="mut" style="font-size:11.5px;margin:4px 0 8px">Mỗi nhân vật 1 ảnh tham chiếu — <b>AI sinh bằng Nano Banana</b> hoặc <b>upload</b>. App gắn đúng ảnh vào file JSON Flow theo TÊN; bấm "Tải ảnh" rồi upload vào Google Flow → ingredients. (Nhân vật chính vẫn dùng ô 🎭 Nhân vật tham chiếu phía trên — thêm vào dàn nếu muốn quản lý ảnh ở đây.)</div>
       <div id="ugc-studio" style="display:none;background:var(--glass);border:1.5px solid var(--line);border-radius:var(--r-md,10px);padding:14px;margin:0 0 10px">
-        <div style="font-size:12.5px;font-weight:700;color:var(--ac2);margin-bottom:8px">🎨 Xưởng nhân vật UGC — chọn đặc điểm, hệ thống tự dựng prompt <b>brand-safe</b> + sinh ảnh vào Dàn (không có field nhạy cảm).</div>
+        <div style="font-size:12.5px;font-weight:700;color:var(--ac2);margin-bottom:8px">🎨 Xưởng nhân vật UGC — dựng nhân vật ảo có <b>tính cách thật</b> (như Muse): ngoại hình + persona (MBTI, niche, POV, giọng, câu chuyện). Tất cả <b>brand-safe</b>.</div>
+        <div style="background:color-mix(in srgb,var(--ac) 9%,transparent);border:1px solid var(--line);border-radius:8px;padding:9px;margin-bottom:10px">
+          <label style="color:var(--ac2)">⚡ Có ý tưởng? Để AI dựng CẢ tính cách (brand-safe)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"><input id="ugc-concept" placeholder="vd: nữ KOC mỹ phẩm gen Z, vui vẻ, kể chuyện chăm da" style="flex:1;min-width:200px"><button class="btn sm" id="ugc-ai" onclick="ugcAiPersona()">🧠 AI dựng tính cách</button></div>
+        </div>
         <div class="row">
           <div><label>Tên</label><input id="ugc-ten" placeholder="vd: Mai Lumi"></div>
           <div><label>Tuổi</label><input id="ugc-tuoi" type="number" placeholder="27"></div>
@@ -465,7 +469,20 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
           <div><label>Trang phục / phong cách</label><input id="ugc-trangphuc" placeholder="vd: smart casual, blazer sáng màu"></div>
           <div><label>Bối cảnh</label><input id="ugc-boicanh" placeholder="vd: studio sáng / bàn làm việc hiện đại"></div>
         </div>
-        <div style="margin-top:8px"><label>Chi tiết thêm (tuỳ chọn)</label><textarea id="ugc-them" rows="2" placeholder="đặc điểm khuôn mặt, phụ kiện, thần thái..."></textarea></div>
+        <div style="font-size:11.5px;font-weight:700;color:var(--ac2);margin:12px 0 6px;border-top:1px solid var(--line);padding-top:10px">🧠 Tính cách & định vị — để nhân vật có "hồn" (như Muse Brand OS)</div>
+        <div class="row">
+          <div><label>Thần thái / Visual style</label><input id="ugc-thanthai" placeholder="vd: ngọt ngào, trong sáng, có chiều sâu"></div>
+          <div><label>MBTI (tuỳ chọn)</label><input id="ugc-mbti" placeholder="vd: INFP"></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Niche / chủ đề kênh</label><input id="ugc-niche" placeholder="vd: kể chuyện chăm da cho da nhạy cảm"></div>
+          <div><label>Góc nhìn đặc trưng (POV)</label><input id="ugc-pov" placeholder="vd: người chị đi trước chia sẻ mẹo thực chiến"></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Chất giọng nói/viết</label><input id="ugc-giong" placeholder="vd: nhẹ nhàng, ấm áp, chân thành"></div>
+          <div><label>Chi tiết ngoại hình thêm</label><input id="ugc-them" placeholder="đặc điểm khuôn mặt, phụ kiện..."></div>
+        </div>
+        <div style="margin-top:8px"><label>Câu chuyện nền (backstory)</label><textarea id="ugc-backstory" rows="2" placeholder="hành trình, động cơ, điều nhân vật trân trọng..."></textarea></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
           <button class="btn sm" onclick="ugcCreate()">✨ Tạo nhân vật vào Dàn</button>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);text-transform:none;font-weight:600;letter-spacing:0"><input type="checkbox" id="ugc-autoimg" checked style="width:auto">Sinh ảnh luôn (Nano Banana)</label>
@@ -4933,31 +4950,49 @@ function _ugcV(id){ const e=document.getElementById(id); return e?String(e.value
 const UGC_HAIR_EN={'Dài':'long','Ngắn':'short','Đuôi ngựa':'ponytail','Tết':'braided','Mái':'with bangs','Búi':'in a bun','Gợn sóng':'wavy','Pixie':'pixie cut','Undercut':'undercut'};
 const UGC_BODY_EN={'Mảnh mai':'slim','Khỏe khoắn':'athletic','Đầy đặn':'full-figured','Đường cong':'curvy','Cơ bắp':'muscular'};
 const UGC_ETH_EN={'Châu Á':'East/Southeast Asian','Da trắng':'White','Da đen':'Black','Latin':'Latina/Latino','Ả Rập':'Arab','Ấn Độ':'South Asian'};
+async function ugcAiPersona(){ if(typeof requirePremium==='function'&&!requirePremium('Xưởng nhân vật'))return;
+  const fb=document.getElementById('roster-fb');
+  if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Cần Gemini key — tab ⚡ Kết nối.</div>'; return; }
+  const concept=_ugcV('ugc-concept'); if(concept.length<3){ alert('Nhập 1 ý tưởng nhân vật ở ô trên trước.'); return; }
+  const btn=document.getElementById('ugc-ai'); const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>';}
+  try{
+    const o=await geminiCall('Bạn là giám đốc casting kiêm biên kịch VIRAL DOJO. Từ ý tưởng, dựng 1 HỒ SƠ NHÂN VẬT ẢO UGC có CHIỀU SÂU TÍNH CÁCH (digital twin "có hồn"), BRAND-SAFE: không nội dung người lớn/nhạy cảm, KHÔNG đặt tên/giống người nổi tiếng. Bám brand nếu có.\nBRAND:\n'+brandContext(900)+'\nÝ TƯỞNG: '+concept+'\nTrả về DUY NHẤT JSON: {"ten":"","tuoi":"số tuổi","gioi":"Nữ hoặc Nam","sac":"Châu Á|Da trắng|Da đen|Latin|Ả Rập|Ấn Độ","dang":"Mảnh mai|Khỏe khoắn|Đầy đặn|Đường cong|Cơ bắp","toc":"Dài|Ngắn|Đuôi ngựa|Tết|Mái|Búi|Gợn sóng|Pixie|Undercut","mautoc":"","nghe":"nghề / định vị chuyên môn","thanthai":"thần thái / visual style ngắn","mbti":"vd INFP","tinh_cach":"2-3 câu tính cách có chiều sâu","niche":"chủ đề / ngách kênh","pov":"góc nhìn đặc trưng","giong":"chất giọng nói/viết","backstory":"2-3 câu câu chuyện nền/động cơ","trangphuc":"trang phục đặc trưng","boicanh":"bối cảnh hay xuất hiện"}.',{json:true,hi:true,temp:0.85});
+    const setV=(id,v)=>{ const e=document.getElementById(id); if(e&&v!=null&&v!=='')e.value=asText(v); };
+    setV('ugc-ten',o.ten); setV('ugc-tuoi',o.tuoi); setV('ugc-mautoc',o.mautoc); setV('ugc-nghe',o.nghe); setV('ugc-tinh',o.tinh_cach);
+    setV('ugc-trangphuc',o.trangphuc); setV('ugc-boicanh',o.boicanh); setV('ugc-thanthai',o.thanthai); setV('ugc-mbti',o.mbti);
+    setV('ugc-niche',o.niche); setV('ugc-pov',o.pov); setV('ugc-giong',o.giong); setV('ugc-backstory',o.backstory);
+    const setSel=(id,v)=>{ const e=document.getElementById(id); if(e&&v){ v=asText(v); for(let i=0;i<e.options.length;i++){ if(e.options[i].value===v||e.options[i].text===v){ e.selectedIndex=i; break; } } } };
+    setSel('ugc-gioi',o.gioi); setSel('ugc-sac',o.sac); setSel('ugc-dang',o.dang); setSel('ugc-toc',o.toc);
+    if(fb)fb.innerHTML='<div class="fb">✅ AI đã dựng hồ sơ tính cách đầy đủ. Xem/sửa các ô rồi bấm "✨ Tạo nhân vật vào Dàn".</div>';
+  }catch(e){ if(fb)fb.innerHTML='<div class="fb bad">❌ '+(e.message==='NO_KEY'?'chưa có Gemini key':e.message)+'</div>'; }
+  if(btn){btn.disabled=false;btn.innerHTML=old;}
+}
 async function ugcCreate(){
   const ten=_ugcV('ugc-ten')||'Nhân vật';
   const tuoi=_ugcV('ugc-tuoi'), gioi=_ugcV('ugc-gioi')||'Nữ', sac=_ugcV('ugc-sac'), toc=_ugcV('ugc-toc'), mauToc=_ugcV('ugc-mautoc'),
         dang=_ugcV('ugc-dang'), nghe=_ugcV('ugc-nghe'), tinh=_ugcV('ugc-tinh'), trangphuc=_ugcV('ugc-trangphuc'), boicanh=_ugcV('ugc-boicanh'), them=_ugcV('ugc-them');
+  const thanthai=_ugcV('ugc-thanthai'), mbti=_ugcV('ugc-mbti'), niche=_ugcV('ugc-niche'), pov=_ugcV('ugc-pov'), giong=_ugcV('ugc-giong'), backstory=_ugcV('ugc-backstory');
   const sexEn=gioi==='Nam'?'man':'woman';
-  const mo=[]; mo.push((tuoi?tuoi+' tuổi, ':'')+gioi.toLowerCase()+(sac?', '+sac.toLowerCase():''));
-  if(dang) mo.push('dáng '+dang.toLowerCase());
-  if(toc) mo.push('tóc '+toc.toLowerCase()+(mauToc?(' '+mauToc.toLowerCase()):''));
-  if(nghe) mo.push('nghề: '+nghe);
-  if(tinh) mo.push('tính cách: '+tinh);
-  if(them) mo.push(them);
-  const mo_ta=mo.filter(Boolean).join(' · ').slice(0,420);
+  const ngoai=[]; ngoai.push((tuoi?tuoi+' tuổi, ':'')+gioi.toLowerCase()+(sac?', '+sac.toLowerCase():''));
+  if(dang) ngoai.push('dáng '+dang.toLowerCase());
+  if(toc) ngoai.push('tóc '+toc.toLowerCase()+(mauToc?(' '+mauToc.toLowerCase()):''));
+  const ps=[]; if(nghe)ps.push('Nghề/định vị: '+nghe); if(thanthai)ps.push('Thần thái: '+thanthai); if(mbti)ps.push('MBTI: '+mbti);
+  if(tinh)ps.push('Tính cách: '+tinh); if(niche)ps.push('Niche: '+niche); if(pov)ps.push('POV: '+pov); if(giong)ps.push('Chất giọng: '+giong); if(backstory)ps.push('Câu chuyện: '+backstory); if(them)ps.push(them);
+  const mo_ta=(ngoai.filter(Boolean).join(' · ')+(ps.length?(' — '+ps.join(' · ')):'')).slice(0,900);
+  const persona={ tuoi:tuoi, gioi:gioi, sac:sac, dang:dang, toc:toc, mauToc:mauToc, nghe:nghe, thanthai:thanthai, mbti:mbti, tinh:tinh, niche:niche, pov:pov, giong:giong, backstory:backstory, trangphuc:trangphuc, boicanh:boicanh };
   const en=['A '+(tuoi?tuoi+'-year-old ':'')+(UGC_ETH_EN[sac]||sac||'')+' '+sexEn,
     (UGC_BODY_EN[dang]?UGC_BODY_EN[dang]+' build':''),
     (toc?((mauToc?mauToc.toLowerCase()+' ':'')+(UGC_HAIR_EN[toc]||toc.toLowerCase())+' hair'):''),
-    (nghe?'occupation: '+nghe:''), (tinh?'vibe: '+tinh:''),
+    (nghe?'occupation: '+nghe:''), ((thanthai||tinh)?'vibe: '+[thanthai,tinh].filter(Boolean).join(', '):''),
     (trangphuc?'wearing '+trangphuc:'modest professional attire'),
     (boicanh?'setting: '+boicanh:'clean neutral studio background'),
     (them||''),
     'advertising-safe, original fictional person — not resembling any real or famous person; clear visible face, consistent recognizable look, even soft lighting, no text/logo/watermark; vertical 9:16 character reference portrait'].filter(Boolean).join(', ');
-  const item={ id:'nv_'+Math.random().toString(36).slice(2,8), ten:ten.slice(0,40), mo_ta:mo_ta, prompt:en, img:'' };
+  const item={ id:'nv_'+Math.random().toString(36).slice(2,8), ten:ten.slice(0,40), mo_ta:mo_ta, prompt:en, img:'', persona:persona };
   roster().push(item); save(); if(typeof renderRoster==='function')renderRoster();
   const autoImg=document.getElementById('ugc-autoimg')&&document.getElementById('ugc-autoimg').checked;
-  const fb=document.getElementById('roster-fb'); if(fb)fb.innerHTML='<div class="fb">✅ Đã tạo "'+_escAttr(item.ten)+'" vào Dàn nhân vật'+(autoImg?' — đang sinh ảnh Nano Banana...':' (bấm 🧠 AI sinh ảnh ở thẻ nhân vật).')+'</div>';
-  ['ugc-ten','ugc-tuoi','ugc-mautoc','ugc-nghe','ugc-tinh','ugc-trangphuc','ugc-boicanh','ugc-them'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
+  const fb=document.getElementById('roster-fb'); if(fb)fb.innerHTML='<div class="fb">✅ Đã tạo "'+_escAttr(item.ten)+'" (kèm hồ sơ tính cách) vào Dàn nhân vật'+(autoImg?' — đang sinh ảnh Nano Banana...':' (bấm 🧠 AI sinh ảnh ở thẻ nhân vật).')+'</div>';
+  ['ugc-ten','ugc-tuoi','ugc-mautoc','ugc-nghe','ugc-tinh','ugc-trangphuc','ugc-boicanh','ugc-them','ugc-thanthai','ugc-mbti','ugc-niche','ugc-pov','ugc-giong','ugc-backstory','ugc-concept'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
   if(autoImg && typeof rosterGenImg==='function'){ try{ await rosterGenImg(item.id); }catch(e){} }
 }
 </script>
