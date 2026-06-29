@@ -1019,6 +1019,8 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
       <button class="btn sm ghost" onclick="ocScoreAll()">🧠 Chấm COREVIRAL (tất cả)</button>
       <button class="btn sm ghost" onclick="ocUpgradeWeakAll()">♻️ Nâng cấp cái chưa đạt → đạt chuẩn</button>
       <button class="btn sm ghost" onclick="ocPromptsAll()">🎥 Sinh prompt video (tất cả)</button>
+      <button class="btn sm ghost" onclick="ocPostKitAll()" style="border-color:var(--ac2);color:var(--ac2)">📋 Caption + Hashtag + chấm (tất cả)</button>
+      <button class="btn sm ghost" onclick="ocPromptQaAll()" style="border-color:var(--warn);color:var(--warn)">🧪 Chấm + nâng cấp prompt (tất cả)</button>
     </div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn sm ghost" style="border-color:var(--blue);color:var(--blue)" onclick="ocExportJson()">🧩 Xuất JSON cho Flow</button>
@@ -5138,7 +5140,7 @@ async function ocPrompts(id){ const x=ocItem(id); if(!x||!x.script)return;
 /* ---- chạy 1 thẻ (có spinner) ---- */
 async function ocOne(act,id,btn){ if(typeof requirePremium==='function'&&!requirePremium('Đại Hải Trình'))return;
   if(!S.keys.gemini){ ocFb('Cần Gemini key — tab ⚡ Kết nối.',1); return; }
-  const map={build:ocBuildScript,score:ocScoreItem,upgrade:ocUpgradeItem,guide:ocGuide,prompts:ocPrompts}; const fn=map[act]; if(!fn)return;
+  const map={build:ocBuildScript,score:ocScoreItem,upgrade:ocUpgradeItem,guide:ocGuide,prompts:ocPrompts,postkit:async(id)=>{await ocPostKit(id);await ocGradeCaption(id);},promptqa:ocUpgradePrompt}; const fn=map[act]; if(!fn)return;
   const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>';}
   try{ await fn(id); }catch(e){ ocFb('❌ '+e.message,1); }
   if(btn){btn.disabled=false; btn.innerHTML=old;}
@@ -5160,6 +5162,45 @@ function ocScoreAll(){ ocRunBulk('🧠 Chấm COREVIRAL', ocScoreItem, x=>x.scri
 function ocUpgradeWeakAll(){ ocRunBulk('♻️ Nâng cấp yếu', ocUpgradeItem, x=>x.script && x._scored && x.score<OC_PASS); }
 function ocPromptsAll(){ ocRunBulk('🎥 Sinh prompt video', ocPrompts, x=>x.script && (!x.shots||!x.shots.length)); }
 
+/* ===== 📋 Caption + Hashtag (+ nhạc) cho mỗi ý tưởng + chấm điểm viral ===== */
+async function ocPostKit(id){ const x=ocItem(id); if(!x)return; const LANG=ocLang();
+  const body=x.script?((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' | trám: '+(c.tram||'')).join('\n').slice(0,1400):(x.mo_ta||'');
+  const o=await geminiCall('Bạn là content creator TikTok/Reels chuyên bán hàng (VIRAL DOJO). Từ kịch bản + brand, tạo BỘ ĐĂNG BÀI sẵn để copy. Ngôn ngữ: '+LANG+'.\n'+ocCtx()+'\nVIDEO "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"caption":"caption '+LANG+' sẵn đăng: DÒNG HOOK đầu giật, 2-4 dòng giá trị/cảm xúc bám insight, 1 CTA cuối; dùng \\\\n xuống dòng, 2-4 emoji; KHÔNG nhồi hashtag vào caption","hashtags":["8-12 hashtag trộn RỘNG đang trend + NGÁCH sản phẩm/insight; mỗi cái bắt đầu # và viết liền"],"music":"BACKGROUND MUSIC prompt TIẾNG ANH cho Suno/Udio: genre + mood + BPM + nhạc cụ chính; instrumental, no vocals, loopable 15-30s"}',{json:true,temp:0.7});
+  x.caption=asText(o.caption); x.hashtags=(typeof cleanTags==='function'?cleanTags(o.hashtags):_arr(o.hashtags)); x.music=asText(o.music); x.capAt=_today(); save(); ocRender();
+}
+async function ocGradeCaption(id){ const x=ocItem(id); if(!x||(!x.caption&&!(x.hashtags&&x.hashtags.length)))return;
+  const o=await geminiCall('Bạn là GIÁM KHẢO VIRAL cực khó tính. Chấm HOOK/caption + bộ HASHTAG của 1 video, mỗi phần 100đ. Chỉ ≥'+passPct()+' mới ĐẠT.\n'+ocCtx()+'\nVIDEO "'+x.title+'"\nCAPTION:\n'+asText(x.caption||'').slice(0,600)+'\nHASHTAG: '+(((x.hashtags||[]).join(' '))||'(chưa có)')+'\nTIÊU CHÍ: tieu_de (hook 3 giây đầu có giật/đúng insight, khiến phải xem hết?), hashtag (trộn rộng-trend + ngách, đúng thị trường, đủ 8-12, không spam?).\nTrả về DUY NHẤT JSON: {"tieu_de":{"diem":0,"sua":["1-2 cách viết hook mạnh hơn"]},"hashtag":{"diem":0,"sua":["1 bộ hashtag tốt hơn"]},"tong":0}. tong = TB 2 phần.',{json:true,temp:0.3});
+  const td=Math.round(+((o.tieu_de||{}).diem)||0), ht=Math.round(+((o.hashtag||{}).diem)||0); let tong=+o.tong; if(!(tong>=0&&tong<=100))tong=Math.round((td+ht)/2);
+  x.capQA={tong:Math.round(tong), td:td, ht:ht, sua:[].concat(_arr((o.tieu_de||{}).sua),_arr((o.hashtag||{}).sua)), at:_today()}; save(); ocRender();
+}
+/* ===== 🧪 Chấm + nâng cấp bộ PROMPT của mỗi ý tưởng (viết lại shot yếu, tự chấm lại đến đạt ngưỡng) ===== */
+async function ocGradePrompt(id){ const x=ocItem(id); if(!x||!(x.shots&&x.shots.length))return;
+  const n=x.shots.length; const body=x.shots.map(s=>'Shot '+s.seq+': '+(s.prompt||'').slice(0,400)+(s.voiceover?(' | VO: '+s.voiceover):'')).join('\n').slice(0,5000);
+  const o=await geminiCall('Bạn là GIÁM KHẢO VIRAL CỰC KHÓ TÍNH. Chấm CHẤT LƯỢNG bộ prompt video '+n+' shot (~'+(n*10)+'s) thang 100đ — quyết định có nên sản xuất chưa. Chỉ ≥'+passPct()+' mới ĐẠT.\n'+ocCtx()+(n<6?'\n⚠️ DƯỚI 6 shot/60s → trừ mạnh, nêu rõ cần ≥6 shot.':'')+'\nTIÊU CHÍ (điểm): hook (cú mở 3s giật), chan_thuc (giống thật/đúng phong cách đã chọn), nhip (quick-cut, đủ shot), lien_mach (nhân vật/bối cảnh nhất quán giữa shot), voiceover (tự nhiên, vừa 10s), cta (chốt/cliffhanger rõ), sang_tao.\nBỘ PROMPT "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"diem":{"hook":0,"chan_thuc":0,"nhip":0,"lien_mach":0,"voiceover":0,"cta":0,"sang_tao":0},"tong":0,"yeu":["..."],"sua":["2-4 việc CỤ THỂ cần sửa"]}. tong 0-100.',{json:true,temp:0.3});
+  let tong=+o.tong; if(!(tong>=0&&tong<=100)){ const d=o.diem||{}; tong=Object.values(d).reduce((a,b)=>a+(+b||0),0); }
+  x.promptQA={tong:Math.round(tong), diem:o.diem||{}, yeu:_arr(o.yeu), sua:_arr(o.sua), at:_today()}; save(); ocRender();
+}
+async function ocUpgradePrompt(id){ const x=ocItem(id); if(!x||!(x.shots&&x.shots.length)||!x.script)return;
+  if(!x.promptQA) await ocGradePrompt(id);
+  const LANG=ocLang(), VOICE=ocVoice(), v=(typeof vref==='function'?vref():{})||{}; const _vp=vStylePack();
+  const _sel=ocSelChars(), _mc=_sel.find(c=>c.vai==='chính')||_sel[0]; const _charDesc=_mc?(_mc.prompt||_mc.mo_ta||_mc.ten):(v.character||'nhân vật hư cấu nhất quán do bạn thiết kế');
+  let round=0, last=-1;
+  while(round<3 && x.promptQA && x.promptQA.tong<passPct()){ round++;
+    const oldShots=x.shots.map(s=>'Shot '+s.seq+': '+(s.prompt||'')+(s.voiceover?(' | VO: '+s.voiceover):'')+(s.onscreen?(' | Text: '+s.onscreen):'')).join('\n').slice(0,4500);
+    const fix=(x.promptQA.yeu&&x.promptQA.yeu.length?('ĐIỂM YẾU: '+x.promptQA.yeu.join('; ')+'. '):'')+(x.promptQA.sua&&x.promptQA.sua.length?('VIỆC CẦN SỬA: '+x.promptQA.sua.join('; ')+'.'):'');
+    const body=((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' | hình: '+(c.hinhanh||'')+' | trám: '+(c.tram||'')).join('\n');
+    const nT=Math.max(6,((x.script.scenes)||[]).length);
+    const o=await geminiCall('Bạn là ĐẠO DIỄN VIRAL DOJO đang NÂNG CẤP bộ prompt video — GIỮ shot đã tốt, VIẾT LẠI ĐÚNG shot/điểm yếu theo phân tích. Mục tiêu đạt ≥'+passPct()+'/100.\nNHÂN VẬT (giữ y hệt mọi shot): '+_charDesc+'\nSTYLE: '+_vp.styleEN+' · GÓC MÁY: '+_vp.cameras+' · CHẤT LƯỢNG: '+_vp.quality+(_vp.neg?(' · TRÁNH: '+_vp.neg):'')+' · NGÔN NGỮ thoại/overlay: '+LANG+(VOICE?(' · giọng: '+VOICE):'')+'\n'+ocCtx()+'\nĐIỂM HIỆN TẠI: '+x.promptQA.tong+'/100. '+fix+'\nMỗi prompt PHẢI chèn nguyên văn: '+(_vp.realPerson?('"'+NATURAL_REAL_EN+'"'):('"'+_vp.styleEN+'. '+_vp.quality+'."'))+' · "'+SAFE_COMPLIANCE_EN+'" · "'+CUT_COHERENCE_EN+'" · shot≥2 mở đầu "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;".'+SAFE_COMPLIANCE_VN+vStyleBlockVN(_vp)+'\nKỊCH BẢN "'+x.title+'":\n'+body+'\nPROMPT CŨ (giữ shot tốt, chỉ sửa shot yếu):\n'+oldShots+'\nTrả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"","voiceover":"","onscreen":""}]}. PHẢI ≥'+nT+' shot (tối thiểu 6, ≥60s).',{json:true,hi:true,temp:0.55});
+    const ns=_arr(o.shots).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:ensureSafeEN(applyStyleEN(s.prompt||'',_vp)),voiceover:asText(s.voiceover||''),onscreen:asText(s.onscreen||'')})).filter(s=>s.prompt);
+    if(ns.length>=Math.max(2,Math.ceil(x.shots.length*0.5))) x.shots=ns;
+    last=(x.promptQA&&x.promptQA.tong)||0; await ocGradePrompt(id);
+    if((x.promptQA&&x.promptQA.tong)<=last && round>=2) break;
+  }
+  save(); ocRender();
+}
+function ocPostKitAll(){ ocRunBulk('📋 Caption+Hashtag+chấm', async(id)=>{ const x=ocItem(id); if(x&&!x.caption) await ocPostKit(id); if(x&&(x.caption||(x.hashtags&&x.hashtags.length))) await ocGradeCaption(id); }, x=>x.script); }
+function ocPromptQaAll(){ ocRunBulk('🧪 Chấm + nâng cấp prompt', ocUpgradePrompt, x=>x.shots&&x.shots.length); }
+
 function ocDel(id){ const o=OC(); o.items=o.items.filter(x=>x.id!==id); save(); ocRender(); }
 function ocWipe(){ if(!OC().items.length){ const ta=document.getElementById('oc-idea'); if(ta)ta.value=''; OC().idea=''; save(); return; } if(!confirm('Xoá toàn bộ ý tưởng trong Đại Hải Trình?'))return; OC().items=[]; save(); ocRender(); ocFb(''); }
 
@@ -5167,6 +5208,7 @@ function ocCopy(id,kind,btn){ const x=ocItem(id); if(!x)return; let t='';
   if(kind==='script'&&x.script) t=(x.script.scenes||[]).map(c=>'【'+(c.phan||'')+'】\n'+(c.noidung||'')+'\nHình: '+(c.hinhanh||'')+'\nTrám: '+(c.tram||'')+(c.note?('\nNote: '+c.note):'')).join('\n\n');
   else if(kind==='prompts') t=(x.shots||[]).map(s=>'# Shot '+s.seq+' ('+s.dur+'s)\n'+s.prompt+(s.voiceover?('\nVO: '+s.voiceover):'')+(s.onscreen?('\nText: '+s.onscreen):'')).join('\n\n---\n\n');
   else if(kind==='guide'&&x.guide) t='— NGƯỜI THẬT —\n'+(x.guide.human||'')+'\n\n— AI (Flow/Veo) —\n'+(x.guide.ai||'');
+  else if(kind==='post') t=(x.caption||'')+((x.hashtags&&x.hashtags.length)?('\n\n'+x.hashtags.join(' ')):'')+(x.music?('\n\n🎵 '+x.music):'');
   if(t&&typeof _clip==='function') _clip(t,btn); else if(t) ocDl('copy.txt',t,'text/plain');
 }
 
@@ -5230,6 +5272,8 @@ function ocRender(){ const o=OC();
       +(hasS?'<button class="btn sm ghost" onclick="ocOne(\'score\',\''+x.id+'\',this)">🧠 Chấm</button>':'')
       +(hasS?'<button class="btn sm ghost" onclick="ocOne(\'guide\',\''+x.id+'\',this)">📋 Hướng dẫn SX</button>':'')
       +(hasS?'<button class="btn sm ghost" style="border-color:var(--blue);color:var(--blue)" onclick="ocOne(\'prompts\',\''+x.id+'\',this)">🎥 Prompt video</button>':'')
+      +(hasS?'<button class="btn sm ghost" style="border-color:var(--ac2);color:var(--ac2)" onclick="ocOne(\'postkit\',\''+x.id+'\',this)">📋 Caption+hashtag</button>':'')
+      +(hasP?'<button class="btn sm ghost" style="border-color:var(--warn);color:var(--warn)" onclick="ocOne(\'promptqa\',\''+x.id+'\',this)">🧪 Chấm prompt</button>':'')
       +'<button class="del" title="Xoá" onclick="ocDel(\''+x.id+'\')">🗑</button>'
       +'</div>'+ocItemDetail(x)+'</div></details>';
   }).join('');
@@ -5244,6 +5288,10 @@ function ocItemDetail(x){ let h='';
     h+='<details style="margin:4px 0"><summary style="cursor:pointer;color:var(--ac2)">📋 Hướng dẫn sản xuất · <a onclick="ocCopy(\''+x.id+'\',\'guide\',this);event.preventDefault()" style="cursor:pointer;text-decoration:underline">copy</a></summary><div style="font-size:12px;margin-top:6px"><b>🧑 Người thật:</b><div style="white-space:pre-wrap;margin:3px 0 8px">'+_escAttr(x.guide.human||'')+'</div><b>🤖 AI (Flow/Veo):</b><div style="white-space:pre-wrap;margin-top:3px">'+_escAttr(x.guide.ai||'')+'</div></div></details>'; }
   if(x.shots&&x.shots.length){
     h+='<details style="margin:4px 0"><summary style="cursor:pointer;color:var(--blue)">🎥 Prompt video ('+x.shots.length+' shot) · <a onclick="ocCopy(\''+x.id+'\',\'prompts\',this);event.preventDefault()" style="cursor:pointer;text-decoration:underline">copy</a></summary><div style="font-size:11.5px;margin-top:6px">'+x.shots.map(s=>'<div style="margin-bottom:8px"><b>Shot '+s.seq+' ('+s.dur+'s)</b>'+(s.voiceover?(' <span class="mut">VO: '+_escAttr(s.voiceover)+'</span>'):'')+'<div style="white-space:pre-wrap;background:var(--glass);border-radius:6px;padding:6px;margin-top:3px">'+_escAttr(s.prompt)+'</div></div>').join('')+'</div></details>'; }
+  if(x.promptQA){ const colP=v=>v>=passPct()?'var(--ac)':v>=60?'var(--warn)':'var(--red)';
+    h+='<div style="font-size:12px;margin:4px 0"><b style="color:'+colP(x.promptQA.tong)+'">🧪 Prompt: '+x.promptQA.tong+'/100'+(x.promptQA.tong>=passPct()?' ✅':'')+'</b>'+(((x.promptQA.tong<passPct())&&x.promptQA.sua&&x.promptQA.sua.length)?' <span class="mut">— '+_escAttr(x.promptQA.sua.join(' · '))+'</span>':'')+'</div>'; }
+  if(x.caption||(x.hashtags&&x.hashtags.length)){ const colC=v=>v>=passPct()?'var(--ac)':v>=60?'var(--warn)':'var(--red)';
+    h+='<details style="margin:4px 0"><summary style="cursor:pointer;color:var(--ac2)">📋 Caption + Hashtag'+(x.capQA?(' · <b style="color:'+colC(x.capQA.tong)+'">'+x.capQA.tong+'/100</b>'):'')+' · <a onclick="ocCopy(\''+x.id+'\',\'post\',this);event.preventDefault()" style="cursor:pointer;text-decoration:underline">copy</a></summary><div style="font-size:12px;margin-top:6px">'+(x.caption?('<div style="white-space:pre-wrap;margin-bottom:6px">'+_escAttr(x.caption)+'</div>'):'')+((x.hashtags&&x.hashtags.length)?('<div style="color:var(--ac);font-size:11.5px">'+_escAttr(x.hashtags.join(' '))+'</div>'):'')+(x.music?('<div class="mut" style="font-size:11px;margin-top:4px">🎵 '+_escAttr(x.music)+'</div>'):'')+((x.capQA&&x.capQA.sua&&x.capQA.sua.length&&x.capQA.tong<passPct())?('<div class="mut" style="font-size:11px;margin-top:4px">Nên sửa: '+_escAttr(x.capQA.sua.join(' · '))+'</div>'):'')+'</div></details>'; }
   return h;
 }
 </script>
