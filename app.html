@@ -2439,7 +2439,7 @@ async function buildScriptsTop(){ if(!requirePremium('Dựng kịch bản'))retu
   try{
     await runPool(L, async (x)=>{
       AIJob.setSub(_jid, x.title); forgeProg(`🎬 Dựng kịch bản chi tiết: ${x.title}`,1);
-      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true,task:'🎬 Dựng kịch bản: '+x.title});
+      const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT (khung B9) cho 1 video TikTok, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (hình ảnh thể hiện: bối cảnh·góc quay·nhân vật·CÁCH sản phẩm xuất hiện [cầm/đặt/dùng — KHÔNG tả ngoại hình, bám ẢNH tham chiếu]), tram (chữ/hình/âm thanh CHÈN overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true,task:'🎬 Dựng kịch bản: '+x.title});
       S.dna.skuld.scripts[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
       _dn++; btn.innerHTML=`<span class="spin"></span>Dựng ${_dn}/${L.length}...`; save(); renderForgePlan(); renderScripts();
     }, _jid);
@@ -2479,7 +2479,7 @@ async function regenWeakScripts(){ if(!requirePremium('Tạo lại kịch bản 
         const fix=failed.length
           ? 'Kịch bản CŨ bị giám khảo đánh TRƯỢT các tiêu chí sau — viết lại để ĐẠT bằng được:\n- '+failed.join('\n- ')
           : 'Kịch bản cũ điểm thấp — nâng cấp mạnh độ viral: hook sắc hơn, cụ thể hơn, có bằng chứng & cao trào.';
-        const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true,task:'♻️ Tạo lại KB yếu: '+x.title});
+        const out=await geminiCall(`Bạn là biên kịch VIRAL DOJO. VIẾT LẠI (nâng cấp) KỊCH BẢN CHI TIẾT cho 1 video TikTok để đạt chuẩn sản xuất, bám BRAND. Chia 3 phần MỞ BÀI / THÂN BÀI / KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh có: noidung (lời thoại/diễn biến cụ thể), hinhanh (bối cảnh·góc quay·nhân vật·CÁCH sản phẩm xuất hiện [cầm/đặt/dùng — KHÔNG tả ngoại hình, bám ẢNH tham chiếu]), tram (chữ/hình/âm thanh overlay), note (gợi ý quay/dựng).\nBRAND:\n${brandContext(2500)}\nÝ TƯỞNG: "${x.title}" — ${x.desc}\n${fix}\nKỊCH BẢN CŨ (tham chiếu — phải LÀM TỐT HƠN, không lặp lại điểm yếu):\n${oldText}\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"...","hinhanh":"...","tram":"...","note":"..."}]}.`,{json:true,temp:0.6,hi:true,task:'♻️ Tạo lại KB yếu: '+x.title});
         sc[x.title]={scenes:normScenes(out.scenes), at:new Date().toISOString().slice(0,10)};
         x._sc=false; x._scv=null; x.score=0; x.checks=[];   // reset điểm → buộc chấm lại ở bước sau
         _dn++; total++; btn.innerHTML=`<span class="spin"></span>V${round}: ${_dn}/${L.length}...`; save(); renderForgePlan(); renderScripts();
@@ -2855,12 +2855,12 @@ async function analyzeRefImg(kind){ const v=vref(), dataUrl=v[kind+'Img']; if(!d
   if(!S.keys.gemini){ if(fb)fb.innerHTML='<div class="fb bad">Đã lưu ảnh. Cần Gemini key để AI đọc ảnh → mô tả (tab ⚡ Kết nối).</div>'; return; }
   const base64=dataUrl.split(',')[1];
   const prompt = kind==='product'
-   ? 'Mô tả CHÍNH XÁC sản phẩm trong ảnh để làm THAM CHIẾU video (TIẾNG ANH, 1 đoạn ngắn gọn): loại bao bì/chai/hộp, MÀU SẮC thực tế, nhãn/logo/chữ nhìn thấy, hình dạng, chất liệu bề mặt. CHỈ tả những gì THỰC SỰ THẤY trong ảnh, KHÔNG suy diễn/không bịa.'
+   ? 'Nhìn ảnh và trả về DUY NHẤT loại vật thể CHUNG CHUNG trong ≤5 từ TIẾNG ANH (vd: "a pump bottle", "a skincare tube", "a canned drink", "a glass jar"). TUYỆT ĐỐI KHÔNG nêu màu sắc, nhãn, logo, chữ, hoạ tiết, kiểu dáng hay chất liệu — ngoại hình sẽ 100% lấy từ ẢNH tham chiếu, không tả bằng lời. CHỈ trả cụm từ, không giải thích.'
    : 'Mô tả CHÍNH XÁC người trong ảnh để làm NHÂN VẬT tham chiếu video (TIẾNG ANH, 1 đoạn ngắn): tuổi ước lượng, giới tính, kiểu/ màu tóc, đặc điểm khuôn mặt nổi bật, trang phục, thần thái. CHỈ tả những gì THẤY trong ảnh.';
   try{ const txt=await geminiCall(prompt,{temp:0.2, images:[{mime:'image/jpeg',data:base64}]});
     const field=kind==='product'?'product':'character'; v[field]=asText(txt).trim(); save();
     const ta=document.getElementById(kind==='product'?'vref-prod':'vref-char'); if(ta) ta.value=v[field];
-    if(fb)fb.innerHTML='<div class="fb">✅ Đã đọc ảnh '+(kind==='product'?'sản phẩm':'nhân vật')+' → mô tả chính xác. Prompt video sẽ bám đúng ảnh này.</div>';
+    if(fb)fb.innerHTML='<div class="fb">✅ Đã lưu ảnh '+(kind==='product'?'sản phẩm (chỉ ghi loại vật thể — ngoại hình bám ẢNH, không tả bằng chữ)':'nhân vật → mô tả chính xác')+'. Prompt video sẽ dùng ẢNH này làm tham chiếu gốc.</div>';
   }catch(e){ if(fb)fb.innerHTML='<div class="fb bad">❌ AI đọc ảnh lỗi: '+e.message+'</div>'; }
 }
 function delRefImg(kind){ const v=vref(); delete v[kind+'Img']; save(); renderRefImgPreviews(); }
@@ -3002,7 +3002,7 @@ async function genVRef(){
   const old=btn?btn.innerHTML:''; if(btn){btn.disabled=true; btn.innerHTML='<span class="spin"></span>...';}
   try{
     const hasCharImg=!!vref().characterImg, hasProdImg=!!vref().productImg;
-    const o=await geminiCall(`Tạo BỘ THAM CHIẾU NHẤT QUÁN cho kênh video (dùng chung cả 30 video — giữ nhân vật + sản phẩm giống nhau). Bám brand.\nBRAND:\n${brandContext(2500)}\nTrả JSON, mô tả bằng TIẾNG ANH (cho video model): {"character":"1 nhân vật on-camera cố định: tuổi/giới/ngoại hình/tóc/trang phục/thần thái, hợp kênh","product":"TÊN + LOẠI sản phẩm theo brand; CHỈ nêu bao bì/màu/logo nếu brand ghi RÕ — TUYỆT ĐỐI KHÔNG tự bịa ngoại hình/màu sắc nếu brand không nêu","style":"tông màu·ánh sáng·phong cách quay·nhịp"}.`,{json:true,temp:0.5});
+    const o=await geminiCall(`Tạo BỘ THAM CHIẾU NHẤT QUÁN cho kênh video (dùng chung cả 30 video — giữ nhân vật + sản phẩm giống nhau). Bám brand.\nBRAND:\n${brandContext(2500)}\nTrả JSON, mô tả bằng TIẾNG ANH (cho video model): {"character":"1 nhân vật on-camera cố định: tuổi/giới/ngoại hình/tóc/trang phục/thần thái, hợp kênh","product":"CHỈ TÊN + LOẠI vật thể chung chung (vd 'pump bottle of cleanser', 'canned coffee'); TUYỆT ĐỐI KHÔNG mô tả màu sắc/bao bì/nhãn/logo/chữ/hoạ tiết — ngoại hình 100% lấy từ ẢNH SẢN PHẨM tham chiếu khi dựng video","style":"tông màu·ánh sáng·phong cách quay·nhịp"}.`,{json:true,temp:0.5});
     const v=vref();
     if(!hasCharImg) v.character=asText(o.character);   // giữ mô tả từ ảnh nếu đã đính kèm
     if(!hasProdImg) v.product=asText(o.product);
@@ -3058,7 +3058,7 @@ function viralDirectorVN(vp, improve){ vp = vp || vStylePack();
   return s;
 }
 /* Luật grounding sản phẩm bằng ẢNH thật — chống AI bịa ngoại hình (dùng cho cả 2 engine) */
-function productGroundingVN(prodName){ return `- PRODUCT = ĐÚNG sản phẩm trong ẢNH SẢN PHẨM ĐÍNH KÈM (uploaded product reference image) — đây là NGUỒN SỰ THẬT DUY NHẤT về ngoại hình sản phẩm. TUYỆT ĐỐI KHÔNG mô tả / sáng tạo / đổi màu / đổi bao bì / đổi nhãn / đổi logo / đổi hình dạng sản phẩm bằng chữ. Mọi shot CHỈ gọi sản phẩm là "the exact product from the uploaded product reference image"${prodName?` (nhận biết nội bộ: ${prodName} — KHÔNG tả lại ngoại hình)`:''}; chỉ tả CÁCH cầm/đặt/dùng/đặt sản phẩm ở đâu trong khung, KHÔNG tả ngoại hình.`; }
+function productGroundingVN(prodName){ return `- PRODUCT = DÙNG ẢNH SẢN PHẨM ĐÍNH KÈM (uploaded product reference image) làm THAM CHIẾU GỐC DUY NHẤT cho ngoại hình. Mọi shot CHỈ gọi sản phẩm là "the exact product from the uploaded product reference image"${prodName?` (loại vật thể: ${prodName} — chỉ để hiểu cách cầm/dùng, KHÔNG tả lại)`:''}; CHỈ tả CÁCH cầm/đặt/dùng/đặt sản phẩm ở đâu trong khung. TUYỆT ĐỐI KHÔNG đưa BẤT KỲ tính từ/mô tả ngoại hình nào (màu sắc, bao bì, chai/hộp/tuýp, nhãn, logo, chữ trên bao bì, hình dạng, chất liệu) vào prompt — KỂ CẢ khi kịch bản/Hình ảnh có tả; nếu có, BỎ QUA và để Veo bám 100% theo ẢNH. KHÔNG recolor/relabel/restyle/redesign/replace sản phẩm.`; }
 const PRODUCT_MANDATORY_EN = `"Use the uploaded product reference image as the SINGLE source of truth for the product — render the product EXACTLY as shown in that image; do NOT recolor, relabel, restyle, redesign, or replace it, and do NOT invent any packaging, color, or logo. Use the uploaded character reference image for the person. Keep both identical across all shots."`;
 /* Khung 19 câu B9 (định nghĩa CỤ THỂ thế nào là viral) — dạng brief gọn để nhồi vào dựng kịch bản + chấm điểm cả 2 engine */
 function b9Brief(){ try{ return SK_Q.map((q,i)=>(i+1)+'. '+q[1]).join(' '); }catch(e){ return ''; } }
@@ -5185,7 +5185,7 @@ async function ocFixWeakIdeas(){ if(typeof requirePremium==='function'&&!require
 }
 
 async function ocBuildScript(id){ const x=ocItem(id); if(!x)return;
-  const out=await geminiCall('Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT cho 1 video TikTok ~60s từ Ý TƯỞNG dưới, bám sản phẩm/insight người dùng. Chia 3 phần MỞ BÀI/THÂN BÀI/KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh: noidung (lời thoại/diễn biến), hinhanh (bối cảnh·góc quay·nhân vật·sản phẩm), tram (chữ/âm thanh overlay), note (gợi ý quay/dựng). Ngôn ngữ thoại: '+ocLang()+'.'
+  const out=await geminiCall('Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT cho 1 video TikTok ~60s từ Ý TƯỞNG dưới, bám sản phẩm/insight người dùng. Chia 3 phần MỞ BÀI/THÂN BÀI/KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh: noidung (lời thoại/diễn biến), hinhanh (bối cảnh·góc quay·nhân vật·CÁCH sản phẩm xuất hiện [cầm/đặt/dùng — KHÔNG tả ngoại hình, bám ẢNH tham chiếu]), tram (chữ/âm thanh overlay), note (gợi ý quay/dựng). Ngôn ngữ thoại: '+ocLang()+'.'
     +'\n\n🦴 KHUNG XƯƠNG 5-BEAT (BẮT BUỘC — map vào MỞ/THÂN/KẾT): (1) HOOK 3s đầu giật/pattern-interrupt → (2) VẤN ĐỀ/nỗi đau khách thấy mình trong đó → (3) GIẢI PHÁP: sản phẩm xuất hiện TỰ NHIÊN giải quyết → (4) BẰNG CHỨNG/trải nghiệm thật (demo, trước-sau, phản ứng) → (5) CTA/chốt rõ hoặc cliffhanger.'
     +'\n🎯 TỐI ĐA HOÁ CÁC TIÊU CHÍ VIRAL B9 khi viết (cài vào hành động/hình ảnh/âm thanh, đừng liệt kê khô): '+b9Brief()
     +'\n'+ocCtx()+'\nÝ TƯỞNG: "'+x.title+'" ['+x.goc+'] — '+x.mo_ta+'\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"","hinhanh":"","tram":"","note":""}]}.',{json:true,hi:true,temp:0.6});
