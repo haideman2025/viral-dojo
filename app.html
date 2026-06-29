@@ -988,6 +988,7 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
 <!-- ============ VIEW: PHÂN PHỐI ============ -->
 <div id="v-ocean" style="display:none">
   <div class="note">🧭 <b>Đại Hải Trình</b> — không gian sáng tạo tự do: gõ 1 ý tưởng sản phẩm → VIRAL DOJO sinh nhiều ý tưởng kịch bản chất lượng cao → chấm điểm COREVIRAL & nâng cấp ≥80% → hướng dẫn sản xuất cho <b>người thật + AI</b> → sinh prompt video an toàn → xuất JSON cho Flow. Sản xuất ít hay nhiều đều giữ chuẩn cao nhất.</div>
+  <div id="oc-dojo-banner"></div>
 
   <div class="sec" id="oc-input">
     <h2>🧭 Nhập ý tưởng — ra cả loạt kịch bản</h2>
@@ -1559,7 +1560,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   ['home','lib','skuld','ocean','ops','dist','conn','dna'].forEach(v=>{ const c=document.getElementById('v-'+v); if(c) c.style.display = (t.dataset.v===v?'':'none'); });
   if(t.dataset.v==='dist'){ renderDistDayOptions(); renderDist(); renderZernioCfg(); }
   if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderRoster(); renderVPrompts(); }
-  if(t.dataset.v==='ocean'){ if(typeof ocLibRender==='function') ocLibRender(); if(typeof ocRender==='function') ocRender(); }
+  if(t.dataset.v==='ocean'){ if(typeof ocLibRender==='function') ocLibRender(); if(typeof ocDojoBanner==='function') ocDojoBanner(); if(typeof ocRender==='function') ocRender(); }
   if(t.dataset.v==='home'){ if(typeof qsRender==='function') qsRender(); if(typeof renderRoster==='function') renderRoster(); }
   if(t.dataset.v==='ops'){ renderOps(); }
 });
@@ -2012,11 +2013,30 @@ function renderVault(){
     ? '🗂 ' + S.dna.brand.map((b,i)=>`<span style="border:1px solid var(--bd);border-radius:14px;padding:2px 9px;margin:2px;display:inline-block">${b.name} <i>${b.loading?'<span class="spin" style="border-color:var(--ac);border-top-color:transparent"></span>đang đọc…':'('+(b.size/1000).toFixed(1)+'k)'}</i> ${b.loading?'':`<a href="#" style="color:var(--red);text-decoration:none" onclick="delBrand(${i});return false">✕</a>`}</span>`).join(' ')
     : 'Vault trống — nạp ít nhất 1 nguồn để AI hiểu thương hiệu của bạn.';
 }
+/* Distill kết quả 6 Trạm DOJO (chiến lược) thành bối cảnh gọn để mọi khâu sản xuất bám theo.
+   Chỉ gồm trạm đã có dữ liệu → đầu hành trình trả '' (không nhiễu), càng làm nhiều càng giàu. */
+function dojoCtx(maxLen){ maxLen = maxLen || 2200; const d=S.dna||{}; const P=[];
+  const m1=d.m1; if(m1&&(m1.chienluoc||m1.chude||m1.dinhdang))
+    P.push('🎯 CHIẾN LƯỢC KÊNH (Trạm 1): '+[m1.chienluoc&&('chiến lược '+m1.chienluoc), m1.dinhdang&&('định dạng '+m1.dinhdang), m1.chude&&('chủ đề: '+m1.chude)].filter(Boolean).join(' · '));
+  const m3=d.m3; if(m3){
+    const ins=(m3.insight||[]).filter(x=>x&&x.noidung);
+    if(ins.length) P.push('🧠 INSIGHT 5 TẦNG TÂM LÝ (Trạm 3) — kịch bản PHẢI chạm đúng các tầng này:\n'+ins.map(x=>'• '+(x.tang||'')+': '+x.noidung).join('\n'));
+    if(m3.signature) P.push('✒️ Chữ ký nội dung (giữ nhất quán): '+m3.signature);
+    if(m3.kwbrand&&m3.kwbrand.length) P.push('🏷️ Keyword thương hiệu: '+m3.kwbrand.slice(0,12).join(', '));
+  }
+  const m4=d.m4; if(m4&&m4.cats){ const kws=[...new Set(m4.cats.flatMap(c=>c.keywords||[]))]; if(kws.length) P.push('🔑 BỘ TỪ KHÓA (Trạm 4) — cài tự nhiên vào hook/caption/hashtag: '+kws.slice(0,28).join(', ')); }
+  const m6=d.m6; if(m6&&m6.analyses){ const pk=m6.analyses.filter(a=>a&&(a.picked||a.win||a.apply)).slice(0,6);
+    if(pk.length) P.push('🏆 CÔNG THỨC VIRAL ĐÃ BÓC (Trạm 6) — học theo công thức thắng:\n'+pk.map(a=>'• '+[a.win&&('điểm thắng: '+a.win), a.apply&&('cách áp dụng: '+a.apply), a.upgrade&&('nâng cấp: '+a.upgrade)].filter(Boolean).join(' | ')).join('\n')); }
+  if(!P.length) return '';
+  return ('\n===== 📚 CHIẾN LƯỢC CHẮT TỪ 6 TRẠM DOJO (ưu tiên cao — kịch bản & prompt phải bám) =====\n'+P.join('\n\n')+'\n').slice(0, maxLen);
+}
+
 function brandContext(maxLen){
   maxLen = maxLen || 9000;
   const ob = S.dna.onboard||{};
   const bk = bkContext();   // 🏷️ Hồ sơ chuẩn lên ĐẦU, ưu tiên cao nhất
-  let ctx = bk + `Ngành: ${ob.nganh||'?'} | Kênh: ${ob.kenh||'?'} | Khách: ${ob.khach||'?'}\n`;
+  const dj = dojoCtx(Math.min(2200, Math.floor(maxLen*0.4)));   // 📚 Chiến lược 6 trạm, ngay sau Brand Kit
+  let ctx = bk + `Ngành: ${ob.nganh||'?'} | Kênh: ${ob.kenh||'?'} | Khách: ${ob.khach||'?'}\n` + dj;
   let budget = maxLen - ctx.length;
   for(const b of S.dna.brand){
     if(budget<=200) break;
@@ -5070,10 +5090,28 @@ function ocLibRender(){ const el=document.getElementById('oc-lib'); if(!el)retur
   else h+='<div class="mut" style="font-size:11.5px;margin-bottom:8px">Dàn nhân vật trống — tạo ở Dojo › 🎭 Thư viện thương hiệu (tuỳ chọn; không chọn thì AI tự dựng nhân vật hư cấu).</div>';
   h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="mut" style="font-size:11.5px">📦 Sản phẩm:</span><select onchange="ocLibSetProd(this.value)" style="width:auto"><option value="">(không gắn / AI tự suy từ ý tưởng)</option>'+ps.map(p=>'<option value="'+_escAttr(p.ten||'')+'"'+((o.prod===(p.ten||''))?' selected':'')+'>'+_escAttr(p.ten||'(chưa đặt tên)')+'</option>').join('')+'</select></div>';
   el.innerHTML=h; if(typeof vStyleFillSelects==='function')vStyleFillSelects(); }
+/* Banner mềm: khuyến nghị (KHÔNG chặn) làm chiến lược ở DOJO trước để kịch bản chất hơn */
+function ocDojoBanner(){ const el=document.getElementById('oc-dojo-banner'); if(!el)return; const d=S.dna||{};
+  const insDone=!!(d.m3&&(d.m3.insight||[]).some(x=>x&&x.noidung));
+  const fmlDone=!!(d.m6&&(d.m6.analyses||[]).some(a=>a&&(a.picked||a.win||a.apply)));
+  const kwDone =!!(d.m4&&(d.m4.cats||[]).some(c=>c&&(c.keywords||[]).length));
+  const missing=[]; if(!insDone)missing.push(['Insight 5 tầng','Trạm 3']); if(!fmlDone)missing.push(['Công thức viral','Trạm 6']); if(!kwDone)missing.push(['Bộ từ khóa','Trạm 4']);
+  const goDojo="document.querySelector('.tab[data-v=&quot;home&quot;]').click()";
+  if(!missing.length){
+    el.innerHTML='<div class="fb" style="border-color:var(--ac);margin:10px 0 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">✅ <b>Đã nạp chiến lược từ 6 Trạm DOJO</b> — kịch bản & prompt bên dưới sẽ tự bám Insight + Từ khóa + Công thức viral của bạn.</div>';
+  } else {
+    const have=3-missing.length;
+    el.innerHTML='<div class="fb bad" style="border-color:var(--warn);margin:10px 0 0">⚡ <b>Mẹo nâng chất kịch bản:</b> hoàn thành '+missing.map(m=>'<b>'+m[0]+'</b> ('+m[1]+')').join(' + ')+' ở Dojo trước khi sinh — AI sẽ bám insight & công thức viral của chính bạn thay vì đoán chung chung.'
+      +(have?' <span class="mut">(Đã có '+have+'/3 mảnh chiến lược.)</span>':'')
+      +' <button class="btn ghost sm" style="margin-top:6px;border-color:var(--warn);color:var(--warn)" onclick="'+goDojo+'">🥋 Về Dojo làm chiến lược</button>'
+      +' <span class="mut" style="font-size:11.5px;display:block;margin-top:4px">Không bắt buộc — bạn vẫn sinh kịch bản ngay được.</span></div>';
+  }
+}
 function ocCtx(){ let s='Ý TƯỞNG/SẢN PHẨM GỐC của người dùng (nguồn sáng tạo — bám sát cái này):\n'+(OC().idea||'').slice(0,1400);
   const ch=ocSelChars(); if(ch.length){ const mc=ch.find(c=>c.vai==='chính'); s+='\n\nNHÂN VẬT TỪ THƯ VIỆN (dùng ĐÚNG, nhất quán; '+(mc?'nhân vật CHÍNH = '+(mc.ten||''):'không có nhân vật chính rõ')+'):\n'+ch.map(c=>'• '+(c.ten||'')+(c.vai==='chính'?' [CHÍNH]':' [phụ]')+(c.mo_ta?' — '+c.mo_ta:'')).join('\n'); }
   const p=ocSelProd(); if(p) s+='\n\nSẢN PHẨM (bám đúng, không bịa): '+(p.ten||'')+(p.usp?' · USP: '+p.usp:'')+(p.loiich?' · lợi ích: '+p.loiich:'')+(p.cam?' · ĐIỀU CẤM: '+p.cam:'');
   try{ const b=brandContext(500); if(b&&b.trim()&&/[A-Za-zÀ-ỹ0-9]/.test(b)) s+='\n\nGỢI Ý THƯƠNG HIỆU (dùng nếu hợp):\n'+b.slice(0,500); }catch(e){}
+  try{ const dj=dojoCtx(2200); if(dj&&dj.trim()) s+='\n'+dj; }catch(e){}
   return s; }
 function ocScenes(out){ return (typeof normScenes==='function'?normScenes(out&&out.scenes):_arr(out&&out.scenes)); }
 
