@@ -147,6 +147,12 @@ table td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:mid
 table tr:nth-child(2n) td{background:color-mix(in srgb,var(--tx) 3%,transparent)}
 table tr:hover td{background:color-mix(in srgb,var(--ac) 8%,transparent)}
 
+/* Ops — KPI dạng lưới thẻ */
+#ops-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+#ops-kpi > div{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r-md);padding:11px 13px;box-shadow:var(--sh1)}
+#ops-kpi label{display:block;margin-bottom:5px}
+#ops-kpi input{width:100%;font-family:'Space Mono','Be Vietnam Pro',monospace;font-weight:700}
+
 .cách{background:var(--glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:18px;margin:0 0 12px;box-shadow:var(--sh1)}
 .cách h3{font-size:18px;margin:0 0 10px;color:var(--ac2);letter-spacing:-.01em}
 .idea{display:flex;gap:10px;margin:0 0 10px;align-items:flex-start}.idea textarea{flex:1}
