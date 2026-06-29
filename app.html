@@ -1026,6 +1026,12 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
       <button class="btn sm ghost" style="border-color:var(--blue);color:var(--blue)" onclick="ocExportJson()">🧩 Xuất JSON cho Flow</button>
       <button class="btn sm ghost" style="border-color:var(--blue);color:var(--blue)" onclick="ocExportMd()">📄 Xuất .md (kịch bản + hướng dẫn + prompt)</button>
     </div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px dashed var(--line);padding-top:8px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" onchange="ocPickAll(this.checked)" style="width:16px;height:16px;margin:0;cursor:pointer">Chọn tất cả</label>
+      <span class="mut" style="font-size:12px">Đã chọn: <b id="oc-pick-count">0</b></span>
+      <button class="btn sm ghost" data-ocpick-btn disabled style="opacity:.45;pointer-events:none;border-color:var(--blue);color:var(--blue)" onclick="ocExportPicked('json')">🧩 Xuất JSON (đã chọn)</button>
+      <button class="btn sm ghost" data-ocpick-btn disabled style="opacity:.45;pointer-events:none;border-color:var(--blue);color:var(--blue)" onclick="ocExportPicked('md')">📄 Xuất .md (đã chọn)</button>
+    </div>
   </div>
 
   <div class="sec" id="oc-board"></div>
@@ -5212,18 +5218,33 @@ function ocCopy(id,kind,btn){ const x=ocItem(id); if(!x)return; let t='';
   if(t&&typeof _clip==='function') _clip(t,btn); else if(t) ocDl('copy.txt',t,'text/plain');
 }
 
-function ocExportMd(){ const o=OC(); if(!o.items.length){ ocFb('Chưa có gì để xuất.',1); return; }
-  let md='# Đại Hải Trình — '+(o.idea||'').slice(0,80)+'\n\n> Ý tưởng gốc: '+(o.idea||'')+'\n\n';
-  o.items.forEach((x,i)=>{ md+='## '+(i+1)+'. '+x.title+(x._scored?(' — '+x.score+'/100'):'')+'\n'+(x.goc?('*Góc: '+x.goc+'*\n'):'')+(x.mo_ta?(x.mo_ta+'\n'):'')+'\n';
+/* ===== Tích chọn ý tưởng để xuất theo nhu cầu (giữ nguyên nút "xuất tất cả") ===== */
+let _ocPick = new Set();
+function ocPickIds(){ const valid=new Set(OC().items.map(x=>x.id)); [..._ocPick].forEach(id=>{ if(!valid.has(id))_ocPick.delete(id); }); return [..._ocPick]; }
+function ocPickSync(){ const n=ocPickIds().length; const lbl=document.getElementById('oc-pick-count'); if(lbl)lbl.textContent=n;
+  document.querySelectorAll('[data-ocpick-btn]').forEach(b=>{ b.disabled=!n; b.style.opacity=n?'':'.45'; b.style.pointerEvents=n?'':'none'; }); }
+function ocPickToggle(id,on){ if(on)_ocPick.add(id); else _ocPick.delete(id); ocPickSync(); }
+function ocPickAll(on){ _ocPick = new Set(on?OC().items.map(x=>x.id):[]); document.querySelectorAll('input[data-ocpick]').forEach(cb=>{ cb.checked=on; }); ocPickSync(); }
+function ocExportPicked(kind){ const ids=ocPickIds(); if(!ids.length){ ocFb('Chưa tích chọn ý tưởng nào. Tích ô vuông ở mỗi thẻ rồi xuất.',1); return; } if(kind==='json')ocExportJson(ids); else ocExportMd(ids); }
+
+function ocExportMd(onlyIds){ const o=OC(); let items=o.items;
+  if(onlyIds&&onlyIds.length){ const s=new Set(onlyIds); items=o.items.filter(x=>s.has(x.id)); }
+  if(!items.length){ ocFb(onlyIds?'Chưa tích chọn ý tưởng nào.':'Chưa có gì để xuất.',1); return; }
+  const pick=!!(onlyIds&&onlyIds.length);
+  let md='# Đại Hải Trình — '+(o.idea||'').slice(0,80)+(pick?(' ('+items.length+' đã chọn)'):'')+'\n\n> Ý tưởng gốc: '+(o.idea||'')+'\n\n';
+  items.forEach((x,i)=>{ md+='## '+(i+1)+'. '+x.title+(x._scored?(' — '+x.score+'/100'):'')+'\n'+(x.goc?('*Góc: '+x.goc+'*\n'):'')+(x.mo_ta?(x.mo_ta+'\n'):'')+'\n';
     if(x.script&&x.script.scenes) md+='### Kịch bản\n'+x.script.scenes.map(c=>'- **'+(c.phan||'')+'**: '+(c.noidung||'')+(c.hinhanh?(' _(hình: '+c.hinhanh+')_'):'')+(c.tram?(' _(trám: '+c.tram+')_'):'')).join('\n')+'\n\n';
     if(x.guide) md+='### Hướng dẫn sản xuất\n**Người thật:**\n'+(x.guide.human||'')+'\n\n**AI (Flow/Veo):**\n'+(x.guide.ai||'')+'\n\n';
     if(x.shots&&x.shots.length) md+='### Prompt video\n'+x.shots.map(s=>'#### Shot '+s.seq+' ('+s.dur+'s)\n'+(s.voiceover?('**VO:** '+s.voiceover+'\n\n'):'')+(s.onscreen?('**Text:** '+s.onscreen+'\n\n'):'')+'```\n'+s.prompt+'\n```').join('\n')+'\n\n';
   });
-  ocDl('dai-hai-trinh.md', md, 'text/markdown'); ocFb('✅ Đã tải dai-hai-trinh.md');
+  ocDl(pick?'dai-hai-trinh-da-chon.md':'dai-hai-trinh.md', md, 'text/markdown'); ocFb('✅ Đã tải '+(pick?items.length+' kịch bản đã chọn':'.md')+'.');
 }
 
-function ocExportJson(){ const o=OC(); const withShots=o.items.filter(x=>x.shots&&x.shots.length);
-  if(!withShots.length){ ocFb('Chưa có prompt video nào. Bấm "🎥 Sinh prompt video (tất cả)" trước.',1); return; }
+function ocExportJson(onlyIds){ const o=OC(); let base=o.items;
+  if(onlyIds&&onlyIds.length){ const s=new Set(onlyIds); base=o.items.filter(x=>s.has(x.id)); }
+  const pick=!!(onlyIds&&onlyIds.length);
+  const withShots=base.filter(x=>x.shots&&x.shots.length);
+  if(!withShots.length){ ocFb(pick?'Các ý tưởng đã chọn chưa có prompt video. Bấm "🎥 Prompt video" trước.':'Chưa có prompt video nào. Bấm "🎥 Sinh prompt video (tất cả)" trước.',1); return; }
   const v=(typeof vref==='function'?vref():{})||{}; const LANG=ocLang(); const VOICE=ocVoice();
   const langCode=/anh|english/i.test(LANG)?'en-US':(/nh[aậ]t|japan/i.test(LANG)?'ja-JP':(/h[aà]n|korea/i.test(LANG)?'ko-KR':'vi-VN'));
   const _sel=ocSelChars(); const _selProd=ocSelProd();
@@ -5244,8 +5265,8 @@ function ocExportJson(){ const o=OC(); const withShots=o.items.filter(x=>x.shots
     return { ngay:ngay, series:x.title, voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE}, arc_cam_xuc:[], shots:shots }; });
   const _embedded=characters.some(c=>c.anh_base64);
   const man={ schema:'flow-pack/v1', meta:{ kenh:'@daihaitrinh', doi_tuong:'', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters'].concat(hasProd?['products']:[]), voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE,ghi_chu:'Voiceover + on-screen + caption theo ngôn ngữ này'}, y_tuong_goc:(o.idea||''), anh_nhan_vat_nhung:_embedded }, characters:characters, products:products, scenes:[], days:days };
-  ocDl('flow-pack-dai-hai-trinh.json', JSON.stringify(man,null,2), 'application/json');
-  ocFb('✅ Đã tải JSON Flow ('+days.length+' video · '+days.reduce((a,d)=>a+d.shots.length,0)+' shot). Nạp vào Lò Video Pro / Google Flow.');
+  ocDl(pick?'flow-pack-dai-hai-trinh-da-chon.json':'flow-pack-dai-hai-trinh.json', JSON.stringify(man,null,2), 'application/json');
+  ocFb('✅ Đã tải JSON Flow'+(pick?' (đã chọn)':'')+' — '+days.length+' video · '+days.reduce((a,d)=>a+d.shots.length,0)+' shot. Nạp vào Lò Video Pro / Google Flow.');
 }
 
 function ocRender(){ const o=OC();
@@ -5260,6 +5281,7 @@ function ocRender(){ const o=OC();
   h+=o.items.map((x,i)=>{ const hasS=!!x.script, hasP=!!(x.shots&&x.shots.length), hasG=!!x.guide;
     const badge=x._scored?('<b style="color:'+col(x.score)+'">'+x.score+'/100'+(x.score>=OC_PASS?' ✅':'')+'</b>'):'<span class="mut">chưa chấm</span>';
     return '<details class="cách" style="margin-bottom:8px"><summary style="cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +'<input type="checkbox" data-ocpick value="'+x.id+'"'+(_ocPick.has(x.id)?' checked':'')+' onclick="event.stopPropagation()" onchange="ocPickToggle(\''+x.id+'\',this.checked)" title="Tích để xuất theo nhu cầu" style="margin:0;width:16px;height:16px;flex:0 0 auto;cursor:pointer">'
       +'<b style="font-size:13px">#'+(i+1)+'</b> '+badge+' <span style="font-size:13px">'+_escAttr(x.title)+'</span>'
       +(x.goc?'<span class="pill" style="font-size:10px">'+_escAttr(x.goc)+'</span>':'')
       +(hasS?'<span class="pill" style="font-size:10px;border-color:var(--ac);color:var(--ac2)">🎬</span>':'')
@@ -5278,6 +5300,7 @@ function ocRender(){ const o=OC();
       +'</div>'+ocItemDetail(x)+'</div></details>';
   }).join('');
   el.innerHTML=h;
+  ocPickSync();
 }
 function ocItemDetail(x){ let h='';
   if(x._scored && ((x.yeu&&x.yeu.length)||(x.sua&&x.sua.length))){
