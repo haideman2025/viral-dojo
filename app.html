@@ -703,6 +703,7 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
         <b style="color:var(--warn)">🎭 Dàn nhân vật kênh</b>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost sm" onclick="ugcToggle()" style="border-color:var(--ac2);color:var(--ac2)">🎨 Xưởng nhân vật UGC</button>
           <button class="btn ghost sm" id="roster-auto" onclick="rosterAutoDesign()" style="border-color:var(--ac);color:var(--ac)">🤖 AI thiết kế dàn (từ kịch bản)</button>
           <button class="btn ghost sm" id="roster-genall" onclick="rosterGenAllImg()">🎨 Sinh ảnh hàng loạt</button>
           <button class="btn ghost sm" onclick="rosterAdd()">➕ Thêm nhân vật</button>
@@ -711,6 +712,33 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
         </div>
       </div>
       <div class="mut" style="font-size:11.5px;margin:4px 0 8px">Mỗi nhân vật 1 ảnh tham chiếu — <b>AI sinh bằng Nano Banana</b> hoặc <b>upload</b>. App gắn đúng ảnh vào file JSON Flow theo TÊN; bấm "Tải ảnh" rồi upload vào Google Flow → ingredients. (Nhân vật chính vẫn dùng ô 🎭 Nhân vật tham chiếu phía trên — thêm vào dàn nếu muốn quản lý ảnh ở đây.)</div>
+      <div id="ugc-studio" style="display:none;background:var(--glass);border:1.5px solid var(--line);border-radius:var(--r-md,10px);padding:14px;margin:0 0 10px">
+        <div style="font-size:12.5px;font-weight:700;color:var(--ac2);margin-bottom:8px">🎨 Xưởng nhân vật UGC — chọn đặc điểm, hệ thống tự dựng prompt <b>brand-safe</b> + sinh ảnh vào Dàn (không có field nhạy cảm).</div>
+        <div class="row">
+          <div><label>Tên</label><input id="ugc-ten" placeholder="vd: Mai Lumi"></div>
+          <div><label>Tuổi</label><input id="ugc-tuoi" type="number" placeholder="27"></div>
+          <div><label>Giới tính</label><select id="ugc-gioi"><option>Nữ</option><option>Nam</option></select></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Sắc tộc</label><select id="ugc-sac"><option>Châu Á</option><option>Da trắng</option><option>Da đen</option><option>Latin</option><option>Ả Rập</option><option>Ấn Độ</option></select></div>
+          <div><label>Dáng người</label><select id="ugc-dang"><option>Mảnh mai</option><option>Khỏe khoắn</option><option>Đầy đặn</option><option>Đường cong</option><option>Cơ bắp</option></select></div>
+          <div><label>Kiểu tóc</label><select id="ugc-toc"><option>Dài</option><option>Ngắn</option><option>Đuôi ngựa</option><option>Tết</option><option>Mái</option><option>Búi</option><option>Gợn sóng</option><option>Pixie</option><option>Undercut</option></select></div>
+          <div><label>Màu tóc</label><input id="ugc-mautoc" placeholder="đen / nâu / vàng..."></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Nghề nghiệp</label><input id="ugc-nghe" placeholder="vd: chủ shop mỹ phẩm"></div>
+          <div><label>Tính cách</label><input id="ugc-tinh" placeholder="vd: tự tin, gần gũi, hài hước"></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Trang phục / phong cách</label><input id="ugc-trangphuc" placeholder="vd: smart casual, blazer sáng màu"></div>
+          <div><label>Bối cảnh</label><input id="ugc-boicanh" placeholder="vd: studio sáng / bàn làm việc hiện đại"></div>
+        </div>
+        <div style="margin-top:8px"><label>Chi tiết thêm (tuỳ chọn)</label><textarea id="ugc-them" rows="2" placeholder="đặc điểm khuôn mặt, phụ kiện, thần thái..."></textarea></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
+          <button class="btn sm" onclick="ugcCreate()">✨ Tạo nhân vật vào Dàn</button>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);text-transform:none;font-weight:600;letter-spacing:0"><input type="checkbox" id="ugc-autoimg" checked style="width:auto">Sinh ảnh luôn (Nano Banana)</label>
+        </div>
+      </div>
       <div id="roster-list"></div>
       <div id="roster-fb"></div>
       <div id="muse-panel" style="margin-top:8px"></div>
@@ -4886,6 +4914,43 @@ function museAddMapped(arr){ const r=roster(); const seen=new Set(r.map(x=>(x.te
   arr.forEach(c=>{ const m=museMap(c); if(!m)return; const key=(m.ten||'').toLowerCase().trim(); if(key&&seen.has(key))return; if(key)seen.add(key); r.push(m); added++; });
   save(); if(typeof renderRoster==='function')renderRoster();
   const p=document.getElementById('muse-panel'); if(p) p.innerHTML='<div class="fb">✅ Đã nạp <b>'+added+'</b> nhân vật vào Dàn nhân vật'+((added<arr.length)?(' ('+(arr.length-added)+' bị bỏ vì trùng tên)'):'')+'. Cuộn xuống Dàn để xem/sửa/sinh ảnh, rồi dùng cho prompt video + nhúng vào JSON Flow.</div>'; }
+</script>
+<script>
+/* ===================== 🎨 XƯỞNG NHÂN VẬT UGC (native, brand-safe) =====================
+   Chọn đặc điểm có cấu trúc → tự dựng prompt EN advertising-safe → tạo nhân vật vào Dàn
+   (roster) + tuỳ chọn sinh ảnh Nano Banana. KHÔNG có field nhạy cảm. */
+function ugcToggle(){ const e=document.getElementById('ugc-studio'); if(e) e.style.display = (e.style.display==='none'?'':'none'); }
+function _ugcV(id){ const e=document.getElementById(id); return e?String(e.value||'').trim():''; }
+const UGC_HAIR_EN={'Dài':'long','Ngắn':'short','Đuôi ngựa':'ponytail','Tết':'braided','Mái':'with bangs','Búi':'in a bun','Gợn sóng':'wavy','Pixie':'pixie cut','Undercut':'undercut'};
+const UGC_BODY_EN={'Mảnh mai':'slim','Khỏe khoắn':'athletic','Đầy đặn':'full-figured','Đường cong':'curvy','Cơ bắp':'muscular'};
+const UGC_ETH_EN={'Châu Á':'East/Southeast Asian','Da trắng':'White','Da đen':'Black','Latin':'Latina/Latino','Ả Rập':'Arab','Ấn Độ':'South Asian'};
+async function ugcCreate(){
+  const ten=_ugcV('ugc-ten')||'Nhân vật';
+  const tuoi=_ugcV('ugc-tuoi'), gioi=_ugcV('ugc-gioi')||'Nữ', sac=_ugcV('ugc-sac'), toc=_ugcV('ugc-toc'), mauToc=_ugcV('ugc-mautoc'),
+        dang=_ugcV('ugc-dang'), nghe=_ugcV('ugc-nghe'), tinh=_ugcV('ugc-tinh'), trangphuc=_ugcV('ugc-trangphuc'), boicanh=_ugcV('ugc-boicanh'), them=_ugcV('ugc-them');
+  const sexEn=gioi==='Nam'?'man':'woman';
+  const mo=[]; mo.push((tuoi?tuoi+' tuổi, ':'')+gioi.toLowerCase()+(sac?', '+sac.toLowerCase():''));
+  if(dang) mo.push('dáng '+dang.toLowerCase());
+  if(toc) mo.push('tóc '+toc.toLowerCase()+(mauToc?(' '+mauToc.toLowerCase()):''));
+  if(nghe) mo.push('nghề: '+nghe);
+  if(tinh) mo.push('tính cách: '+tinh);
+  if(them) mo.push(them);
+  const mo_ta=mo.filter(Boolean).join(' · ').slice(0,420);
+  const en=['A '+(tuoi?tuoi+'-year-old ':'')+(UGC_ETH_EN[sac]||sac||'')+' '+sexEn,
+    (UGC_BODY_EN[dang]?UGC_BODY_EN[dang]+' build':''),
+    (toc?((mauToc?mauToc.toLowerCase()+' ':'')+(UGC_HAIR_EN[toc]||toc.toLowerCase())+' hair'):''),
+    (nghe?'occupation: '+nghe:''), (tinh?'vibe: '+tinh:''),
+    (trangphuc?'wearing '+trangphuc:'modest professional attire'),
+    (boicanh?'setting: '+boicanh:'clean neutral studio background'),
+    (them||''),
+    'advertising-safe, original fictional person — not resembling any real or famous person; clear visible face, consistent recognizable look, even soft lighting, no text/logo/watermark; vertical 9:16 character reference portrait'].filter(Boolean).join(', ');
+  const item={ id:'nv_'+Math.random().toString(36).slice(2,8), ten:ten.slice(0,40), mo_ta:mo_ta, prompt:en, img:'' };
+  roster().push(item); save(); if(typeof renderRoster==='function')renderRoster();
+  const autoImg=document.getElementById('ugc-autoimg')&&document.getElementById('ugc-autoimg').checked;
+  const fb=document.getElementById('roster-fb'); if(fb)fb.innerHTML='<div class="fb">✅ Đã tạo "'+_escAttr(item.ten)+'" vào Dàn nhân vật'+(autoImg?' — đang sinh ảnh Nano Banana...':' (bấm 🧠 AI sinh ảnh ở thẻ nhân vật).')+'</div>';
+  ['ugc-ten','ugc-tuoi','ugc-mautoc','ugc-nghe','ugc-tinh','ugc-trangphuc','ugc-boicanh','ugc-them'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
+  if(autoImg && typeof rosterGenImg==='function'){ try{ await rosterGenImg(item.id); }catch(e){} }
+}
 </script>
 <script>
 /* ===================== 🧭 ĐẠI HẢI TRÌNH — không gian sáng tạo tự do (super app) =====================
