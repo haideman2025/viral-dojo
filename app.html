@@ -140,6 +140,13 @@ label{font-size:10.5px;font-weight:700;color:var(--ac2);display:block;margin:0 0
 @keyframes vdpulse{0%,100%{box-shadow:var(--sh2)}50%{box-shadow:var(--sh2),0 0 0 4px color-mix(in srgb,var(--red) 22%,transparent)}}
 @keyframes vdsway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
 
+/* Tables — global polish (mọi bảng dùng chung) */
+table{width:100%;border-collapse:collapse}
+table th{text-align:left;padding:9px 10px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);border-bottom:1.5px solid var(--bd);white-space:nowrap}
+table td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+table tr:nth-child(2n) td{background:color-mix(in srgb,var(--tx) 3%,transparent)}
+table tr:hover td{background:color-mix(in srgb,var(--ac) 8%,transparent)}
+
 .cách{background:var(--glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:18px;margin:0 0 12px;box-shadow:var(--sh1)}
 .cách h3{font-size:18px;margin:0 0 10px;color:var(--ac2);letter-spacing:-.01em}
 .idea{display:flex;gap:10px;margin:0 0 10px;align-items:flex-start}.idea textarea{flex:1}
