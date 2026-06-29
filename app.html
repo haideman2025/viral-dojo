@@ -979,6 +979,7 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
       <div><label>Định dạng ưu tiên</label><select id="oc-fmt"><option value="đa dạng" selected>Đa dạng (mỗi cái 1 góc)</option><option value="kể chuyện POV">Kể chuyện / POV</option><option value="review trải nghiệm">Review / Trải nghiệm</option><option value="mẹo hướng dẫn">Mẹo / Hướng dẫn</option><option value="so sánh trước-sau">So sánh / Trước-sau</option><option value="bán hàng trực diện">Bán hàng trực diện</option></select></div>
       <div><label>Ngôn ngữ đầu ra</label><input id="oc-lang" placeholder="Vietnamese"></div>
     </div>
+    <div id="oc-lib" style="margin-top:10px"></div>
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" id="oc-gen" onclick="ocGenIdeas()">✨ Sinh ý tưởng kịch bản</button>
       <button class="btn ghost sm" onclick="ocWipe()">🧹 Xoá hết</button>
@@ -1526,7 +1527,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   ['home','lib','skuld','ocean','ops','dist','conn','dna'].forEach(v=>{ const c=document.getElementById('v-'+v); if(c) c.style.display = (t.dataset.v===v?'':'none'); });
   if(t.dataset.v==='dist'){ renderDistDayOptions(); renderDist(); renderZernioCfg(); }
   if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderRoster(); renderVPrompts(); }
-  if(t.dataset.v==='ocean'){ if(typeof ocRender==='function') ocRender(); }
+  if(t.dataset.v==='ocean'){ if(typeof ocLibRender==='function') ocLibRender(); if(typeof ocRender==='function') ocRender(); }
   if(t.dataset.v==='home'){ if(typeof qsRender==='function') qsRender(); if(typeof renderRoster==='function') renderRoster(); }
   if(t.dataset.v==='ops'){ renderOps(); }
 });
@@ -4974,8 +4975,23 @@ function ocVoice(){ return (typeof voStyle==='function'?voStyle():'')||''; }
 function ocItem(id){ return OC().items.find(x=>x.id===id); }
 function ocNewId(){ return 'oc'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
 function ocDl(name,data,mime){ const b=new Blob([data],{type:mime||'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+/* ===== Thư viện: chọn nhân vật + sản phẩm cho Đại Hải Trình ===== */
+function ocSelChars(){ const o=OC(); const r=(typeof roster==='function'?roster():[]); return (o.chars||[]).map(id=>r.find(c=>c.id===id)).filter(Boolean); }
+function ocSelProd(){ const nm=(OC().prod||'').trim(); if(!nm)return null; const ps=((S.dna.brandKit&&S.dna.brandKit.products)||[]); return ps.find(p=>(p.ten||'')===nm)||{ten:nm}; }
+function ocLibToggleChar(id){ const o=OC(); o.chars=o.chars||[]; const i=o.chars.indexOf(id); if(i>=0)o.chars.splice(i,1); else o.chars.push(id); save(); ocLibRender(); }
+function ocLibSetProd(v){ OC().prod=v; save(); }
+function ocLibRender(){ const el=document.getElementById('oc-lib'); if(!el)return; const o=OC(); o.chars=o.chars||[];
+  const r=(typeof roster==='function'?roster():[]); const ps=((S.dna.brandKit&&S.dna.brandKit.products)||[]);
+  let h='<div style="font-size:12px;font-weight:700;color:var(--ac2);margin-bottom:6px">🎭 Chọn nhân vật &amp; 📦 sản phẩm từ Thư viện (AI sẽ bám đúng)</div>';
+  if(r.length){ h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+r.map(c=>{ const on=o.chars.indexOf(c.id)>=0;
+      return '<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;border:1.5px solid '+(on?'var(--ac)':'var(--line)')+';border-radius:999px;padding:3px 10px 3px 5px;font-size:11.5px"><input type="checkbox" '+(on?'checked':'')+' onchange="ocLibToggleChar(\''+c.id+'\')" style="width:auto">'+(c.img?'<img src="'+c.img+'" style="width:20px;height:20px;border-radius:50%;object-fit:cover">':'<span>🎭</span>')+_escAttr(c.ten||'NV')+(c.vai==='chính'?' ⭐':'')+'</label>'; }).join('')+'</div>'; }
+  else h+='<div class="mut" style="font-size:11.5px;margin-bottom:8px">Dàn nhân vật trống — tạo ở Dojo › 🎭 Thư viện thương hiệu (tuỳ chọn; không chọn thì AI tự dựng nhân vật hư cấu).</div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="mut" style="font-size:11.5px">📦 Sản phẩm:</span><select onchange="ocLibSetProd(this.value)" style="width:auto"><option value="">(không gắn / AI tự suy từ ý tưởng)</option>'+ps.map(p=>'<option value="'+_escAttr(p.ten||'')+'"'+((o.prod===(p.ten||''))?' selected':'')+'>'+_escAttr(p.ten||'(chưa đặt tên)')+'</option>').join('')+'</select></div>';
+  el.innerHTML=h; }
 function ocCtx(){ let s='Ý TƯỞNG/SẢN PHẨM GỐC của người dùng (nguồn sáng tạo — bám sát cái này):\n'+(OC().idea||'').slice(0,1400);
-  try{ const b=brandContext(600); if(b&&b.trim()&&/[A-Za-zÀ-ỹ0-9]/.test(b)) s+='\n\nGỢI Ý THƯƠNG HIỆU (dùng nếu hợp, không bắt buộc):\n'+b.slice(0,600); }catch(e){}
+  const ch=ocSelChars(); if(ch.length){ const mc=ch.find(c=>c.vai==='chính'); s+='\n\nNHÂN VẬT TỪ THƯ VIỆN (dùng ĐÚNG, nhất quán; '+(mc?'nhân vật CHÍNH = '+(mc.ten||''):'không có nhân vật chính rõ')+'):\n'+ch.map(c=>'• '+(c.ten||'')+(c.vai==='chính'?' [CHÍNH]':' [phụ]')+(c.mo_ta?' — '+c.mo_ta:'')).join('\n'); }
+  const p=ocSelProd(); if(p) s+='\n\nSẢN PHẨM (bám đúng, không bịa): '+(p.ten||'')+(p.usp?' · USP: '+p.usp:'')+(p.loiich?' · lợi ích: '+p.loiich:'')+(p.cam?' · ĐIỀU CẤM: '+p.cam:'');
+  try{ const b=brandContext(500); if(b&&b.trim()&&/[A-Za-zÀ-ỹ0-9]/.test(b)) s+='\n\nGỢI Ý THƯƠNG HIỆU (dùng nếu hợp):\n'+b.slice(0,500); }catch(e){}
   return s; }
 function ocScenes(out){ return (typeof normScenes==='function'?normScenes(out&&out.scenes):_arr(out&&out.scenes)); }
 
@@ -5034,9 +5050,10 @@ async function ocGuide(id){ const x=ocItem(id); if(!x)return;
 
 async function ocPrompts(id){ const x=ocItem(id); if(!x||!x.script)return;
   const LANG=ocLang(), VOICE=ocVoice(), v=(typeof vref==='function'?vref():{})||{};
+  const _sel=ocSelChars(), _mc=_sel.find(c=>c.vai==='chính')||_sel[0]; const _charDesc=_mc?(_mc.prompt||_mc.mo_ta||_mc.ten):(v.character||'nhân vật hư cấu nhất quán do bạn thiết kế, hợp ý tưởng');
   const body=((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' | hình: '+(c.hinhanh||'')+' | trám: '+(c.tram||'')).join('\n');
   const nT=Math.max(6,((x.script.scenes)||[]).length);
-  const o=await geminiCall('Bạn là ĐẠO DIỄN VIRAL DOJO. Chuyển KỊCH BẢN thành chuỗi SHOT 10 GIÂY cho Omni/Veo (Google Flow); ghép lại thành 1 video ≥60s mượt, liền mạch.\nNHÂN VẬT (giữ y hệt mọi shot): '+(v.character||'nhân vật hư cấu nhất quán do bạn thiết kế, hợp ý tưởng')+'\nSTYLE: '+(v.style||'cinematic, hợp TikTok')+' · NGÔN NGỮ thoại/overlay: '+LANG+(VOICE?(' · giọng: '+VOICE):'')+'\n'+ocCtx()+'\nMỗi shot trả: prompt (TIẾNG ANH chuẩn Veo: [shot size+camera move+angle]·[subject=nhân vật y hệt+trang phục]·[hành động]·[bối cảnh+props]·[ánh sáng+mood]·[audio] · chèn nguyên văn vào MỌI prompt: "'+NATURAL_REAL_EN+'" · "'+SAFE_COMPLIANCE_EN+'" · "'+CUT_COHERENCE_EN+'" · shot≥2 mở đầu "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;"), voiceover ('+LANG+', ~10s), onscreen ('+LANG+', ngắn).'+SAFE_COMPLIANCE_VN+'\nKỊCH BẢN "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"","voiceover":"","onscreen":""}]}. PHẢI ≥'+nT+' shot (tối thiểu 6, ≥60s); kịch bản ngắn thì giãn thêm cảnh/b-roll. Mỗi shot 10s độc lập.',{json:true,hi:true,temp:0.55});
+  const o=await geminiCall('Bạn là ĐẠO DIỄN VIRAL DOJO. Chuyển KỊCH BẢN thành chuỗi SHOT 10 GIÂY cho Omni/Veo (Google Flow); ghép lại thành 1 video ≥60s mượt, liền mạch.\nNHÂN VẬT (giữ y hệt mọi shot): '+_charDesc+'\nSTYLE: '+(v.style||'cinematic, hợp TikTok')+' · NGÔN NGỮ thoại/overlay: '+LANG+(VOICE?(' · giọng: '+VOICE):'')+'\n'+ocCtx()+'\nMỗi shot trả: prompt (TIẾNG ANH chuẩn Veo: [shot size+camera move+angle]·[subject=nhân vật y hệt+trang phục]·[hành động]·[bối cảnh+props]·[ánh sáng+mood]·[audio] · chèn nguyên văn vào MỌI prompt: "'+NATURAL_REAL_EN+'" · "'+SAFE_COMPLIANCE_EN+'" · "'+CUT_COHERENCE_EN+'" · shot≥2 mở đầu "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;"), voiceover ('+LANG+', ~10s), onscreen ('+LANG+', ngắn).'+SAFE_COMPLIANCE_VN+'\nKỊCH BẢN "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"","voiceover":"","onscreen":""}]}. PHẢI ≥'+nT+' shot (tối thiểu 6, ≥60s); kịch bản ngắn thì giãn thêm cảnh/b-roll. Mỗi shot 10s độc lập.',{json:true,hi:true,temp:0.55});
   let shots=_arr(o.shots).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:ensureSafeEN(s.prompt||''),voiceover:asText(s.voiceover||''),onscreen:asText(s.onscreen||'')})).filter(s=>s.prompt);
   if(shots.length) x.shots=shots; x.shotsAt=_today(); save(); ocRender();
 }
@@ -5090,16 +5107,24 @@ function ocExportJson(){ const o=OC(); const withShots=o.items.filter(x=>x.shots
   if(!withShots.length){ ocFb('Chưa có prompt video nào. Bấm "🎥 Sinh prompt video (tất cả)" trước.',1); return; }
   const v=(typeof vref==='function'?vref():{})||{}; const LANG=ocLang(); const VOICE=ocVoice();
   const langCode=/anh|english/i.test(LANG)?'en-US':(/nh[aậ]t|japan/i.test(LANG)?'ja-JP':(/h[aà]n|korea/i.test(LANG)?'ko-KR':'vi-VN'));
-  const hasProd=!!(v.product&&String(v.product).trim());
-  const characters=[{ id:'NV1', ten:(v.character&&String(v.character).slice(0,40))||'NV chính', mo_ta:(v.character||'Nhân vật hư cấu nhất quán cho toàn bộ video.'), upload_huong_dan:'Upload 1 ảnh nhân vật vào Flow → ingredients (giữ nguyên mọi shot)', xuat_hien_o:[], prompt_anh:(v.character||''), co_anh:!!v.charImg }];
-  if(v.charImg) characters[0].anh_base64=v.charImg;
-  const products=hasProd?[{ id:'SP1', ten:String(v.product), mo_ta:'', upload_huong_dan:'Upload ảnh sản phẩm thật vào Flow → ingredients', xuat_hien_o:[] }]:[];
+  const _sel=ocSelChars(); const _selProd=ocSelProd();
+  let characters, mainEntry;
+  if(_sel.length){ const _mc=_sel.find(c=>c.vai==='chính')||_sel[0];
+    characters=_sel.map((c,i)=>{ const e={ id:'NV'+(i+1), ten:(c.ten||('NV'+(i+1))).slice(0,40), mo_ta:c.mo_ta||'', upload_huong_dan:'Upload ảnh nhân vật vào Flow → ingredients (giữ nguyên mọi shot)', xuat_hien_o:[], prompt_anh:c.prompt||'', co_anh:!!c.img }; if(c.img)e.anh_base64=c.img; if(c===_mc)mainEntry=e; return e; });
+    if(!mainEntry)mainEntry=characters[0];
+  } else {
+    characters=[{ id:'NV1', ten:(v.character&&String(v.character).slice(0,40))||'NV chính', mo_ta:(v.character||'Nhân vật hư cấu nhất quán cho toàn bộ video.'), upload_huong_dan:'Upload 1 ảnh nhân vật vào Flow → ingredients (giữ nguyên mọi shot)', xuat_hien_o:[], prompt_anh:(v.character||''), co_anh:!!v.charImg }];
+    if(v.charImg)characters[0].anh_base64=v.charImg; mainEntry=characters[0];
+  }
+  const _prodName=_selProd?(_selProd.ten||''):((v.product&&String(v.product).trim())||''); const hasProd=!!_prodName;
+  const products=hasProd?[{ id:'SP1', ten:String(_prodName), mo_ta:(_selProd?(_selProd.usp||_selProd.loiich||''):''), upload_huong_dan:'Upload ảnh sản phẩm thật vào Flow → ingredients', xuat_hien_o:[] }]:[];
   const days=withShots.map((x,di)=>{ const ngay='N'+(di+1);
-    const shots=x.shots.map((s,k)=>{ const tag=ngay+'-S'+(k+1); characters[0].xuat_hien_o.push(tag);
+    const shots=x.shots.map((s,k)=>{ const tag=ngay+'-S'+(k+1); mainEntry.xuat_hien_o.push(tag);
       const useProd=hasProd && /product|sản phẩm/i.test(s.prompt); if(useProd) products[0].xuat_hien_o.push(tag);
-      return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:['NV1'], san_pham:useProd?['SP1']:[], no_product:!useProd, canh:'', cam_xuc:'', goc_may:'', overlay:{text:s.onscreen||'',do_hoa:'',sfx:'',nhac:''}, ly_do_gan:'', prompt_en:ensureSafeEN(s.prompt), voiceover:s.voiceover||'' }; });
+      return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:[mainEntry.id], san_pham:useProd?['SP1']:[], no_product:!useProd, canh:'', cam_xuc:'', goc_may:'', overlay:{text:s.onscreen||'',do_hoa:'',sfx:'',nhac:''}, ly_do_gan:'', prompt_en:ensureSafeEN(s.prompt), voiceover:s.voiceover||'' }; });
     return { ngay:ngay, series:x.title, voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE}, arc_cam_xuc:[], shots:shots }; });
-  const man={ schema:'flow-pack/v1', meta:{ kenh:'@daihaitrinh', doi_tuong:'', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters'].concat(hasProd?['products']:[]), voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE,ghi_chu:'Voiceover + on-screen + caption theo ngôn ngữ này'}, y_tuong_goc:(o.idea||''), anh_nhan_vat_nhung:!!v.charImg }, characters:characters, products:products, scenes:[], days:days };
+  const _embedded=characters.some(c=>c.anh_base64);
+  const man={ schema:'flow-pack/v1', meta:{ kenh:'@daihaitrinh', doi_tuong:'', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters'].concat(hasProd?['products']:[]), voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE,ghi_chu:'Voiceover + on-screen + caption theo ngôn ngữ này'}, y_tuong_goc:(o.idea||''), anh_nhan_vat_nhung:_embedded }, characters:characters, products:products, scenes:[], days:days };
   ocDl('flow-pack-dai-hai-trinh.json', JSON.stringify(man,null,2), 'application/json');
   ocFb('✅ Đã tải JSON Flow ('+days.length+' video · '+days.reduce((a,d)=>a+d.shots.length,0)+' shot). Nạp vào Lò Video Pro / Google Flow.');
 }
