@@ -1034,6 +1034,25 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
       <button class="btn sm ghost" data-ocpick-btn disabled style="opacity:.45;pointer-events:none;border-color:var(--blue);color:var(--blue)" onclick="ocExportPicked('json')">🧩 Xuất JSON (đã chọn)</button>
       <button class="btn sm ghost" data-ocpick-btn disabled style="opacity:.45;pointer-events:none;border-color:var(--blue);color:var(--blue)" onclick="ocExportPicked('md')">📄 Xuất .md (đã chọn)</button>
     </div>
+    <div style="margin-top:8px;border-top:1px dashed var(--line);padding-top:8px">
+      <div style="font-size:12px;font-weight:700;color:var(--ac2);margin-bottom:6px">🌐 Xuất JSON đa ngôn ngữ — mỗi thị trường 1 file <span class="mut" style="font-weight:400">(dịch lại voiceover + chữ on-screen, GIỮ nguyên prompt hình ảnh — không cần sinh lại)</span></div>
+      <div style="display:flex;gap:6px 10px;flex-wrap:wrap;margin-bottom:7px">
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="English" style="width:auto">🇬🇧 English</label>
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="Thai" style="width:auto">🇹🇭 Thái</label>
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="Indonesian" style="width:auto">🇮🇩 Indo</label>
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="Filipino" style="width:auto">🇵🇭 Filipino</label>
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="Malay" style="width:auto">🇲🇾 Mã Lai</label>
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="Chinese" style="width:auto">🇨🇳 Trung</label>
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="Korean" style="width:auto">🇰🇷 Hàn</label>
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="Japanese" style="width:auto">🇯🇵 Nhật</label>
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="Spanish" style="width:auto">🇪🇸 Tây BN</label>
+        <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" class="oc-lang-cb" value="Vietnamese" style="width:auto">🇻🇳 Việt</label>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input id="oc-lang-extra" placeholder="Ngôn ngữ khác (cách nhau dấu phẩy)" style="flex:1;min-width:160px">
+        <button class="btn sm" style="border-color:var(--ac);color:var(--ac)" onclick="ocMultiLangExport()">🌐 Dịch + xuất JSON đa ngôn ngữ</button>
+      </div>
+    </div>
   </div>
 
   <div class="sec" id="oc-board"></div>
@@ -5334,13 +5353,26 @@ function ocExportMd(onlyIds){ const o=OC(); let items=o.items;
   ocDl(pick?'dai-hai-trinh-da-chon.md':'dai-hai-trinh.md', md, 'text/markdown'); ocFb('✅ Đã tải '+(pick?items.length+' kịch bản đã chọn':'.md')+'.');
 }
 
-function ocExportJson(onlyIds){ const o=OC(); let base=o.items;
-  if(onlyIds&&onlyIds.length){ const s=new Set(onlyIds); base=o.items.filter(x=>s.has(x.id)); }
-  const pick=!!(onlyIds&&onlyIds.length);
-  const withShots=base.filter(x=>x.shots&&x.shots.length);
-  if(!withShots.length){ ocFb(pick?'Các ý tưởng đã chọn chưa có prompt video. Bấm "🎥 Prompt video" trước.':'Chưa có prompt video nào. Bấm "🎥 Sinh prompt video (tất cả)" trước.',1); return; }
-  const v=(typeof vref==='function'?vref():{})||{}; const LANG=ocLang(); const VOICE=ocVoice();
-  const langCode=/anh|english/i.test(LANG)?'en-US':(/nh[aậ]t|japan/i.test(LANG)?'ja-JP':(/h[aà]n|korea/i.test(LANG)?'ko-KR':'vi-VN'));
+/* mã ngôn ngữ + slug tên file cho nhiều thị trường */
+function ocLangCode(L){ L=(L||'').toLowerCase();
+  if(/anh|english|en\b/.test(L))return'en-US';
+  if(/nh[aậ]t|japan|ja\b/.test(L))return'ja-JP';
+  if(/h[aà]n|korea|ko\b/.test(L))return'ko-KR';
+  if(/th[aá]i|thai/.test(L))return'th-TH';
+  if(/indo|indonesia/.test(L))return'id-ID';
+  if(/phi|filipino|tagalog/.test(L))return'fil-PH';
+  if(/m[aã]\s*lai|malay|melayu/.test(L))return'ms-MY';
+  if(/trung|china|chinese|hoa\b|quan thoai|mandarin/.test(L))return'zh-CN';
+  if(/t[aâ]y ban nha|spanish|espa/.test(L))return'es-ES';
+  if(/ph[aá]p|french|fran/.test(L))return'fr-FR';
+  if(/[aả] r[aậ]p|arab/.test(L))return'ar-SA';
+  if(/vi[eệ]t|vietnam/.test(L))return'vi-VN';
+  return'vi-VN';
+}
+function ocLangSlug(L){ return String(L||'lang').toLowerCase().replace(/đ/g,'d').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,20)||'lang'; }
+/* lõi dựng gói Flow — dùng chung cho xuất 1 ngôn ngữ & xuất đa ngôn ngữ */
+function ocBuildFlowPack(withShots, LANG, ideaText){
+  const v=(typeof vref==='function'?vref():{})||{}; const VOICE=ocVoice(); const langCode=ocLangCode(LANG);
   const _sel=ocSelChars(); const _selProd=ocSelProd();
   let characters, mainEntry;
   if(_sel.length){ const _mc=_sel.find(c=>c.vai==='chính')||_sel[0];
@@ -5358,9 +5390,47 @@ function ocExportJson(onlyIds){ const o=OC(); let base=o.items;
       return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:[mainEntry.id], san_pham:useProd?['SP1']:[], no_product:!useProd, canh:'', cam_xuc:'', goc_may:'', overlay:{text:s.onscreen||'',do_hoa:'',sfx:'',nhac:''}, ly_do_gan:'', prompt_en:ensureSafeEN(s.prompt), voiceover:s.voiceover||'' }; });
     return { ngay:ngay, series:x.title, voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE}, arc_cam_xuc:[], shots:shots }; });
   const _embedded=characters.some(c=>c.anh_base64);
-  const man={ schema:'flow-pack/v1', meta:{ kenh:'@daihaitrinh', doi_tuong:'', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters'].concat(hasProd?['products']:[]), voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE,ghi_chu:'Voiceover + on-screen + caption theo ngôn ngữ này'}, y_tuong_goc:(o.idea||''), anh_nhan_vat_nhung:_embedded }, characters:characters, products:products, scenes:[], days:days };
+  return { schema:'flow-pack/v1', meta:{ kenh:'@daihaitrinh', doi_tuong:'', nen_tang:'TikTok/Reels', ti_le:'9:16', thoi_luong_shot:'10s', muc_tieu:'cảm xúc cao, viral', scene_upload:false, upload_entities:['characters'].concat(hasProd?['products']:[]), voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE,ghi_chu:'Voiceover + on-screen theo ngôn ngữ này'}, y_tuong_goc:(ideaText||''), anh_nhan_vat_nhung:_embedded }, characters:characters, products:products, scenes:[], days:days };
+}
+function ocExportJson(onlyIds){ const o=OC(); let base=o.items;
+  if(onlyIds&&onlyIds.length){ const s=new Set(onlyIds); base=o.items.filter(x=>s.has(x.id)); }
+  const pick=!!(onlyIds&&onlyIds.length);
+  const withShots=base.filter(x=>x.shots&&x.shots.length);
+  if(!withShots.length){ ocFb(pick?'Các ý tưởng đã chọn chưa có prompt video. Bấm "🎥 Prompt video" trước.':'Chưa có prompt video nào. Bấm "🎥 Sinh prompt video (tất cả)" trước.',1); return; }
+  const man=ocBuildFlowPack(withShots, ocLang(), o.idea||'');
   ocDl(pick?'flow-pack-dai-hai-trinh-da-chon.json':'flow-pack-dai-hai-trinh.json', JSON.stringify(man,null,2), 'application/json');
-  ocFb('✅ Đã tải JSON Flow'+(pick?' (đã chọn)':'')+' — '+days.length+' video · '+days.reduce((a,d)=>a+d.shots.length,0)+' shot. Nạp vào Lò Video Pro / Google Flow.');
+  ocFb('✅ Đã tải JSON Flow'+(pick?' (đã chọn)':'')+' — '+man.days.length+' video · '+man.days.reduce((a,d)=>a+d.shots.length,0)+' shot. Nạp vào Lò Video Pro / Google Flow.');
+}
+
+/* ===== 🌐 ĐA NGÔN NGỮ — dịch lại voiceover + chữ on-screen sang nhiều thị trường, GIỮ nguyên prompt hình ảnh, xuất JSON mỗi thị trường 1 file ===== */
+async function ocTranslateShots(shots, targetLang){
+  const payload=[]; shots.forEach((s,i)=>{ if(String(s.voiceover||'').trim()||String(s.onscreen||'').trim()) payload.push({i:i, vo:s.voiceover||'', os:s.onscreen||''}); });
+  if(!payload.length) return shots.map(s=>({...s}));
+  const o=await geminiCall('Bạn là chuyên gia BẢN ĐỊA HOÁ. DỊCH các đoạn voiceover (vo) + chữ on-screen (os) sang '+targetLang+' — tự nhiên đúng văn hoá thị trường nói '+targetLang+', KHÔNG dịch word-by-word, GIỮ ý/cảm xúc/CTA; vo vừa ~10 giây. Trả về DUY NHẤT JSON: {"t":[{"i":<số index>,"vo":"...","os":"..."}]} đúng từng phần tử dưới (giữ nguyên i).\n'+JSON.stringify(payload),{json:true,temp:0.4});
+  const map={}; _arr(o.t).forEach(t=>{ if(t&&t.i!=null) map[t.i]={vo:asText(t.vo),os:asText(t.os)}; });
+  return shots.map((s,i)=>({...s, voiceover:(map[i]&&map[i].vo)||s.voiceover, onscreen:(map[i]&&map[i].os!=null&&map[i].os!=='')?map[i].os:s.onscreen }));
+}
+function ocGetTargetLangs(){ const set=[]; document.querySelectorAll('.oc-lang-cb:checked').forEach(cb=>set.push(cb.value));
+  const extra=(document.getElementById('oc-lang-extra')||{}).value||''; extra.split(',').map(s=>s.trim()).filter(Boolean).forEach(l=>set.push(l));
+  return [...new Set(set.map(s=>s.trim()).filter(Boolean))]; }
+async function ocMultiLangExport(){ if(typeof requirePremium==='function'&&!requirePremium('Xuất đa ngôn ngữ'))return;
+  if(!S.keys.gemini){ ocFb('Cần Gemini key — tab ⚡ Kết nối.',1); return; }
+  const o=OC(); const withShots=o.items.filter(x=>x.shots&&x.shots.length);
+  if(!withShots.length){ ocFb('Chưa có prompt video nào. Bấm "🎥 Sinh prompt video (tất cả)" trước.',1); return; }
+  const langs=ocGetTargetLangs(); if(!langs.length){ ocFb('Chọn ít nhất 1 ngôn ngữ thị trường (hoặc gõ vào ô "ngôn ngữ khác").',1); return; }
+  const total=langs.length*withShots.length; const jid=AIJob.start('🌐 Dịch + xuất đa ngôn ngữ', total); let dn=0;
+  try{
+    for(const LANG of langs){
+      const transMap={};
+      await runPool(withShots, async(x)=>{ AIJob.setSub(jid, LANG+' · '+x.title); try{ transMap[x.id]=await ocTranslateShots(x.shots, LANG); }catch(e){ transMap[x.id]=x.shots; } dn++; ocFb('<span class="spin"></span>Dịch '+LANG+' — '+dn+'/'+total+'...'); }, jid);
+      const clones=withShots.map(x=>({...x, shots:(transMap[x.id]||x.shots)}));
+      const man=ocBuildFlowPack(clones, LANG, o.idea||'');
+      ocDl('flow-pack-'+ocLangSlug(LANG)+'.json', JSON.stringify(man,null,2), 'application/json');
+    }
+    AIJob.done(jid);
+    ocFb('✅ Đã dịch + tải '+langs.length+' file JSON ('+langs.join(', ')+') — mỗi thị trường 1 file, prompt hình ảnh giữ nguyên. Nạp vào Lò Video Pro / Google Flow.');
+    if(typeof vdNotifyDone==='function')vdNotifyDone('Xuat da ngon ngu xong!');
+  }catch(e){ if(window.AIJob&&AIJob.isCancel(e)){ ocFb('⏹ Đã dừng (giữ phần đã tải).'); } else { if(AIJob.fail)AIJob.fail(jid); ocFb('❌ '+e.message,1); } }
 }
 
 function ocRender(){ const o=OC();
