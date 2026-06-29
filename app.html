@@ -428,6 +428,55 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
   </div>
 
   <!-- 🪪 BIO ĐA NỀN TẢNG -->
+  <div class="sec" id="brand-library">
+    <h2>🎭 Thư viện thương hiệu — Nhân vật &amp; Sản phẩm <span class="pill">thiết lập 1 lần · dùng chung mọi nơi</span></h2>
+    <p class="mut" style="margin:0 0 10px">Lập <b>dàn nhân vật (chính/phụ)</b> + ảnh, và sản phẩm chuẩn ngay từ đầu. Mọi tính năng sau (GENERATE, 🧭 Đại Hải Trình, prompt video, xuất Flow) sẽ <b>tham chiếu / chọn</b> từ đây.</p>
+    <div id="roster-box" style="margin:6px 0 12px;border:1px solid var(--bd);border-radius:10px;padding:10px;background:var(--card2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <b style="color:var(--warn)">🎭 Dàn nhân vật kênh</b>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost sm" onclick="ugcToggle()" style="border-color:var(--ac2);color:var(--ac2)">🎨 Xưởng nhân vật UGC</button>
+          <button class="btn ghost sm" id="roster-auto" onclick="rosterAutoDesign()" style="border-color:var(--ac);color:var(--ac)">🤖 AI thiết kế dàn (từ kịch bản)</button>
+          <button class="btn ghost sm" id="roster-genall" onclick="rosterGenAllImg()">🎨 Sinh ảnh hàng loạt</button>
+          <button class="btn ghost sm" onclick="rosterAdd()">➕ Thêm nhân vật</button>
+          <button class="btn ghost sm" onclick="museOpen()" style="border-color:var(--blue);color:var(--blue)">📥 Nhập từ Muse</button>
+          <button class="btn ghost sm" onclick="rosterDownloadAll()">⬇️ Tải tất cả ảnh</button>
+        </div>
+      </div>
+      <div class="mut" style="font-size:11.5px;margin:4px 0 8px">Mỗi nhân vật 1 ảnh tham chiếu — <b>AI sinh bằng Nano Banana</b> hoặc <b>upload</b>. App gắn đúng ảnh vào file JSON Flow theo TÊN; bấm "Tải ảnh" rồi upload vào Google Flow → ingredients. (Nhân vật chính vẫn dùng ô 🎭 Nhân vật tham chiếu phía trên — thêm vào dàn nếu muốn quản lý ảnh ở đây.)</div>
+      <div id="ugc-studio" style="display:none;background:var(--glass);border:1.5px solid var(--line);border-radius:var(--r-md,10px);padding:14px;margin:0 0 10px">
+        <div style="font-size:12.5px;font-weight:700;color:var(--ac2);margin-bottom:8px">🎨 Xưởng nhân vật UGC — chọn đặc điểm, hệ thống tự dựng prompt <b>brand-safe</b> + sinh ảnh vào Dàn (không có field nhạy cảm).</div>
+        <div class="row">
+          <div><label>Tên</label><input id="ugc-ten" placeholder="vd: Mai Lumi"></div>
+          <div><label>Tuổi</label><input id="ugc-tuoi" type="number" placeholder="27"></div>
+          <div><label>Giới tính</label><select id="ugc-gioi"><option>Nữ</option><option>Nam</option></select></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Sắc tộc</label><select id="ugc-sac"><option>Châu Á</option><option>Da trắng</option><option>Da đen</option><option>Latin</option><option>Ả Rập</option><option>Ấn Độ</option></select></div>
+          <div><label>Dáng người</label><select id="ugc-dang"><option>Mảnh mai</option><option>Khỏe khoắn</option><option>Đầy đặn</option><option>Đường cong</option><option>Cơ bắp</option></select></div>
+          <div><label>Kiểu tóc</label><select id="ugc-toc"><option>Dài</option><option>Ngắn</option><option>Đuôi ngựa</option><option>Tết</option><option>Mái</option><option>Búi</option><option>Gợn sóng</option><option>Pixie</option><option>Undercut</option></select></div>
+          <div><label>Màu tóc</label><input id="ugc-mautoc" placeholder="đen / nâu / vàng..."></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Nghề nghiệp</label><input id="ugc-nghe" placeholder="vd: chủ shop mỹ phẩm"></div>
+          <div><label>Tính cách</label><input id="ugc-tinh" placeholder="vd: tự tin, gần gũi, hài hước"></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Trang phục / phong cách</label><input id="ugc-trangphuc" placeholder="vd: smart casual, blazer sáng màu"></div>
+          <div><label>Bối cảnh</label><input id="ugc-boicanh" placeholder="vd: studio sáng / bàn làm việc hiện đại"></div>
+        </div>
+        <div style="margin-top:8px"><label>Chi tiết thêm (tuỳ chọn)</label><textarea id="ugc-them" rows="2" placeholder="đặc điểm khuôn mặt, phụ kiện, thần thái..."></textarea></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
+          <button class="btn sm" onclick="ugcCreate()">✨ Tạo nhân vật vào Dàn</button>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);text-transform:none;font-weight:600;letter-spacing:0"><input type="checkbox" id="ugc-autoimg" checked style="width:auto">Sinh ảnh luôn (Nano Banana)</label>
+        </div>
+      </div>
+      <div id="roster-list"></div>
+      <div id="roster-fb"></div>
+      <div id="muse-panel" style="margin-top:8px"></div>
+    </div>
+  </div>
+
   <div class="sec" id="biokit">
     <h2>🪪 Tiểu sử / Bio đa nền tảng <span class="pill">TikTok · Instagram · Threads · Facebook · YouTube — copy &amp; dán</span></h2>
     <p class="mut" style="margin:0 0 8px">AI viết tiểu sử kênh chuẩn từng nền tảng (đúng giới hạn ký tự + CTA + đối tượng), bám Brand Vault. Bấm Copy là dán thẳng vào phần hồ sơ kênh.</p>
@@ -700,50 +749,7 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
       <div><label>🖼 Ảnh nhân vật (đính kèm thật)</label><input type="file" id="vref-char-img" accept="image/*" onchange="pickRefImg('character',this.files)"><div id="vref-char-prev" style="margin-top:6px"></div></div>
       <div><label>🖼 Ảnh sản phẩm (Veo lấy ĐÚNG từ ảnh này)</label><input type="file" id="vref-prod-img" accept="image/*" onchange="pickRefImg('product',this.files)"><div id="vref-prod-prev" style="margin-top:6px"></div></div>
     </div>
-    <div id="roster-box" style="margin:6px 0 12px;border:1px solid var(--bd);border-radius:10px;padding:10px;background:var(--card2)">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-        <b style="color:var(--warn)">🎭 Dàn nhân vật kênh</b>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn ghost sm" onclick="ugcToggle()" style="border-color:var(--ac2);color:var(--ac2)">🎨 Xưởng nhân vật UGC</button>
-          <button class="btn ghost sm" id="roster-auto" onclick="rosterAutoDesign()" style="border-color:var(--ac);color:var(--ac)">🤖 AI thiết kế dàn (từ kịch bản)</button>
-          <button class="btn ghost sm" id="roster-genall" onclick="rosterGenAllImg()">🎨 Sinh ảnh hàng loạt</button>
-          <button class="btn ghost sm" onclick="rosterAdd()">➕ Thêm nhân vật</button>
-          <button class="btn ghost sm" onclick="museOpen()" style="border-color:var(--blue);color:var(--blue)">📥 Nhập từ Muse</button>
-          <button class="btn ghost sm" onclick="rosterDownloadAll()">⬇️ Tải tất cả ảnh</button>
-        </div>
-      </div>
-      <div class="mut" style="font-size:11.5px;margin:4px 0 8px">Mỗi nhân vật 1 ảnh tham chiếu — <b>AI sinh bằng Nano Banana</b> hoặc <b>upload</b>. App gắn đúng ảnh vào file JSON Flow theo TÊN; bấm "Tải ảnh" rồi upload vào Google Flow → ingredients. (Nhân vật chính vẫn dùng ô 🎭 Nhân vật tham chiếu phía trên — thêm vào dàn nếu muốn quản lý ảnh ở đây.)</div>
-      <div id="ugc-studio" style="display:none;background:var(--glass);border:1.5px solid var(--line);border-radius:var(--r-md,10px);padding:14px;margin:0 0 10px">
-        <div style="font-size:12.5px;font-weight:700;color:var(--ac2);margin-bottom:8px">🎨 Xưởng nhân vật UGC — chọn đặc điểm, hệ thống tự dựng prompt <b>brand-safe</b> + sinh ảnh vào Dàn (không có field nhạy cảm).</div>
-        <div class="row">
-          <div><label>Tên</label><input id="ugc-ten" placeholder="vd: Mai Lumi"></div>
-          <div><label>Tuổi</label><input id="ugc-tuoi" type="number" placeholder="27"></div>
-          <div><label>Giới tính</label><select id="ugc-gioi"><option>Nữ</option><option>Nam</option></select></div>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <div><label>Sắc tộc</label><select id="ugc-sac"><option>Châu Á</option><option>Da trắng</option><option>Da đen</option><option>Latin</option><option>Ả Rập</option><option>Ấn Độ</option></select></div>
-          <div><label>Dáng người</label><select id="ugc-dang"><option>Mảnh mai</option><option>Khỏe khoắn</option><option>Đầy đặn</option><option>Đường cong</option><option>Cơ bắp</option></select></div>
-          <div><label>Kiểu tóc</label><select id="ugc-toc"><option>Dài</option><option>Ngắn</option><option>Đuôi ngựa</option><option>Tết</option><option>Mái</option><option>Búi</option><option>Gợn sóng</option><option>Pixie</option><option>Undercut</option></select></div>
-          <div><label>Màu tóc</label><input id="ugc-mautoc" placeholder="đen / nâu / vàng..."></div>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <div><label>Nghề nghiệp</label><input id="ugc-nghe" placeholder="vd: chủ shop mỹ phẩm"></div>
-          <div><label>Tính cách</label><input id="ugc-tinh" placeholder="vd: tự tin, gần gũi, hài hước"></div>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <div><label>Trang phục / phong cách</label><input id="ugc-trangphuc" placeholder="vd: smart casual, blazer sáng màu"></div>
-          <div><label>Bối cảnh</label><input id="ugc-boicanh" placeholder="vd: studio sáng / bàn làm việc hiện đại"></div>
-        </div>
-        <div style="margin-top:8px"><label>Chi tiết thêm (tuỳ chọn)</label><textarea id="ugc-them" rows="2" placeholder="đặc điểm khuôn mặt, phụ kiện, thần thái..."></textarea></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
-          <button class="btn sm" onclick="ugcCreate()">✨ Tạo nhân vật vào Dàn</button>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);text-transform:none;font-weight:600;letter-spacing:0"><input type="checkbox" id="ugc-autoimg" checked style="width:auto">Sinh ảnh luôn (Nano Banana)</label>
-        </div>
-      </div>
-      <div id="roster-list"></div>
-      <div id="roster-fb"></div>
-      <div id="muse-panel" style="margin-top:8px"></div>
-    </div>
+    <div class="note" style="margin:6px 0 12px">🎭 <b>Dàn nhân vật &amp; Xưởng UGC</b> đã chuyển sang <b>Dojo › 🎭 Thư viện thương hiệu</b> — thiết lập 1 lần, dùng chung mọi nơi. <button class="btn ghost sm" onclick="if(window.qsGo)qsGo('home','brand-library')">Mở Thư viện ↗</button></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <button class="btn ghost" id="vref-gen" onclick="genVRef()">✨ Sinh bộ tham chiếu (AI)</button>
       <button class="btn" id="vp-gen" onclick="genVPromptsAll()">🎥 Sinh prompt video (cả loạt)</button>
@@ -1521,7 +1527,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.v==='dist'){ renderDistDayOptions(); renderDist(); renderZernioCfg(); }
   if(t.dataset.v==='skuld'){ renderScorecard(); renderBoard(); renderDpPick(); renderForgePlan(); renderScripts(); renderVRef(); renderRoster(); renderVPrompts(); }
   if(t.dataset.v==='ocean'){ if(typeof ocRender==='function') ocRender(); }
-  if(t.dataset.v==='home'){ if(typeof qsRender==='function') qsRender(); }
+  if(t.dataset.v==='home'){ if(typeof qsRender==='function') qsRender(); if(typeof renderRoster==='function') renderRoster(); }
   if(t.dataset.v==='ops'){ renderOps(); }
 });
 
@@ -2844,7 +2850,7 @@ function renderRoster(){ const el=document.getElementById('roster-list'); if(!el
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div style="width:130px">${img}</div>
         <div style="flex:1;min-width:200px">
-          <input placeholder="Tên nhân vật (vd: Mai 'Glitch')" value="${_escAttr(c.ten||'')}" onchange="rosterField('${c.id}','ten',this.value)" style="margin-bottom:6px">
+          <div style="display:flex;gap:6px;margin-bottom:6px"><input placeholder="Tên nhân vật (vd: Mai 'Glitch')" value="${_escAttr(c.ten||'')}" onchange="rosterField('${c.id}','ten',this.value)" style="flex:1;margin:0"><select onchange="rosterField('${c.id}','vai',this.value)" style="width:auto;flex:0 0 auto"><option value="phụ"${c.vai==='chính'?'':' selected'}>🎭 Phụ</option><option value="chính"${c.vai==='chính'?' selected':''}>⭐ Chính</option></select></div>
           <textarea placeholder="Mô tả ngắn (vai trò/cá tính)" onchange="rosterField('${c.id}','mo_ta',this.value)">${_escAttr(c.mo_ta||'')}</textarea>
         </div>
       </div>
@@ -2858,7 +2864,7 @@ function renderRoster(){ const el=document.getElementById('roster-list'); if(!el
     </div>`;
   }).join('');
 }
-function rosterAdd(){ roster().push({id:'nv_'+Math.random().toString(36).slice(2,8), ten:'', mo_ta:'', img:''}); save(); renderRoster(); }
+function rosterAdd(){ roster().push({id:'nv_'+Math.random().toString(36).slice(2,8), ten:'', mo_ta:'', img:'', vai:'phụ'}); save(); renderRoster(); }
 function rosterDel(id){ if(!confirm('Xoá nhân vật này khỏi dàn?'))return; S.dna.skuld.roster=roster().filter(x=>x.id!==id); save(); renderRoster(); }
 function rosterField(id,field,val){ const c=roster().find(x=>x.id===id); if(!c)return; c[field]=val; save(); }
 async function rosterUpload(id, files){ const f=files&&files[0]; if(!f)return; const fb=document.getElementById('roster-fb'); const c=roster().find(x=>x.id===id); if(!c)return;
