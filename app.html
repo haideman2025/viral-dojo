@@ -1308,6 +1308,33 @@ window.addEventListener('beforeunload',()=>{
     navigator.sendBeacon(_base()+'/push?code='+encodeURIComponent(SESS.code), new Blob([body],{type:'application/json'})); }catch(e){}
 });
 
+/* ☁️ ĐỒNG BỘ NGAY — đẩy bản mới nhất lên server tức thì (bỏ qua chờ 2.5s), xác nhận an toàn tắt máy / chuyển thiết bị */
+function syncFlash(msg, bad){
+  let el=document.getElementById('sync-flash');
+  if(!el){ el=document.createElement('div'); el.id='sync-flash';
+    el.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99999;max-width:92%;padding:11px 16px;border-radius:10px;font-size:13.5px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.35);transition:opacity .3s;text-align:center';
+    document.body.appendChild(el); }
+  el.style.background = bad?'#4a2424':'#143a2a'; el.style.color = bad?'#ff9a9a':'#7df5b6'; el.style.border='1px solid '+(bad?'#e5484d':'#39d98a');
+  el.textContent=msg; el.style.opacity='1';
+  clearTimeout(el._t); el._t=setTimeout(()=>{ el.style.opacity='0'; }, 4500);
+}
+async function syncNow(btn){
+  if(!SYNC_URL){ syncFlash('Tính năng đồng bộ chưa bật cho bản này.', true); return; }
+  if(!syncOn()){ openLogin(); return; }                 // chưa đăng nhập → mời đăng nhập
+  if(_conflictOpen) return;
+  const old=btn?btn.innerHTML:''; if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span> Đang đồng bộ…'; }
+  clearTimeout(_syncTimer);                              // huỷ chờ debounce → đẩy NGAY
+  try{ await pushNow(); }catch(e){}
+  if(btn){ btn.disabled=false; btn.innerHTML=old; }
+  if(syncOn() && !_dirty && !_conflictOpen){
+    const t=new Date(), hm=('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2);
+    setBadge('synced','☁️ Đã đồng bộ '+hm);
+    syncFlash('✅ Đã đồng bộ lên server lúc '+hm+'. An toàn tắt máy — mở thiết bị khác (đăng nhập cùng mã) là làm tiếp ngay.');
+  } else if(!_conflictOpen){
+    syncFlash('❌ Chưa đồng bộ được — kiểm tra mạng rồi bấm lại. (Dữ liệu vẫn an toàn trong máy này.)', true);
+  }
+}
+
 function openLogin(){
   const ov=document.createElement('div'); ov.className='auth-ov';
   ov.innerHTML='<div class="auth-box"><h3 style="margin:0 0 4px">☁️ Đăng nhập để đồng bộ</h3>'+
@@ -1336,6 +1363,7 @@ function renderAuthUI(){
       : ' <span style="background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;cursor:pointer" onclick="openUpgrade(\'Dùng thử đã hết hạn\')">⛔ Hết hạn dùng thử — Mở khoá</span>'; }
     el.innerHTML='<span title="'+_escAttr(SESS.code)+'">👤 '+_escAttr(SESS.name||'Tài khoản')+'</span>'+badge+
       ' · <span id="sync-badge" style="font-weight:700">(local)</span>'+
+      ' <button class="btn sm" id="sync-now-btn" style="border-color:var(--ac2);color:var(--ac2)" onclick="syncNow(this)" title="Đẩy dữ liệu mới nhất lên server NGAY — bấm trước khi tắt máy / chuyển thiết bị">☁️ Đồng bộ ngay</button>'+
       ' <button class="btn ghost sm" onclick="logout()">Đăng xuất</button>';
   } else {
     el.innerHTML='<button class="btn sm" style="background:var(--gold);color:var(--px)" onclick="openUpgrade()">💎 Mở khoá Trọn đời</button>'+
