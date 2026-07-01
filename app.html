@@ -1024,6 +1024,43 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
   <div class="note">🧭 <b>Đại Hải Trình</b> — không gian sáng tạo tự do: gõ 1 ý tưởng sản phẩm → VIRAL DOJO sinh nhiều ý tưởng kịch bản chất lượng cao → chấm điểm COREVIRAL & nâng cấp ≥80% → hướng dẫn sản xuất cho <b>người thật + AI</b> → sinh prompt video an toàn → xuất JSON cho Flow. Sản xuất ít hay nhiều đều giữ chuẩn cao nhất.</div>
   <div id="oc-dojo-banner"></div>
 
+  <div class="sec" id="oc-treasure">
+    <h2>🗺️ Bản đồ kho báu — tìm sản phẩm hợp DNA <span class="pill" style="border-color:var(--warn);color:var(--warn)">MỚI</span></h2>
+    <p class="mut">Chọn đúng "kho báu" trước khi ra khơi: AI phân tích DNA kênh + nhân vật → đề xuất ngách/sản phẩm bán chạy hợp bạn, kèm <b>link tìm kiếm THẬT</b> (Shopee Mall sort bán chạy + TikTok) để xem sản phẩm & review thật. Không bịa link.</p>
+    <div class="row">
+      <div style="flex:2"><label>Ngành / định hướng kênh (trống thì lấy từ DNA)</label><input id="oc-tre-niche" placeholder="VD: chăm sóc da cho dân văn phòng / đồ bếp tiện lợi..."></div>
+      <div><label>Số đề xuất</label><select id="oc-tre-n"><option>5</option><option selected>8</option><option>12</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn" onclick="ocTreasureFind()">🧭 Tìm sản phẩm hợp DNA</button>
+      <button class="btn ghost sm" style="border-color:var(--ac2);color:var(--ac2)" onclick="ocTreasureApify()">🕷 Cào tín hiệu thật (TikTok)</button>
+    </div>
+    <div id="oc-tre-fb"></div>
+    <div id="oc-tre-box" style="margin-top:10px"></div>
+  </div>
+
+  <div class="sec" id="oc-persona">
+    <h2>🧬 Nhân vật DNA — dựng nhanh</h2>
+    <p class="mut">Ai "cầm cờ" kênh này? Dựng nhân vật (persona) để ý tưởng &amp; video bám đúng chất. (Không bắt buộc — bỏ qua vẫn sinh ý tưởng được.)</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn sm" onclick="ocPersonaAI()">🤖 AI dựng hết (từ sản phẩm + DNA)</button>
+      <button class="btn sm ghost" onclick="ocPersonaQuickToggle()">✍️ Nhập nhanh</button>
+      <button class="btn sm ghost" onclick="ocPersonaLibToggle()">📚 Từ Thư viện</button>
+    </div>
+    <div id="oc-persona-quick" style="display:none;margin-top:8px">
+      <div class="row">
+        <div><label>Tên nhân vật</label><input id="oc-per-ten" placeholder="VD: Vy Lumi"></div>
+        <div><label>Ngách / lĩnh vực</label><input id="oc-per-niche" placeholder="VD: skincare văn phòng"></div>
+      </div>
+      <div style="margin-top:6px"><label>Ngoại hình</label><input id="oc-per-mota" placeholder="nữ 25t, tóc ngắn, năng động..."></div>
+      <div style="margin-top:6px"><label>Tính cách / giọng điệu</label><input id="oc-per-tinhcach" placeholder="vui, thẳng thắn, hài hước nhẹ..."></div>
+      <div style="margin-top:8px"><button class="btn sm" onclick="ocPersonaSaveQuick()">💾 Lưu nhân vật</button></div>
+    </div>
+    <div id="oc-persona-lib" style="display:none;margin-top:8px"></div>
+    <div id="oc-persona-fb"></div>
+    <div id="oc-persona-box" style="margin-top:8px"></div>
+  </div>
+
   <div class="sec" id="oc-input">
     <h2>🧭 Nhập ý tưởng — ra cả loạt kịch bản</h2>
     <p class="mut">Mô tả sản phẩm / dịch vụ / chủ đề bạn muốn làm video. Càng rõ insight khách + điểm mạnh, AI càng trúng.</p>
@@ -5220,6 +5257,93 @@ function ocRefRender(){ const el=document.getElementById('oc-ref-box'); if(!el)r
   h+='</div></div>';
   el.innerHTML=h;
 }
+
+/* ============================ 🗺️ BẢN ĐỒ KHO BÁU (tìm sản phẩm hợp DNA) ============================ */
+function ocTreasure(){ const o=OC(); o.treasure=o.treasure||{niche:'',items:[],apify:[],at:''}; return o.treasure; }
+function _encq(s){ return encodeURIComponent(String(s||'').trim()); }
+function ocShopeeUrl(kw){ return 'https://shopee.vn/search?keyword='+_encq(kw)+'&officialShop=true&sortBy=sales'; }
+function ocTiktokUrl(kw){ return 'https://www.tiktok.com/search?q='+_encq(kw); }
+function _fmtN(n){ n=+n||0; return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':(''+n); }
+function ocTreFb(m,bad){ const el=document.getElementById('oc-tre-fb'); if(el)el.innerHTML='<div class="fb'+(bad?' bad':'')+'" style="margin-top:8px">'+m+'</div>'; }
+async function ocTreasureFind(){
+  if(typeof requirePremium==='function'&&!requirePremium('Bản đồ kho báu'))return;
+  if(!S.keys.gemini){ ocTreFb('Cần Gemini key — tab ⚡ Kết nối.',1); return; }
+  const niche=((document.getElementById('oc-tre-niche')||{}).value||'').trim();
+  const N=Math.max(3,Math.min(15,parseInt((document.getElementById('oc-tre-n')||{}).value,10)||8));
+  ocTreasure().niche=niche;
+  ocTreFb('<span class="spin"></span>AI đang dò kho báu — tìm sản phẩm hợp DNA...');
+  try{
+    let dnaCtx=''; try{ const dj=dojoCtx(1600); if(dj)dnaCtx+='\n'+dj; }catch(e){}
+    try{ const b=brandContext(600); if(b&&/[A-Za-zÀ-ỹ0-9]/.test(b))dnaCtx+='\nTHƯƠNG HIỆU:\n'+b; }catch(e){}
+    const _pers=OC().persona; if(_pers&&(_pers.ten||_pers.mo_ta))dnaCtx+='\nNHÂN VẬT KÊNH: '+(_pers.ten||'')+' — '+(_pers.mo_ta||'')+' '+(_pers.tinh_cach||'')+' (ngách '+(_pers.niche||'')+')';
+    const ros=(typeof roster==='function'?roster():[]).filter(function(c){return (c.ten||'').trim();}); if(ros.length)dnaCtx+='\nDÀN NHÂN VẬT: '+ros.map(function(c){return c.ten+(c.mo_ta?(' ('+c.mo_ta+')'):'');}).join('; ');
+    const o=await geminiCall('Bạn là chuyên gia chọn sản phẩm cho creator bán hàng TikTok/Shopee ở VIỆT NAM. Dựa trên DNA kênh + nhân vật + '+(niche?('định hướng: "'+niche+'"'):'ngành suy từ DNA')+', đề xuất '+N+' LOẠI/NGÁCH SẢN PHẨM đang BÁN CHẠY, review tốt, HỢP để nhân vật này làm video bán hàng. Ưu tiên hàng shop Mall/chính hãng, giá tốt, dễ viral.\n'+(dnaCtx||'(chưa nhiều DNA — suy luận hợp lý theo định hướng)')+'\nMỗi đề xuất: ten (tên loại sản phẩm CỤ THỂ, không chung chung), tu_khoa (2-4 từ khoá NGẮN tiếng Việt để tìm trên sàn), vi_sao (vì sao hợp nhân vật/kênh, 1 câu), insight (nỗi đau/mong muốn khách), goc (góc content viral gợi ý), hot ("cao"/"vừa"/"ngách sâu"). KHÔNG bịa link hay tên shop cụ thể.\nTrả về DUY NHẤT JSON: {"items":[{"ten":"","tu_khoa":"","vi_sao":"","insight":"","goc":"","hot":""}]} — '+N+' phần tử.',{json:true,hi:true,temp:0.8});
+    const items=_arr(o.items).slice(0,N).map(function(v){ const kw=asText(v.tu_khoa||v.ten||''); return { ten:asText(v.ten||''), tu_khoa:kw, vi_sao:asText(v.vi_sao||''), insight:asText(v.insight||''), goc:asText(v.goc||''), hot:asText(v.hot||''), shopee_url:ocShopeeUrl(kw), tiktok_url:ocTiktokUrl(kw) }; }).filter(function(x){return x.ten;});
+    ocTreasure().items=items; ocTreasure().at=_today(); save(); ocTreasureRender();
+    ocTreFb('✅ '+items.length+' hướng sản phẩm. Bấm link xem hàng thật trên sàn, rồi "✅ Chốt" cái ưng.');
+    if(typeof vdNotifyDone==='function')vdNotifyDone('Ban do kho bau xong!');
+  }catch(e){ ocTreFb('❌ '+e.message,1); }
+}
+async function ocTreasureApify(){
+  const token=S.keys.apify;
+  const niche=((document.getElementById('oc-tre-niche')||{}).value||'').trim()||ocTreasure().niche||'';
+  if(!token){ ocTreFb('Chưa có Apify token (tab ⚡ Kết nối). Dùng "🧭 Tìm sản phẩm hợp DNA" + link tìm kiếm thật là đủ.',1); return; }
+  if(!niche){ ocTreFb('Nhập ngành/ngách để cào tín hiệu.',1); return; }
+  ocTreFb('<span class="spin"></span>Cào video TikTok đang viral về "'+niche+'"...');
+  try{
+    const q=niche+' review';
+    const r=await fetch('https://api.apify.com/v2/acts/clockworks~tiktok-scraper/run-sync-get-dataset-items?token='+token,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({searchQueries:[q],resultsPerPage:15,shouldDownloadVideos:false,shouldDownloadCovers:false})});
+    if(!r.ok) throw new Error('Apify HTTP '+r.status);
+    const arr=await r.json();
+    const vids=_arr(arr).map(function(v){ return { title:asText(v.text||'').slice(0,120), url:v.webVideoUrl||'', views:+v.playCount||0, likes:+v.diggCount||0 }; }).filter(function(v){return v.url;}).sort(function(a,b){return b.views-a.views;}).slice(0,15);
+    ocTreasure().apify=vids; save(); ocTreasureRender();
+    ocTreFb('✅ Cào '+vids.length+' video thật đang viral — tín hiệu nhu cầu + tham khảo cách làm.');
+  }catch(e){ ocTreFb('❌ Cào lỗi: '+e.message+' (CORS/quota Apify). Dùng link tìm kiếm thật là chắc nhất.',1); }
+}
+function ocTreasureRender(){ const el=document.getElementById('oc-tre-box'); if(!el)return; const t=ocTreasure();
+  const nn=document.getElementById('oc-tre-niche'); if(nn&&!nn.value&&t.niche)nn.value=t.niche;
+  let h='';
+  if(t.items&&t.items.length){ h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">'+t.items.map(function(x,i){
+    return '<div style="border:1.5px solid var(--line);border-radius:12px;padding:12px;background:var(--card2)">'
+      +'<div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><b style="font-size:13px">'+_escAttr(x.ten)+'</b>'+(x.hot?'<span class="pill" style="font-size:9px">🔥 '+_escAttr(x.hot)+'</span>':'')+'</div>'
+      +(x.vi_sao?'<div class="mut" style="font-size:11.5px;margin:4px 0">'+_escAttr(x.vi_sao)+'</div>':'')
+      +(x.insight?'<div style="font-size:11px;margin:2px 0"><b>Insight:</b> '+_escAttr(x.insight)+'</div>':'')
+      +(x.goc?'<div style="font-size:11px;margin:2px 0"><b>Góc:</b> '+_escAttr(x.goc)+'</div>':'')
+      +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px">'
+      +'<a class="btn sm ghost" style="font-size:10.5px;padding:3px 8px;border-color:var(--red);color:var(--red)" href="'+x.shopee_url+'" target="_blank" rel="noopener">🛒 Shopee Mall</a>'
+      +'<a class="btn sm ghost" style="font-size:10.5px;padding:3px 8px" href="'+x.tiktok_url+'" target="_blank" rel="noopener">🎵 TikTok</a>'
+      +'<button class="btn sm" style="font-size:10.5px;padding:3px 8px" onclick="ocTreasureChoose('+i+')">✅ Chốt</button>'
+      +'</div></div>';
+  }).join('')+'</div>'; }
+  if(t.apify&&t.apify.length){ h+='<details style="margin-top:10px"><summary style="cursor:pointer;color:var(--ac2)">🕷 Video thật đang viral ('+t.apify.length+')</summary><div style="margin-top:6px">'+t.apify.map(function(v){return '<div style="font-size:11.5px;margin-bottom:5px;border-left:3px solid var(--ac2);padding-left:7px"><a href="'+v.url+'" target="_blank" rel="noopener" style="color:var(--ac2)">'+_escAttr(v.title||'(video)')+'</a> <span class="mut">· '+_fmtN(v.views)+' view · '+_fmtN(v.likes)+' tim</span></div>';}).join('')+'</div></details>'; }
+  el.innerHTML=h;
+}
+function ocTreasureChoose(i){ const x=ocTreasure().items[i]; if(!x)return; OC().chosenProd={ten:x.ten,tu_khoa:x.tu_khoa};
+  const ta=document.getElementById('oc-idea'); if(ta){ ta.value='Sản phẩm: '+x.ten+(x.insight?('. Insight khách: '+x.insight):'')+(x.goc?('. Góc content: '+x.goc):''); OC().idea=ta.value; }
+  const r=ocRef(); if(!r.prodTen)r.prodTen=x.ten; const pn=document.getElementById('oc-ref-prodname'); if(pn)pn.value=r.prodTen;
+  save(); if(typeof ocRefRender==='function')ocRefRender();
+  ocTreFb('✅ Đã chốt "'+x.ten+'" → điền sẵn vào ý tưởng + tên sản phẩm tham chiếu. Giờ dựng Nhân vật DNA hoặc sinh ý tưởng.');
+  const el=document.getElementById('oc-persona'); if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ============================ 🧬 NHÂN VẬT DNA (bước 2) ============================ */
+function ocPerFb(m,bad){ const el=document.getElementById('oc-persona-fb'); if(el)el.innerHTML='<div class="fb'+(bad?' bad':'')+'" style="margin-top:8px">'+m+'</div>'; }
+function ocPersonaQuickToggle(){ const e=document.getElementById('oc-persona-quick'); const l=document.getElementById('oc-persona-lib'); if(l)l.style.display='none'; if(e)e.style.display=e.style.display==='none'?'':'none'; }
+function ocPersonaLibToggle(){ const l=document.getElementById('oc-persona-lib'); if(!l)return; const q=document.getElementById('oc-persona-quick'); if(q)q.style.display='none'; const show=l.style.display==='none'; l.style.display=show?'':'none';
+  if(show){ const ros=(typeof roster==='function'?roster():[]).filter(function(c){return (c.ten||'').trim();}); l.innerHTML=ros.length?('<div class="mut" style="font-size:11.5px;margin-bottom:4px">Chọn nhân vật có sẵn:</div>'+ros.map(function(c){return '<button class="btn sm ghost" style="margin:2px" onclick="ocPersonaFromLib(\''+c.id+'\')">'+(c.img?'<img src="'+c.img+'" style="width:16px;height:16px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:3px">':'🎭 ')+_escAttr(c.ten||'NV')+'</button>';}).join(' ')):'<div class="mut" style="font-size:11.5px">Thư viện trống — tạo ở Dojo › 🎭 Thư viện thương hiệu, hoặc dùng "AI dựng hết"/"Nhập nhanh".</div>'; }
+}
+function ocPersonaFromLib(rid){ const c=(typeof roster==='function'?roster():[]).find(function(x){return x.id===rid;}); if(!c)return; OC().persona={ten:c.ten||'',mo_ta:c.mo_ta||'',tinh_cach:'',niche:'',prompt:c.prompt||'',from:'lib'}; const r=ocRef(); r.charTen=c.ten||r.charTen; if(c.img)r.charImg=c.img; save(); ocPersonaRender(); if(typeof ocRefRender==='function')ocRefRender(); ocPerFb('✅ Đã chọn nhân vật "'+(c.ten||'')+'" từ Thư viện (ảnh gắn luôn vào tham chiếu).'); }
+function ocPersonaSaveQuick(){ const g=function(id){return ((document.getElementById(id)||{}).value||'').trim();}; const ten=g('oc-per-ten'); if(!ten){ ocPerFb('Nhập tên nhân vật.',1); return; } OC().persona={ten:ten,mo_ta:g('oc-per-mota'),tinh_cach:g('oc-per-tinhcach'),niche:g('oc-per-niche'),prompt:'',from:'quick'}; const r=ocRef(); r.charTen=ten; save(); ocPersonaRender(); if(typeof ocRefRender==='function')ocRefRender(); const q=document.getElementById('oc-persona-quick'); if(q)q.style.display='none'; ocPerFb('✅ Đã lưu nhân vật "'+ten+'".'); }
+async function ocPersonaAI(){ if(typeof requirePremium==='function'&&!requirePremium('AI dựng nhân vật'))return; if(!S.keys.gemini){ ocPerFb('Cần Gemini key — tab ⚡ Kết nối.',1); return; }
+  ocPerFb('<span class="spin"></span>AI đang dựng nhân vật DNA...');
+  try{ const cp=OC().chosenProd; let ctx=cp?('SẢN PHẨM ĐÃ CHỐT: '+cp.ten):('NGÁCH: '+(((document.getElementById('oc-tre-niche')||{}).value||'').trim()||'(chưa rõ)')); try{ const dj=dojoCtx(1200); if(dj)ctx+='\n'+dj; }catch(e){}
+    const o=await geminiCall('Bạn là chuyên gia xây nhân vật KOC/KOL bán hàng TikTok Việt Nam. Dựng 1 NHÂN VẬT (persona) hợp để bán '+(cp?('"'+cp.ten+'"'):'sản phẩm/ngách này')+' & dễ viral.\n'+ctx+'\nTrả về DUY NHẤT JSON: {"ten":"tên nhân vật ngắn dễ nhớ","mo_ta":"ngoại hình 1 câu","tinh_cach":"tính cách + giọng điệu","niche":"ngách","prompt":"prompt TIẾNG ANH tạo ảnh chân dung nhân vật (ngoại hình rõ, phong cách, bối cảnh) cho Nano Banana/Veo"}.',{json:true,hi:true,temp:0.8});
+    OC().persona={ten:asText(o.ten||'Nhân vật'),mo_ta:asText(o.mo_ta||''),tinh_cach:asText(o.tinh_cach||''),niche:asText(o.niche||''),prompt:asText(o.prompt||''),from:'ai'}; const r=ocRef(); r.charTen=OC().persona.ten; save(); ocPersonaRender(); if(typeof ocRefRender==='function')ocRefRender(); ocPerFb('✅ Đã dựng "'+OC().persona.ten+'". Có prompt ảnh — sinh/upload ảnh ở "🖼 Ảnh tham chiếu nhanh" để khoá ngoại hình.');
+  }catch(e){ ocPerFb('❌ '+e.message,1); }
+}
+function ocPersonaClear(){ OC().persona=null; save(); ocPersonaRender(); }
+function ocPersonaRender(){ const el=document.getElementById('oc-persona-box'); if(!el)return; const p=OC().persona; if(!p||!p.ten){ el.innerHTML='<div class="mut" style="font-size:11.5px">Chưa có nhân vật — chọn 1 cách phía trên (không bắt buộc).</div>'; return; }
+  el.innerHTML='<div style="border:1.5px solid var(--ac);border-radius:10px;padding:10px;background:var(--card2)"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><b>🧬 '+_escAttr(p.ten)+'</b><button class="btn sm ghost" style="font-size:10px;padding:2px 7px" onclick="ocPersonaClear()">Xoá</button></div>'+(p.mo_ta?'<div style="font-size:11.5px;margin-top:3px">'+_escAttr(p.mo_ta)+'</div>':'')+(p.tinh_cach?'<div style="font-size:11.5px;color:var(--mut)">'+_escAttr(p.tinh_cach)+'</div>':'')+(p.niche?'<div style="font-size:11px;color:var(--ac2);margin-top:2px">ngách: '+_escAttr(p.niche)+'</div>':'')+(p.prompt?'<details style="margin-top:4px"><summary style="cursor:pointer;font-size:11px;color:var(--ac2)">prompt ảnh nhân vật</summary><div style="font-size:11px;white-space:pre-wrap;margin-top:3px">'+_escAttr(p.prompt)+'</div></details>':'')+'</div>'; }
 function ocLibRender(){ const el=document.getElementById('oc-lib'); if(!el)return; const o=OC(); o.chars=o.chars||[];
   const r=(typeof roster==='function'?roster():[]); const ps=((S.dna.brandKit&&S.dna.brandKit.products)||[]);
   let h='<div style="font-size:12px;font-weight:700;color:var(--ac2);margin-bottom:6px">🎭 Chọn nhân vật &amp; 📦 sản phẩm từ Thư viện (AI sẽ bám đúng)</div>';
@@ -5264,6 +5388,8 @@ function ocCtx(item){
   let s='Ý TƯỞNG/SẢN PHẨM GỐC của người dùng (nguồn sáng tạo — bám sát cái này):\n'+(OC().idea||'').slice(0,1400);
   const ch=ocSelChars(); if(ch.length){ const mc=ch.find(c=>c.vai==='chính'); s+='\n\nNHÂN VẬT TỪ THƯ VIỆN (dùng ĐÚNG, nhất quán; '+(mc?'nhân vật CHÍNH = '+(mc.ten||''):'không có nhân vật chính rõ')+'):\n'+ch.map(c=>'• '+(c.ten||'')+(c.vai==='chính'?' [CHÍNH]':' [phụ]')+(c.mo_ta?' — '+c.mo_ta:'')).join('\n'); }
   const p=ocSelProd(); if(p) s+='\n\nSẢN PHẨM (bám đúng, không bịa): '+(p.ten||'')+(p.usp?' · USP: '+p.usp:'')+(p.loiich?' · lợi ích: '+p.loiich:'')+(p.cam?' · ĐIỀU CẤM: '+p.cam:'');
+  const _pers=OC().persona; if(_pers&&(_pers.ten||_pers.mo_ta)) s+='\n\nNHÂN VẬT KÊNH (persona — video do người này dẫn, GIỮ chất & giọng): '+(_pers.ten||'')+(_pers.mo_ta?(' — '+_pers.mo_ta):'')+(_pers.tinh_cach?(' · '+_pers.tinh_cach):'')+(_pers.niche?(' · ngách '+_pers.niche):'');
+  const _cp=OC().chosenProd; if(_cp&&_cp.ten) s+='\n\nSẢN PHẨM ĐÃ CHỐT (từ Bản đồ kho báu — bám để bán): '+_cp.ten;
   if(!nb){
     try{ const b=brandContext(500); if(b&&b.trim()&&/[A-Za-zÀ-ỹ0-9]/.test(b)) s+='\n\nGỢI Ý THƯƠNG HIỆU (dùng nếu hợp):\n'+b.slice(0,500); }catch(e){}
     try{ const dj=dojoCtx(2200); if(dj&&dj.trim()) s+='\n'+dj; }catch(e){}
@@ -5591,6 +5717,8 @@ function ocRender(){ const o=OC();
   const ta=document.getElementById('oc-idea'); if(ta && !ta.value && o.idea) ta.value=o.idea;
   const nbcb=document.getElementById('oc-nobrand'); if(nbcb) nbcb.checked=!!o.noBrand;
   if(typeof ocRefRender==='function')ocRefRender();
+  if(typeof ocTreasureRender==='function')ocTreasureRender();
+  if(typeof ocPersonaRender==='function')ocPersonaRender();
   const el=document.getElementById('oc-board'); if(!el)return; el.className='sec';
   if(!o.items.length){ el.innerHTML='<p class="mut" style="margin:0">Chưa có ý tưởng. Nhập ý tưởng ở trên rồi bấm "✨ Sinh ý tưởng kịch bản".</p>'; return; }
   const col=v=>v>=OC_PASS?'var(--ac)':v>=60?'var(--warn)':'var(--red)';
