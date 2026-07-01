@@ -1035,6 +1035,7 @@ footer{color:var(--mut);font-size:13px;text-align:center;padding:26px;font-weigh
       <div><label>🎬 Phong cách video</label><select id="oc-vstyle" onchange="vStyleSet(this.value)"></select></div>
     </div>
     <div id="oc-lib" style="margin-top:10px"></div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:12px 0 0;font-size:12.5px"><input type="checkbox" id="oc-nobrand" onchange="ocSetNoBrand(this.checked)" style="width:16px;height:16px;margin:0">Không dùng dữ liệu thương hiệu <span class="mut" style="font-size:11px">— sáng tạo ý tưởng / sản phẩm / nhân vật MỚI, không bám brand & DOJO mặc định</span></label>
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" id="oc-gen" onclick="ocGenIdeas()">✨ Sinh ý tưởng kịch bản</button>
       <button class="btn ghost sm" onclick="ocWipe()">🧹 Xoá hết</button>
@@ -5187,6 +5188,7 @@ function ocSelChars(){ const o=OC(); const r=(typeof roster==='function'?roster(
 function ocSelProd(){ const nm=(OC().prod||'').trim(); if(!nm)return null; const ps=((S.dna.brandKit&&S.dna.brandKit.products)||[]); return ps.find(p=>(p.ten||'')===nm)||{ten:nm}; }
 function ocLibToggleChar(id){ const o=OC(); o.chars=o.chars||[]; const i=o.chars.indexOf(id); if(i>=0)o.chars.splice(i,1); else o.chars.push(id); save(); ocLibRender(); }
 function ocLibSetProd(v){ OC().prod=v; save(); }
+function ocSetNoBrand(v){ OC().noBrand=!!v; save(); if(typeof ocDojoBanner==='function')ocDojoBanner(); }
 function ocLibRender(){ const el=document.getElementById('oc-lib'); if(!el)return; const o=OC(); o.chars=o.chars||[];
   const r=(typeof roster==='function'?roster():[]); const ps=((S.dna.brandKit&&S.dna.brandKit.products)||[]);
   let h='<div style="font-size:12px;font-weight:700;color:var(--ac2);margin-bottom:6px">🎭 Chọn nhân vật &amp; 📦 sản phẩm từ Thư viện (AI sẽ bám đúng)</div>';
@@ -5197,6 +5199,7 @@ function ocLibRender(){ const el=document.getElementById('oc-lib'); if(!el)retur
   el.innerHTML=h; if(typeof vStyleFillSelects==='function')vStyleFillSelects(); }
 /* Banner mềm: khuyến nghị (KHÔNG chặn) làm chiến lược ở DOJO trước để kịch bản chất hơn */
 function ocDojoBanner(){ const el=document.getElementById('oc-dojo-banner'); if(!el)return; const d=S.dna||{};
+  if(OC().noBrand){ el.innerHTML='<div class="fb" style="border-color:var(--ac2);margin:10px 0 0">🎨 <b>Chế độ sáng tạo mới</b> — đang BỎ dữ liệu thương hiệu & DOJO. AI tự do phát triển <b>ý tưởng / sản phẩm / nhân vật MỚI</b> theo ý tưởng gốc bạn nhập. Bỏ tích ô để bám lại brand.</div>'; return; }
   const insDone=!!(d.m3&&(d.m3.insight||[]).some(x=>x&&x.noidung));
   const fmlDone=!!(d.m6&&(d.m6.analyses||[]).some(a=>a&&(a.picked||a.win||a.apply)));
   const kwDone =!!(d.m4&&(d.m4.cats||[]).some(c=>c&&(c.keywords||[]).length));
@@ -5226,11 +5229,16 @@ function ocCtx(item){
     } else { s+='\n\n(Chế độ ĐỘC LẬP — không dùng dữ liệu thương hiệu; chỉ bám lời VO + dàn nhân vật trên.)'; }
     return s;
   }
+  const nb = item ? !!item.noBrand : !!(OC().noBrand);   // 🆕 khu ý tưởng: tuỳ chọn KHÔNG dùng dữ liệu thương hiệu
   let s='Ý TƯỞNG/SẢN PHẨM GỐC của người dùng (nguồn sáng tạo — bám sát cái này):\n'+(OC().idea||'').slice(0,1400);
   const ch=ocSelChars(); if(ch.length){ const mc=ch.find(c=>c.vai==='chính'); s+='\n\nNHÂN VẬT TỪ THƯ VIỆN (dùng ĐÚNG, nhất quán; '+(mc?'nhân vật CHÍNH = '+(mc.ten||''):'không có nhân vật chính rõ')+'):\n'+ch.map(c=>'• '+(c.ten||'')+(c.vai==='chính'?' [CHÍNH]':' [phụ]')+(c.mo_ta?' — '+c.mo_ta:'')).join('\n'); }
   const p=ocSelProd(); if(p) s+='\n\nSẢN PHẨM (bám đúng, không bịa): '+(p.ten||'')+(p.usp?' · USP: '+p.usp:'')+(p.loiich?' · lợi ích: '+p.loiich:'')+(p.cam?' · ĐIỀU CẤM: '+p.cam:'');
-  try{ const b=brandContext(500); if(b&&b.trim()&&/[A-Za-zÀ-ỹ0-9]/.test(b)) s+='\n\nGỢI Ý THƯƠNG HIỆU (dùng nếu hợp):\n'+b.slice(0,500); }catch(e){}
-  try{ const dj=dojoCtx(2200); if(dj&&dj.trim()) s+='\n'+dj; }catch(e){}
+  if(!nb){
+    try{ const b=brandContext(500); if(b&&b.trim()&&/[A-Za-zÀ-ỹ0-9]/.test(b)) s+='\n\nGỢI Ý THƯƠNG HIỆU (dùng nếu hợp):\n'+b.slice(0,500); }catch(e){}
+    try{ const dj=dojoCtx(2200); if(dj&&dj.trim()) s+='\n'+dj; }catch(e){}
+  } else {
+    s+='\n\n(Chế độ SÁNG TẠO MỚI — KHÔNG dùng dữ liệu thương hiệu/DOJO mặc định. Tự do phát triển Ý TƯỞNG, SẢN PHẨM, NHÂN VẬT MỚI bám ý tưởng gốc trên'+((ch.length||p)?' + lựa chọn thủ công phía trên':'')+'; đừng nhồi thương hiệu cũ.)';
+  }
   return s; }
 function ocScenes(out){ return (typeof normScenes==='function'?normScenes(out&&out.scenes):_arr(out&&out.scenes)); }
 
@@ -5247,7 +5255,7 @@ async function ocGenIdeas(){ if(typeof requirePremium==='function'&&!requirePrem
     const o=await geminiCall('Bạn là chiến lược gia nội dung VIRAL DOJO (phương pháp COREVIRAL). Từ ý tưởng/sản phẩm của người dùng, đẻ ra '+N+' Ý TƯỞNG KỊCH BẢN video ngắn (TikTok/Reels) CHẤT LƯỢNG CAO, mỗi cái 1 GÓC TIẾP CẬN KHÁC HẲN, đủ sức viral & bán hàng. Định dạng ưu tiên: '+fmt+'.\n'+ocCtx()+'\nMỗi ý tưởng: tieu_de (hook/tiêu đề giật, ngắn), goc (góc tiếp cận: Mẹo/Case study/So sánh/POV/Giải quyết nỗi đau/Hậu trường/Phản biện...), mo_ta (2-3 câu: nội dung chính + vì sao viral + CTA).\nTrả về DUY NHẤT JSON: {"items":[{"tieu_de":"","goc":"","mo_ta":""}]} — đúng '+N+' phần tử, KHÔNG trùng góc.',{json:true,hi:true,temp:0.9});
     const arr=_arr(o.items).slice(0,N); const at=_today();
     arr.forEach((v,i)=>{ if(!v||(!v.tieu_de&&!v.mo_ta))return;
-      OC().items.push({ id:ocNewId(), title:asText(v.tieu_de||('Ý tưởng '+(i+1))).slice(0,90), goc:asText(v.goc||''), mo_ta:asText(v.mo_ta||''), fmt:fmt, at:at, score:0, _scored:false, script:null, shots:[], guide:null }); });
+      OC().items.push({ id:ocNewId(), title:asText(v.tieu_de||('Ý tưởng '+(i+1))).slice(0,90), goc:asText(v.goc||''), mo_ta:asText(v.mo_ta||''), fmt:fmt, at:at, noBrand:!!(OC().noBrand), score:0, _scored:false, script:null, shots:[], guide:null }); });
     save(); ocRender();
     ocFb('✅ Đã sinh '+arr.length+' ý tưởng — đang tự chấm tiềm năng viral...');
     if(typeof vdNotifyDone==='function')vdNotifyDone('Sinh y tuong xong!');
@@ -5258,7 +5266,7 @@ async function ocGenIdeas(){ if(typeof requirePremium==='function'&&!requirePrem
 
 /* ===== 🎯 CỔNG CHẤT LƯỢNG Ý TƯỞNG — chấm Ý TƯỞNG (chưa cần kịch bản) + viết lại GÓC MỚI cho cái yếu (đánh vào gốc) ===== */
 async function ocScoreIdea(id){ const x=ocItem(id); if(!x)return;
-  const o=await geminiCall('Bạn là GIÁM KHẢO VIRAL DOJO cực khó tính. Chấm TIỀM NĂNG VIRAL của 1 Ý TƯỞNG video ngắn (CHƯA có kịch bản) theo COREVIRAL/khung B9, thang 100đ — chỉ ≥'+OC_PASS+' mới đáng công dựng kịch bản.\nTIÊU CHÍ (0-100): hook (tiêu đề/góc có sức giật, tò mò?), insight (chạm đúng nỗi đau/mong muốn khách?), goc_la (góc tiếp cận MỚI/khác biệt, không nhàm?), san_pham (gắn sản phẩm/bán hàng tự nhiên?), viral (drama/trend/thử thách/xếp hạng — sức lan toả?).\nĐỐI CHIẾU B9: '+b9Brief()+'\n'+ocCtx()+'\nÝ TƯỞNG: "'+x.title+'" ['+(x.goc||'')+'] — '+(x.mo_ta||'')+'\nTrả về DUY NHẤT JSON: {"diem":{"hook":0,"insight":0,"goc_la":0,"san_pham":0,"viral":0},"tong":0,"yeu":["điểm yếu cốt lõi"],"sua":["1-3 hướng làm mạnh hơn"]}. "tong" 0-100 tổng thể.',{json:true,temp:0.3});
+  const o=await geminiCall('Bạn là GIÁM KHẢO VIRAL DOJO cực khó tính. Chấm TIỀM NĂNG VIRAL của 1 Ý TƯỞNG video ngắn (CHƯA có kịch bản) theo COREVIRAL/khung B9, thang 100đ — chỉ ≥'+OC_PASS+' mới đáng công dựng kịch bản.\nTIÊU CHÍ (0-100): hook (tiêu đề/góc có sức giật, tò mò?), insight (chạm đúng nỗi đau/mong muốn khách?), goc_la (góc tiếp cận MỚI/khác biệt, không nhàm?), san_pham (gắn sản phẩm/bán hàng tự nhiên?), viral (drama/trend/thử thách/xếp hạng — sức lan toả?).\nĐỐI CHIẾU B9: '+b9Brief()+'\n'+ocCtx(x)+'\nÝ TƯỞNG: "'+x.title+'" ['+(x.goc||'')+'] — '+(x.mo_ta||'')+'\nTrả về DUY NHẤT JSON: {"diem":{"hook":0,"insight":0,"goc_la":0,"san_pham":0,"viral":0},"tong":0,"yeu":["điểm yếu cốt lõi"],"sua":["1-3 hướng làm mạnh hơn"]}. "tong" 0-100 tổng thể.',{json:true,temp:0.3});
   let tong=+o.tong; if(!(tong>=0&&tong<=100)){ const vals=Object.values(o.diem||{}).map(v=>+v||0); tong=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length):0; }
   x.ideaScore=Math.round(tong); x.ideaDiem=o.diem||{}; x.ideaYeu=_arr(o.yeu); x.ideaSua=_arr(o.sua); x._ideaScored=true; x.ideaScoredAt=_today(); save(); ocRender();
 }
@@ -5266,7 +5274,7 @@ async function ocRegenIdea(id){ const x=ocItem(id); if(!x||x.script)return;   //
   if(!x._ideaScored) await ocScoreIdea(id);
   const others=OC().items.filter(y=>y.id!==id).map(y=>(y.goc||y.title)).filter(Boolean).slice(0,12).join(' | ');
   const fix=(x.ideaYeu&&x.ideaYeu.length?('ĐIỂM YẾU: '+x.ideaYeu.join('; ')+'. '):'')+(x.ideaSua&&x.ideaSua.length?('HƯỚNG: '+x.ideaSua.join('; ')+'.'):'');
-  const o=await geminiCall('Bạn là chiến lược gia VIRAL DOJO. VIẾT LẠI 1 ý tưởng video ngắn bằng GÓC TIẾP CẬN KHÁC HẲN (KHÔNG chỉ sửa câu chữ — đổi cách kể) để đạt ≥'+OC_PASS+'/100 tiềm năng viral. Vẫn bám ý tưởng/sản phẩm gốc & insight khách. Điểm hiện tại: '+(x.ideaScore||0)+'/100. '+fix+'\nTRÁNH TRÙNG góc với các ý tưởng khác: '+(others||'(không có)')+'\n'+ocCtx()+'\nÝ TƯỞNG CŨ (yếu): "'+x.title+'" ['+(x.goc||'')+'] — '+(x.mo_ta||'')+'\nTrả về DUY NHẤT JSON: {"tieu_de":"hook/tiêu đề giật, ngắn","goc":"góc tiếp cận MỚI","mo_ta":"2-3 câu: nội dung + vì sao viral + CTA"}.',{json:true,hi:true,temp:0.95});
+  const o=await geminiCall('Bạn là chiến lược gia VIRAL DOJO. VIẾT LẠI 1 ý tưởng video ngắn bằng GÓC TIẾP CẬN KHÁC HẲN (KHÔNG chỉ sửa câu chữ — đổi cách kể) để đạt ≥'+OC_PASS+'/100 tiềm năng viral. Vẫn bám ý tưởng/sản phẩm gốc & insight khách. Điểm hiện tại: '+(x.ideaScore||0)+'/100. '+fix+'\nTRÁNH TRÙNG góc với các ý tưởng khác: '+(others||'(không có)')+'\n'+ocCtx(x)+'\nÝ TƯỞNG CŨ (yếu): "'+x.title+'" ['+(x.goc||'')+'] — '+(x.mo_ta||'')+'\nTrả về DUY NHẤT JSON: {"tieu_de":"hook/tiêu đề giật, ngắn","goc":"góc tiếp cận MỚI","mo_ta":"2-3 câu: nội dung + vì sao viral + CTA"}.',{json:true,hi:true,temp:0.95});
   if(o&&(o.tieu_de||o.mo_ta)){ x.title=asText(o.tieu_de||x.title).slice(0,90); x.goc=asText(o.goc||x.goc); x.mo_ta=asText(o.mo_ta||x.mo_ta); x._ideaScored=false; }
   await ocScoreIdea(id);
 }
@@ -5294,7 +5302,7 @@ async function ocBuildScript(id){ const x=ocItem(id); if(!x)return;
   const out=await geminiCall('Bạn là biên kịch VIRAL DOJO. Viết KỊCH BẢN CHI TIẾT cho 1 video TikTok ~60s từ Ý TƯỞNG dưới, bám sản phẩm/insight người dùng. Chia 3 phần MỞ BÀI/THÂN BÀI/KẾT BÀI; mỗi phần 1-3 cảnh. MỖI cảnh: noidung (lời thoại/diễn biến), hinhanh (bối cảnh·góc quay·nhân vật·CÁCH sản phẩm xuất hiện [cầm/đặt/dùng — KHÔNG tả ngoại hình, bám ẢNH tham chiếu]), tram (chữ/âm thanh overlay), note (gợi ý quay/dựng). Ngôn ngữ thoại: '+ocLang()+'.'
     +'\n\n🦴 KHUNG XƯƠNG 5-BEAT (BẮT BUỘC — map vào MỞ/THÂN/KẾT): (1) HOOK 3s đầu giật/pattern-interrupt → (2) VẤN ĐỀ/nỗi đau khách thấy mình trong đó → (3) GIẢI PHÁP: sản phẩm xuất hiện TỰ NHIÊN giải quyết → (4) BẰNG CHỨNG/trải nghiệm thật (demo, trước-sau, phản ứng) → (5) CTA/chốt rõ hoặc cliffhanger.'
     +'\n🎯 TỐI ĐA HOÁ CÁC TIÊU CHÍ VIRAL B9 khi viết (cài vào hành động/hình ảnh/âm thanh, đừng liệt kê khô): '+b9Brief()
-    +'\n'+ocCtx()+'\nÝ TƯỞNG: "'+x.title+'" ['+x.goc+'] — '+x.mo_ta+'\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"","hinhanh":"","tram":"","note":""}]}.',{json:true,hi:true,temp:0.6});
+    +'\n'+ocCtx(x)+'\nÝ TƯỞNG: "'+x.title+'" ['+x.goc+'] — '+x.mo_ta+'\nTrả về DUY NHẤT JSON: {"scenes":[{"phan":"MỞ BÀI","noidung":"","hinhanh":"","tram":"","note":""}]}.',{json:true,hi:true,temp:0.6});
   x.script={scenes:ocScenes(out), at:_today()}; x._scored=false; x.score=0; save(); ocRender();
 }
 
@@ -5544,6 +5552,7 @@ function ocRender(){ const o=OC();
   const act=document.getElementById('oc-actions'); if(act) act.style.display=o.items.length?'':'none';
   const cnt=document.getElementById('oc-count'); if(cnt) cnt.textContent=o.items.length+' ý tưởng';
   const ta=document.getElementById('oc-idea'); if(ta && !ta.value && o.idea) ta.value=o.idea;
+  const nbcb=document.getElementById('oc-nobrand'); if(nbcb) nbcb.checked=!!o.noBrand;
   const el=document.getElementById('oc-board'); if(!el)return; el.className='sec';
   if(!o.items.length){ el.innerHTML='<p class="mut" style="margin:0">Chưa có ý tưởng. Nhập ý tưởng ở trên rồi bấm "✨ Sinh ý tưởng kịch bản".</p>'; return; }
   const col=v=>v>=OC_PASS?'var(--ac)':v>=60?'var(--warn)':'var(--red)';
