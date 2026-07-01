@@ -157,6 +157,7 @@ footer{padding:30px 0;text-align:center;color:var(--mut);font-size:14px;border-t
     <a href="#triet-ly" class="hidem">Bí kíp</a>
     <a href="#gia" class="hidem">Bảng giá</a>
     <a href="#faq" class="hidem">FAQ</a>
+    <a href="#" class="hidem" onclick="openActivate();return false" style="font-weight:700;color:var(--ac2)">🔑 Đã mua?</a>
     <a class="btn ghost" style="padding:10px 16px;font-size:14px;box-shadow:var(--sh1)" onclick="vdStart()">⚓ Bắt đầu</a>
   </div>
 </div></nav>
@@ -409,6 +410,7 @@ footer{padding:30px 0;text-align:center;color:var(--mut);font-size:14px;border-t
     </div>
   </div>
   <p style="text-align:center;color:var(--mut);font-size:13px;margin-top:18px">🎁 <b>Dùng thử FULL 30 ngày — không cần thẻ.</b> Điền thông tin nhận mã ngay. Hết hạn muốn dùng tiếp: lên gói <b>theo tháng</b> (trả năm tặng 2 tháng), huỷ bất cứ lúc nào. AI chạy bằng key Google miễn phí của bạn.</p>
+  <p style="text-align:center;margin-top:8px"><a href="#" onclick="openActivate();return false" style="color:var(--ac2);font-weight:700;font-size:13.5px">🔑 Đã thanh toán? Kích hoạt / nhận mã ngay →</a></p>
 </div></section>
 
 <section id="faq"><div class="wrap" style="max-width:760px">
@@ -449,6 +451,10 @@ footer{padding:30px 0;text-align:center;color:var(--mut);font-size:14px;border-t
 })();
 /* ===== CTA → Form nhận MÃ DÙNG THỬ 30 NGÀY (lead → Worker → admin/Sheet) ===== */
 var LEAD_API='https://dojo-sync.hai-cbe.workers.dev';
+/* ⚙️ CẤU HÌNH — điền 2 biến này rồi lưu là xong (không cần sửa gì khác) */
+var SUPPORT_GROUP='';   // 👉 DÁN link Group hỗ trợ (Zalo/Facebook/Telegram). Để trống = ẩn nút Group.
+var PAY_INFO={ bank:'', stk:'', chu:'', noidung:'VIRALDOJO <Họ tên> <SĐT>' };   // 👉 Thông tin CK hiện cho khách. Để trống bank+stk nếu muốn admin tự liên hệ hướng dẫn.
+function _grpBtn(){ return SUPPORT_GROUP?('<a class="btn" href="'+SUPPORT_GROUP+'" target="_blank" rel="noopener" style="width:100%;justify-content:center;margin-top:8px;background:var(--ac2);color:var(--px)">👥 Vào Group hỗ trợ khách hàng</a>'):''; }
 function vdStart(){ try{ VDsfx&&VDsfx.win&&VDsfx.win(); }catch(e){} openLeadForm(); }
 function gotoApp(code){ location.href='app.html?start=1'+(code?('&code='+encodeURIComponent(code)):''); }
 function openLeadForm(){
@@ -493,6 +499,63 @@ function openLeadForm(){
       ov.querySelector('#ld-enter').onclick=function(){ gotoApp(d.code); };
       try{ VDsfx&&VDsfx.win&&VDsfx.win(); }catch(e){}
     }catch(e){ err.textContent=e.message||'Lỗi mạng, thử lại.'; btn.disabled=false; btn.textContent='🎁 Nhận mã dùng thử'; }
+  };
+}
+/* ===== 🔑 KÍCH HOẠT / XÁC THỰC SAU THANH TOÁN ===== */
+function openActivate(){
+  if(document.getElementById('ac-ov')) return;
+  try{ VDsfx&&VDsfx.tab&&VDsfx.tab(); }catch(e){}
+  var pay=(PAY_INFO&&PAY_INFO.bank&&PAY_INFO.stk)
+    ? ('<div style="background:var(--glass);border:1.5px dashed var(--ac);border-radius:10px;padding:10px;margin-bottom:8px;font-size:12.5px;color:var(--tx);line-height:1.6"><b>Chuyển khoản kích hoạt TRỌN ĐỜI:</b><br>🏦 '+PAY_INFO.bank+' — <b style="user-select:all">'+PAY_INFO.stk+'</b><br>👤 '+(PAY_INFO.chu||'')+'<br>📝 Nội dung: <b style="user-select:all">'+(PAY_INFO.noidung||'')+'</b><br>Sau khi CK, điền form dưới để admin xác thực &amp; cấp mã.</div>')
+    : '<div style="font-size:12px;color:var(--mut);margin-bottom:8px">Điền thông tin bên dưới, admin sẽ liên hệ hướng dẫn thanh toán &amp; cấp mã trọn đời.</div>';
+  var ov=document.createElement('div'); ov.id='ac-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px;overflow:auto';
+  ov.innerHTML='<div style="background:var(--card);border:1.5px solid var(--bd);border-radius:16px;box-shadow:var(--sh3);max-width:440px;width:100%;padding:22px;font-family:\'Be Vietnam Pro\',sans-serif">'
+    +'<h3 style="margin:0 0 10px;font-family:Bungee,sans-serif;color:var(--tx)">🔑 Kích hoạt / Đã mua</h3>'
+    +'<div style="border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px">'
+      +'<div style="font-weight:800;font-size:13px;margin-bottom:6px;color:var(--ac2)">✅ Tôi đã có mã kích hoạt</div>'
+      +'<div style="display:flex;gap:8px"><input id="ac-code" placeholder="Dán mã của bạn" style="flex:1;box-sizing:border-box;padding:11px;border:1.5px solid var(--bd);border-radius:9px;font-weight:700;background:var(--glass);color:var(--tx);letter-spacing:1px"><button class="btn red" id="ac-go">Vào app →</button></div>'
+      +'<div id="ac-err" style="color:var(--red);font-size:12px;min-height:14px;font-weight:600;margin-top:4px"></div>'
+    +'</div>'
+    +'<div style="border:1.5px solid var(--line);border-radius:12px;padding:12px">'
+      +'<div style="font-weight:800;font-size:13px;margin-bottom:6px;color:var(--ac2)">💳 Đã thanh toán, chưa có mã</div>'
+      +pay
+      +'<div id="ac-form">'
+      +'<input id="ac-name" placeholder="Họ tên *" style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:7px;border:1.5px solid var(--bd);border-radius:9px;font-weight:600;background:var(--glass);color:var(--tx)">'
+      +'<input id="ac-phone" placeholder="Số điện thoại / Zalo *" inputmode="tel" style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:7px;border:1.5px solid var(--bd);border-radius:9px;font-weight:600;background:var(--glass);color:var(--tx)">'
+      +'<input id="ac-ref" placeholder="Mã đơn / nội dung CK (nếu có)" style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:7px;border:1.5px solid var(--bd);border-radius:9px;font-weight:600;background:var(--glass);color:var(--tx)">'
+      +'<div id="ac-err2" style="color:var(--red);font-size:12px;min-height:14px;font-weight:600"></div>'
+      +'<button class="btn red" id="ac-send" style="width:100%">📤 Gửi xác thực thanh toán</button>'
+      +'</div>'
+      +'<div id="ac-done" style="display:none;text-align:center">'
+        +'<div style="font-size:38px">✅</div><p style="font-weight:700;color:var(--tx);margin:6px 0">Đã nhận yêu cầu!</p>'
+        +'<p style="font-size:12.5px;color:var(--mut);margin:0 0 10px">Admin xác thực chuyển khoản &amp; cấp <b>mã trọn đời</b> qua Zalo/điện thoại trong ít phút.</p>'
+        +'<div id="ac-bridge"></div>'
+        +_grpBtn()
+      +'</div>'
+    +'</div>'
+    +'<p style="text-align:center;margin:12px 0 0"><a href="#" id="ac-close" style="color:var(--mut);font-size:12.5px">Đóng</a></p>'
+    +'</div>';
+  document.body.appendChild(ov);
+  ov.querySelector('#ac-close').onclick=function(e){ e.preventDefault(); ov.remove(); };
+  ov.querySelector('#ac-go').onclick=function(){ var c=(ov.querySelector('#ac-code').value||'').trim(); if(!c){ ov.querySelector('#ac-err').textContent='Nhập mã kích hoạt.'; return; } gotoApp(c); };
+  ov.querySelector('#ac-send').onclick=async function(){
+    var name=(ov.querySelector('#ac-name').value||'').trim();
+    var phone=(ov.querySelector('#ac-phone').value||'').trim();
+    var ref=(ov.querySelector('#ac-ref').value||'').trim();
+    var e2=ov.querySelector('#ac-err2');
+    if(!name){ e2.textContent='Nhập họ tên.'; return; }
+    if(!phone){ e2.textContent='Nhập SĐT / Zalo.'; return; }
+    var btn=ov.querySelector('#ac-send'); btn.disabled=true; btn.textContent='Đang gửi…'; e2.textContent='';
+    try{
+      var r=await fetch(LEAD_API+'/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,phone:phone,email:'',note:ref,source:'paid-verify'})});
+      var d=await r.json().catch(function(){return {};});
+      if(!r.ok) throw new Error(d.error||'Lỗi, thử lại.');
+      ov.querySelector('#ac-form').style.display='none';
+      ov.querySelector('#ac-done').style.display='';
+      if(d.code){ ov.querySelector('#ac-bridge').innerHTML='<p style="font-size:12px;color:var(--mut);margin:0 0 6px">Trong lúc chờ mã trọn đời, dùng tạm mã này để vào app ngay:</p><div style="font-family:monospace;font-weight:800;background:var(--glass);border:1.5px dashed var(--bd);border-radius:8px;padding:8px;user-select:all;color:var(--ac2)">'+d.code+'</div><button class="btn" style="width:100%;margin-top:6px" onclick="gotoApp(\''+d.code+'\')">🚀 Vào app ngay</button>'; }
+      try{ VDsfx&&VDsfx.win&&VDsfx.win(); }catch(e){}
+    }catch(e){ e2.textContent=e.message||'Lỗi mạng, thử lại.'; btn.disabled=false; btn.textContent='📤 Gửi xác thực thanh toán'; }
   };
 }
 </script>
