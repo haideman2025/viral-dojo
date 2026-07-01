@@ -1308,7 +1308,30 @@ function _saveMeta(){ _origSet('dojo_sync',JSON.stringify(SYNCMETA)); }
 function cloudBlob(){ return { v:S.v, activeId:S.activeId, projects:S.projects }; }
 
 /* Mọi lần ghi key 'dojo' (save, project ops, xpTick…) → tự lên lịch đẩy cloud + đánh dấu dirty */
-localStorage.setItem = function(k,v){ _origSet(k,v); if(k==='dojo' && typeof scheduleSync==='function') scheduleSync(); };
+localStorage.setItem = function(k,v){ try{ _origSet(k,v); }catch(e){ if(typeof _quotaWarn==='function')_quotaWarn(e); return; } if(k==='dojo' && typeof scheduleSync==='function') scheduleSync(); };
+var _quotaWarned=false;
+function _quotaWarn(e){ try{ console.warn('localStorage quota',e); }catch(_){} if(_quotaWarned)return; _quotaWarned=true;
+  try{ var t=document.createElement('div'); t.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99999;max-width:92%;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:700;background:#e5484d;color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.35);text-align:center;line-height:1.45';
+    t.innerHTML='⚠️ Bộ nhớ trình duyệt đầy — dữ liệu MỚI có thể chưa lưu. Xoá bớt ẢNH nhân vật/sản phẩm không dùng, hoặc Tải DNA backup rồi Reset.';
+    document.body.appendChild(t); setTimeout(function(){ try{t.remove();}catch(_){}} ,8000);
+  }catch(_){}
+}
+/* 🧹 Dọn 1 lần: thu nhỏ ảnh Đại Hải Trình đã lỡ lưu full-size (ref char/prod + cast) xuống 512px — chống phình localStorage/sync. Roster/vref đã nén sẵn nên bỏ qua. */
+async function _shrinkOceanImgs(){
+  try{
+    if(localStorage.getItem('vd_img_shrunk')==='1') return;
+    const big=function(s){ return typeof s==='string' && s.indexOf('data:image')===0 && s.length>200000; };
+    let changed=false;
+    const projs=(S&&S.projects)?Object.keys(S.projects).map(function(k){return S.projects[k];}):[];
+    for(const p of projs){ const oc=p&&p.dna&&p.dna.ocean; if(!oc)continue;
+      if(oc.ref){ for(const k of ['charImg','prodImg']){ if(big(oc.ref[k])){ try{ oc.ref[k]=await dataUrlToScaled(oc.ref[k],512); changed=true; }catch(_){} } } }
+      if(Array.isArray(oc.items)){ for(const it of oc.items){ if(it&&Array.isArray(it.cast)){ for(const c of it.cast){ if(c&&big(c.img)){ try{ c.img=await dataUrlToScaled(c.img,512); changed=true; }catch(_){} } } } } }
+    }
+    _origSet('vd_img_shrunk','1');
+    if(changed){ if(typeof save==='function')save(); if(typeof ocRender==='function')ocRender(); }
+  }catch(_){}
+}
+setTimeout(function(){ if(typeof _shrinkOceanImgs==='function')_shrinkOceanImgs(); }, 3500);
 
 function setBadge(state,txt){
   const el=document.getElementById('sync-badge'); if(!el) return;
@@ -1344,7 +1367,7 @@ function trialDaysLeft(){ if(!(SESS&&SESS.expiresAt)) return null; return Math.c
 function applyBlob(blob){
   if(!blob) return; S.v=blob.v||2; S.activeId=blob.activeId; S.projects=blob.projects||{};
   if(!S.projects[S.activeId]) S.activeId=Object.keys(S.projects)[0];
-  _origSet('dojo',JSON.stringify(S));
+  try{ _origSet('dojo',JSON.stringify(S)); }catch(e){ if(typeof _quotaWarn==='function')_quotaWarn(e); }
   if(typeof renderBrandKit==='function') renderBrandKit();
 }
 
@@ -5239,7 +5262,7 @@ function ocSetNoBrand(v){ OC().noBrand=!!v; save(); if(typeof ocDojoBanner==='fu
 /* 🖼 Ảnh tham chiếu nhanh (nhân vật + sản phẩm) cho JSON Flow — lưu ở OC().ref, nhúng base64 khi xuất */
 function ocRef(){ const o=OC(); o.ref=o.ref||{charTen:'',charImg:'',prodTen:'',prodImg:''}; return o.ref; }
 function ocRefName(which,v){ const r=ocRef(); if(which==='char')r.charTen=v; else r.prodTen=v; save(); }
-function ocRefUpload(which,files){ if(!files||!files[0])return; const rd=new FileReader(); rd.onload=function(e){ const r=ocRef(); if(which==='char')r.charImg=e.target.result; else r.prodImg=e.target.result; save(); ocRefRender(); }; rd.readAsDataURL(files[0]); }
+function ocRefUpload(which,files){ if(!files||!files[0])return; fileToScaledImg(files[0],512).then(function(im){ const r=ocRef(); if(which==='char')r.charImg=im.dataUrl; else r.prodImg=im.dataUrl; save(); ocRefRender(); }).catch(function(){ const rd=new FileReader(); rd.onload=function(e){ const r=ocRef(); if(which==='char')r.charImg=e.target.result; else r.prodImg=e.target.result; save(); ocRefRender(); }; rd.readAsDataURL(files[0]); }); }
 function ocRefFromLib(rid){ const c=(typeof roster==='function'?roster():[]).find(function(x){return x.id===rid;}); if(!c||!c.img)return; const r=ocRef(); r.charImg=c.img; if(c.ten)r.charTen=c.ten; save(); ocRefRender(); }
 function ocRefClear(which){ const r=ocRef(); if(which==='char')r.charImg=''; else r.prodImg=''; save(); ocRefRender(); }
 function ocRefRender(){ const el=document.getElementById('oc-ref-box'); if(!el)return; const r=ocRef();
@@ -5816,7 +5839,7 @@ function ocVoRevert(id){ const x=ocItem(id); if(!x)return; x._useUpgraded=false;
 function ocVoCastAdd(id){ const x=ocItem(id); if(!x)return; x.cast=x.cast||[]; x.cast.push({ten:'Nhân vật '+(x.cast.length+1),vai:x.cast.length?'phụ':'chính',mo_ta:'',prompt:'',img:''}); save(); ocRender(); }
 function ocVoCastDel(id,idx){ const x=ocItem(id); if(!x||!x.cast)return; x.cast.splice(idx,1); save(); ocRender(); }
 function ocVoCastEdit(id,idx,f,v){ const x=ocItem(id); if(!x||!x.cast||!x.cast[idx])return; x.cast[idx][f]=v; if(f==='vai'&&v==='chính')x.cast.forEach(function(c,i){ if(i!==idx&&c.vai==='chính')c.vai='phụ'; }); save(); }
-function ocVoCastImg(id,idx,files){ const x=ocItem(id); if(!x||!x.cast||!x.cast[idx]||!files||!files[0])return; const rd=new FileReader(); rd.onload=function(e){ x.cast[idx].img=e.target.result; save(); ocRender(); }; rd.readAsDataURL(files[0]); }
+function ocVoCastImg(id,idx,files){ const x=ocItem(id); if(!x||!x.cast||!x.cast[idx]||!files||!files[0])return; fileToScaledImg(files[0],512).then(function(im){ x.cast[idx].img=im.dataUrl; save(); ocRender(); }).catch(function(){ const rd=new FileReader(); rd.onload=function(e){ x.cast[idx].img=e.target.result; save(); ocRender(); }; rd.readAsDataURL(files[0]); }); }
 function ocVoCastFromRoster(id,rid){ const x=ocItem(id); if(!x)return; const r=(typeof roster==='function'?roster():[]).find(function(c){return c.id===rid;}); if(!r)return; x.cast=x.cast||[]; if(x.cast.some(function(c){return (c.ten||'')===(r.ten||'');}))return; x.cast.push({ten:r.ten||'',vai:x.cast.length?'phụ':(r.vai||'chính'),mo_ta:r.mo_ta||'',prompt:r.prompt||'',img:r.img||''}); save(); ocRender(); }
 async function ocVoCastDesign(id){ const x=ocItem(id); if(!x||!x.fromVoice)return;
   const o=await geminiCall('Bạn là giám đốc casting. Từ lời voice-over dưới, thiết kế DÀN NHÂN VẬT cần để quay (1 chính + phụ nếu cần). Mỗi người {ten, vai, mo_ta (ngoại hình+tính cách), prompt (mô tả tạo ảnh)}.\n'+ocCtx(x)+'\nLỜI VO:\n"""\n'+ocVoSrc(x)+'\n"""\nTrả về DUY NHẤT JSON: {"cast":[{"ten":"","vai":"chính","mo_ta":"","prompt":""}]}.',{json:true,hi:true,temp:0.6});
