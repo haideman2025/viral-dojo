@@ -3191,7 +3191,11 @@ const SAFE_COMPLIANCE_VN = `\n\n🛡 AN TOÀN CHÍNH SÁCH (BẮT BUỘC — đ�
 - Viết prompt trung tính, chuyên nghiệp; tránh từ ngữ dễ kích hoạt bộ lọc an toàn.`;
 const SAFE_COMPLIANCE_EN = `Original fictional character — does NOT depict, resemble, imitate, or share a name with any real, famous, or public figure. Advertising-safe content only: modest appropriate clothing, no sexual, suggestive, violent, dangerous, hateful, or otherwise sensitive elements; no third-party brands, logos, or copyrighted characters.`;
 /* 🛡 Luật AD-SAFE cho khâu SINH prompt (chống Flow/Veo chặn với SP nhạy cảm: diệt côn trùng/thuốc/hoá chất/…) */
-const FLOW_SAFE_VN = `\n🛡 AD-SAFE (QUAN TRỌNG — để Google Flow/Veo KHÔNG chặn video): TUYỆT ĐỐI KHÔNG mô tả giết chóc/xác/côn trùng-động vật chết/máu/hoá chất độc/phun xịt độc hại/bạo lực/nguy hiểm. Thể hiện hiệu quả sản phẩm bằng: KHÔNG GIAN SẠCH SẼ (nhà/bếp gọn gàng), người TỰ TIN HÀI LÒNG, sản phẩm xuất hiện gọn gàng, kết quả "sạch bóng côn trùng/sạch sẽ" thể hiện qua không gian sạch — KHÔNG show con vật/xác. Dùng từ ngữ quảng cáo tích cực, an toàn.`;
+const FLOW_SAFE_VN = `\n🛡 AD-SAFE (RẤT QUAN TRỌNG — để Google Flow/Veo KHÔNG chặn/fail video):
+- TUYỆT ĐỐI KHÔNG hiển thị côn trùng/gián/sâu bọ/động vật DƯỚI MỌI HÌNH THỨC (kể cả hoạt hình, minh hoạ, bóng/silhouette, nhỏ, mờ).
+- KHÔNG cảnh giết chóc/xác/máu/hoá chất độc/phun xịt/bạo lực/nguy hiểm; KHÔNG biểu cảm ghê tởm/nhăn mặt/bịt mũi/khó chịu/phản ứng tiêu cực.
+- CHỈ cảnh TÍCH CỰC: người vui vẻ tự tin, nhà-bếp SẠCH SÁNG gọn gàng, sản phẩm đẹp gọn trong tay/trên bàn. Hiệu quả = không gian sạch + người hài lòng.
+- Prompt NGẮN GỌN, ít yếu tố (tránh nhồi quá nhiều chi tiết/cú máy trong 1 shot). Từ ngữ quảng cáo an toàn, tích cực.`;
 /* 🧽 Rửa TỪ NGỮ nguy hiểm khỏi prompt EN → euphemism ad-safe (chống Flow chặn). Áp cho cả Lò lẫn Đại Hải Trình qua ensureSafeEN. */
 function sanitizeFlowEN(p){ p=String(p||''); if(!p.trim()) return p;
   var R=[
@@ -3203,7 +3207,10 @@ function sanitizeFlowEN(p){ p=String(p||''); if(!p.trim()) return p;
     [/\b(cockroach\w*|roach\w*|insect\w*|bug\w*)\s+(corpses?|carcass\w*|bodies|body)\b/gi,'a clean pest-free space'],
     [/\bexterminat\w*/gi,'clearing away'],[/\bcrush(ing|es|ed)?\b/gi,'clearing away'],[/\bsquash(ing|es|ed)?\b/gi,'clearing away'],[/\bstomp(ing|s|ed)?\b/gi,'clearing away'],
     [/\bblood(y|ied)?\b/gi,'clean'],[/\bgore\b/gi,''],[/\bviolen\w*/gi,'safe'],[/\bweapons?\b/gi,'tool'],[/\bgun\b/gi,'tool'],
-    [/\bdying\b/gi,'leaving'],[/\bsuffering\b/gi,''],[/\bhazardous\b/gi,'household']
+    [/\bdying\b/gi,'leaving'],[/\bsuffering\b/gi,''],[/\bhazardous\b/gi,'household'],
+    [/\b(a |an |the |small |tiny |stylized |animated )*(cockroach|roach|insect|bug|pest)s?\s+(scurr\w+|crawl\w+|scatter\w+|runn?\w+|mov\w+|walk\w+)[^,.;]*/gi,'a fresh clean space'],
+    [/\b(stylized |animated |non-?graphic |cartoon )*(animation|illustration|graphic|silhouette|shadow|image) of (a |an |the )?(cockroach|roach|insect|bug|pest)s?\b/gi,'a bright clean-home graphic'],
+    [/\binfestations?\b/gi,'the situation'],[/\bdisgust\w*/gi,'calm'],[/\bdistress\w*/gi,'calm'],[/\bscrunch\w*/gi,'relaxed'],[/\brepuls\w*/gi,'calm']
   ];
   R.forEach(function(r){ p=p.replace(r[0],r[1]); });
   return p.replace(/\s{2,}/g,' ').trim();
