@@ -2886,7 +2886,7 @@ Trả về DUY NHẤT JSON hợp lệ (không markdown, không phẩy thừa): {
         if(!pen&&s._sc) pen=`Fast-paced 10s sequence, 6-8 quick cuts with varied creative camera angles. ${CUT_COHERENCE_EN} ${s._sc.noidung||''}. Setting: ${s._sc.hinhanh||''}. Vertical 9:16, cinematic, dynamic.`;
         if(vo && !/voiceover|speaks in /i.test(pen)) pen+=` Audio: the character speaks in ${_lang}: "${vo}" with clear lip-synced voiceover${_voice?` (voice style: ${_voice})`:''}, plus trending background music and SFX synced to each cut.`;
         if(noProd && !/no product appears/i.test(pen)) pen+=' No product appears in this shot; do not show, invent, imply, or place any product, packaging, bottle, or logo anywhere in the frame.';
-        pen=ensureSafeEN(pen);   // 🛡 chống Flow chặn: luôn kèm câu "nhân vật hư cấu + nội dung an toàn"
+        pen=capFlowPrompt(ensureSafeEN(pen));   // 🛡 chống Flow chặn: luôn kèm câu "nhân vật hư cấu + nội dung an toàn"
         return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:nv, san_pham:sp, no_product:noProd, canh:canh,
           cam_xuc:c.cam_xuc||'', goc_may:c.goc_may||'', overlay:{ text:s.onscreen||'', do_hoa:'', sfx:'', nhac:'' },
           ly_do_gan:'', prompt_en:pen, voiceover:vo };
@@ -3217,6 +3217,16 @@ function sanitizeFlowEN(p){ p=String(p||''); if(!p.trim()) return p;
 }
 /* đảm bảo prompt EN đã RỬA từ nguy hiểm + kèm câu an toàn (kể cả khi AI quên) — chống Flow chặn */
 function ensureSafeEN(p){ p=String(p||''); if(!p.trim()) return p; p=sanitizeFlowEN(p); return /original fictional character/i.test(p)?p:(p.trim()+' '+SAFE_COMPLIANCE_EN); }
+/* ✂️ Cắt prompt về dưới giới hạn Flow/Veo (max 4000 ký tự) — cắt ở ranh câu, GIỮ 1 câu an toàn ngắn ở cuối */
+const FLOW_MAX_PROMPT=3900;
+function capFlowPrompt(pen, maxLen){ maxLen=maxLen||FLOW_MAX_PROMPT; pen=String(pen||'').trim(); if(pen.length<=maxLen) return pen;
+  var tail=' Advertising-safe, original fictional person; no sensitive, violent or dangerous content; no real/famous person; no third-party logos.';
+  var budget=maxLen - tail.length; var cut=pen.slice(0,budget);
+  var b=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('; '),cut.lastIndexOf(', '),cut.lastIndexOf(' '));
+  if(b>budget*0.5) cut=cut.slice(0,b);
+  cut=cut.replace(/[\s,;.]+$/,'');
+  return (cut+'.'+tail).slice(0,maxLen);
+}
 /* 🎬 THƯ VIỆN PHONG CÁCH VIDEO — học từ thư viện prompt chất lượng cao (Style + Camera + Quality + Negative + Continuity). Bơm vào bộ sinh prompt cho cả LÒ lẫn Đại Hải Trình. */
 const VIDEO_STYLES=[
  {key:'ugc', label:'🤳 UGC giống thật (mặc định)', realPerson:true, styleEN:'Documentary-real UGC, authentic phone-shot handheld look, natural everyday realism', cameras:'handheld micro-shake, medium tracking, POV, close-up, snap-zoom, over-the-shoulder', quality:'natural true-to-life color, slightly soft smartphone-camera look with subtle grain, vertical 9:16 — not over-sharp, not 8K', neg:'no plastic CGI, no fake AI look, no over-smooth/waxy skin, no ultra-sharp 8K hyper-detail, no glossy studio polish'},
@@ -3285,7 +3295,7 @@ ${body}
 Trả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"...","voiceover":"...","onscreen":"..."}]}. SỐ SHOT: video hoàn chỉnh PHẢI dài TỐI THIỂU 60 GIÂY = ÍT NHẤT 6 shot 10s (BẮT BUỘC ≥${_nTarget} shot, KHÔNG ÍT HƠN ${_nTarget}); nếu kịch bản ngắn thì GIÃN/khai triển thêm cảnh (mở rộng diễn biến, thêm nhịp, b-roll, phản ứng, bằng chứng) cho ĐỦ ≥6 shot — TUYỆT ĐỐI KHÔNG cắt bớt còn dưới 6. Mỗi shot = 1 đoạn 10 giây ĐỘC LẬP; TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot (mỗi shot tự nó đã gồm 6-8 cú cắt nhanh bên trong).`,{json:true,temp:0.55, hi:true, images: v.productImg?[{mime:'image/jpeg',data:v.productImg.split(',')[1]}]:[]});
   S.dna.skuld.vprompts=S.dna.skuld.vprompts||{};
   const prev=S.dna.skuld.vprompts[title]||{};
-  let newShots=(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:ensureSafeEN(applyStyleEN(s.prompt||'',_vp)),voiceover:s.voiceover||'',onscreen:s.onscreen||''})).filter(s=>s.prompt);
+  let newShots=(o.shots||[]).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:capFlowPrompt(ensureSafeEN(applyStyleEN(s.prompt||'',_vp))),voiceover:s.voiceover||'',onscreen:s.onscreen||''})).filter(s=>s.prompt);
   const prevN=(prev.shots||[]).length;
   // lưới an toàn: AI gộp bất thường (ít hơn 1 nửa bản cũ & bản cũ ≥3 shot) → GIỮ bản cũ, không phá
   if(prevN>=3 && newShots.length < Math.max(2, Math.ceil(prevN*0.5))) newShots=prev.shots;
@@ -5586,7 +5596,7 @@ async function ocPrompts(id){ const x=ocItem(id); if(!x||!x.script)return;
   const body=((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' | hình: '+(c.hinhanh||'')+' | trám: '+(c.tram||'')).join('\n');
   const nT=Math.max(6,((x.script.scenes)||[]).length);
   const o=await geminiCall('Bạn là ĐẠO DIỄN đã học toàn bộ VIRAL DOJO. Chuyển KỊCH BẢN thành chuỗi SHOT 10 GIÂY cho Omni/Veo (Google Flow); ghép lại thành 1 video ≥60s MƯỢT, LIỀN MẠCH.'+_director+FLOW_SAFE_VN+(_imgs.length?'\n\n(Ảnh tham chiếu THẬT đính kèm bên dưới — NHÌN ảnh để hiểu nhân vật/sản phẩm, nhưng KHÔNG mô tả ngoại hình bằng chữ trong prompt.)':'')+'\n\nKHOÁ NHẤT QUÁN (nhắc NGUYÊN VĂN trong MỌI shot):\n- CHARACTER (giữ y hệt mọi shot, dùng ảnh tham chiếu nếu có): '+_charDesc+'\n'+((prodName||_prodImg)?(productGroundingVN(prodName)+'\n'):'')+'- '+CUT_COHERENCE_VN+'\n- 🗣 NGÔN NGỮ & GIỌNG: voiceover/onscreen bằng '+LANG+(VOICE?(' — giọng: '+VOICE):'')+'; kịch bản gốc có thể tiếng Việt → DỊCH tự nhiên sang '+LANG+', giữ ý/cảm xúc/CTA.\n'+ocCtx(x)+'\nMỗi shot 10s, trả 3 trường: prompt (TIẾNG ANH chuẩn Veo: [shot size+camera move+angle]·[subject=CHARACTER y hệt+wardrobe]·[hành động cụ thể từ kịch bản]·'+(_prodImg?'[PRODUCT: chỉ nêu CÁCH cầm/đặt/dùng — gọi "the product from the uploaded reference image", KHÔNG tả ngoại hình]·':'')+'[bối cảnh+props]·[ánh sáng+mood+color]·[lens/DOF]·[audio] · chèn nguyên văn vào MỌI prompt: '+(_vp.realPerson?('"'+NATURAL_REAL_EN+'"'):('"'+_vp.styleEN+'. '+_vp.quality+'."'))+' · "'+SAFE_COMPLIANCE_EN+'"'+(_prodImg?(' · '+PRODUCT_MANDATORY_EN):'')+' · "'+CUT_COHERENCE_EN+'" · shot≥2 mở đầu "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;"), voiceover ('+LANG+', BẮT BUỘC có lời nếu cảnh có người nói — bám ĐÚNG "Nội dung", dịch tự nhiên sang '+LANG+' ~10s, KHÔNG để trống), onscreen ('+LANG+', chữ overlay NGẮN & GIẬT từ "trám").\n🎬 MỖI shot 10s = 6-8 CÚ CẮT NHANH, mỗi cú 1 GÓC MÁY sáng tạo khác (extreme close-up, low-angle, POV, overhead/top-down, whip-pan, tracking, macro insert, dutch tilt, snap-zoom) nhưng cùng 1 khoảnh khắc liền mạch; LỒNG audio: nhạc nền trend + SFX khớp từng cú cắt + voiceover lip-sync bằng '+LANG+'.\nKỊCH BẢN "'+x.title+'":\n'+body+'\nTrả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"","voiceover":"","onscreen":""}]}. PHẢI ≥'+nT+' shot (tối thiểu 6, ≥60s); kịch bản ngắn thì giãn thêm cảnh/b-roll/phản ứng/bằng chứng. Mỗi shot 10s độc lập; TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot.',{json:true,hi:true,temp:0.55, images:_imgs});
-  let shots=_arr(o.shots).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:ensureSafeEN(applyStyleEN(s.prompt||'',_vp)),voiceover:asText(s.voiceover||''),onscreen:asText(s.onscreen||'')})).filter(s=>s.prompt);
+  let shots=_arr(o.shots).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:capFlowPrompt(ensureSafeEN(applyStyleEN(s.prompt||'',_vp))),voiceover:asText(s.voiceover||''),onscreen:asText(s.onscreen||'')})).filter(s=>s.prompt);
   const _prevN=(x.shots||[]).length;
   if(_prevN>=3 && shots.length < Math.max(2,Math.ceil(_prevN*0.5))) shots=x.shots;   // lưới an toàn: AI gộp bất thường → giữ bản cũ
   if(shots.length){ x.shots=shots; x.shotsAt=_today(); save(); ocRender(); }
@@ -5646,7 +5656,7 @@ async function ocUpgradePrompt(id){ const x=ocItem(id); if(!x||!(x.shots&&x.shot
     const body=((x.script.scenes)||[]).map(c=>(c.phan||'')+': '+(c.noidung||'')+' | hình: '+(c.hinhanh||'')+' | trám: '+(c.tram||'')).join('\n');
     const nT=Math.max(6,((x.script.scenes)||[]).length);
     const o=await geminiCall('Bạn là ĐẠO DIỄN VIRAL DOJO đang NÂNG CẤP bộ prompt video — GIỮ shot đã tốt, VIẾT LẠI ĐÚNG shot/điểm yếu theo phân tích. Mục tiêu đạt ≥'+passPct()+'/100.\nNHÂN VẬT (giữ y hệt mọi shot): '+_charDesc+'\nSTYLE: '+_vp.styleEN+' · GÓC MÁY: '+_vp.cameras+' · CHẤT LƯỢNG: '+_vp.quality+(_vp.neg?(' · TRÁNH: '+_vp.neg):'')+' · NGÔN NGỮ thoại/overlay: '+LANG+(VOICE?(' · giọng: '+VOICE):'')+'\n'+ocCtx()+'\nĐIỂM HIỆN TẠI: '+x.promptQA.tong+'/100. '+fix+'\nMỗi prompt PHẢI chèn nguyên văn: '+(_vp.realPerson?('"'+NATURAL_REAL_EN+'"'):('"'+_vp.styleEN+'. '+_vp.quality+'."'))+' · "'+SAFE_COMPLIANCE_EN+'" · "'+CUT_COHERENCE_EN+'" · shot≥2 mở đầu "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;".'+SAFE_COMPLIANCE_VN+vStyleBlockVN(_vp)+'\nKỊCH BẢN "'+x.title+'":\n'+body+'\nPROMPT CŨ (giữ shot tốt, chỉ sửa shot yếu):\n'+oldShots+'\nTrả về DUY NHẤT JSON: {"shots":[{"seq":1,"prompt":"","voiceover":"","onscreen":""}]}. PHẢI ≥'+nT+' shot (tối thiểu 6, ≥60s).',{json:true,hi:true,temp:0.55});
-    const ns=_arr(o.shots).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:ensureSafeEN(applyStyleEN(s.prompt||'',_vp)),voiceover:asText(s.voiceover||''),onscreen:asText(s.onscreen||'')})).filter(s=>s.prompt);
+    const ns=_arr(o.shots).map((s,i)=>({seq:s.seq||i+1,dur:10,prompt:capFlowPrompt(ensureSafeEN(applyStyleEN(s.prompt||'',_vp))),voiceover:asText(s.voiceover||''),onscreen:asText(s.onscreen||'')})).filter(s=>s.prompt);
     if(ns.length>=Math.max(2,Math.ceil(x.shots.length*0.5))) x.shots=ns;
     last=(x.promptQA&&x.promptQA.tong)||0; await ocGradePrompt(id);
     if((x.promptQA&&x.promptQA.tong)<=last && round>=2) break;
@@ -5737,7 +5747,7 @@ function ocBuildFlowPack(withShots, LANG, ideaText){
       else if(!vo && !/\bAudio:/i.test(pen)) pen+=' Audio: trending background music and SFX synced to each cut'+(s.onscreen?('; bold on-screen text in '+LANG+': "'+s.onscreen+'"'):'')+'.';
       if(s.onscreen && !/on-screen text/i.test(pen)) pen+=' Add bold, punchy on-screen caption in '+LANG+': "'+s.onscreen+'".';
       if(!useProd && !/no product appears/i.test(pen)) pen+=' No product appears in this shot; do not show, invent, imply, or place any product, packaging, bottle, or logo anywhere in the frame.';
-      pen=ensureSafeEN(pen);
+      pen=capFlowPrompt(ensureSafeEN(pen));
       return { seq:s.seq||k+1, thoi_luong:'10s', nhan_vat:[mainEntry.id], san_pham:useProd?['SP1']:[], no_product:!useProd, canh:'', cam_xuc:'', goc_may:'', overlay:{text:s.onscreen||'',do_hoa:'',sfx:'',nhac:''}, ly_do_gan:'', prompt_en:pen, voiceover:vo }; });
     return { ngay:ngay, series:x.title, voice:{ngon_ngu:LANG,ma_ngon_ngu:langCode,phong_cach:VOICE}, arc_cam_xuc:[], shots:shots }; });
   const _embedded=characters.some(c=>c.anh_base64); const _embeddedP=products.some(p=>p.anh_base64);
@@ -5909,7 +5919,7 @@ async function ocVoPrompts(id){ const x=ocItem(id); if(!x||!x.script)return;
   const o=await geminiCall('Bạn là ĐẠO DIỄN VIRAL DOJO. Biến 1 bản VOICE-OVER (đã chia đoạn) thành chuỗi SHOT 10s cho Omni/Veo (Google Flow), ghép thành video LIỀN MẠCH ăn khớp lời.'+_director+FLOW_SAFE_VN+(_imgs.length?'\n\n(Ảnh tham chiếu THẬT đính kèm — nhìn để hiểu nhân vật/sản phẩm, KHÔNG tả ngoại hình bằng chữ.)':'')
     +'\n\nQUY TẮC BẮT BUỘC:\n- MỖI đoạn lời = ÍT NHẤT 1 shot "vo" có voiceover = ĐÚNG NGUYÊN VĂN đoạn lời đó (KHÔNG dịch, KHÔNG sửa chữ).\n- CHÈN THÊM "cảnh trám" (type="broll") xen giữa để minh hoạ/giữ chân người xem: broll KHÔNG có người nói (voiceover rỗng), onscreen ngắn nếu cần. Đề xuất ~1 cảnh trám cho mỗi 1-2 đoạn lời.\n- KHOÁ NHÂN VẬT (nhắc NGUYÊN VĂN mọi shot có người): '+_charDesc+prodLine+'\n- '+CUT_COHERENCE_VN+'\n- Giọng/ngôn ngữ voiceover: '+LANG+(VOICE?(' — '+VOICE):'')+' (GIỮ đúng lời gốc).'
     +'\nMỗi shot 10s, trả 4 trường: type ("vo" hoặc "broll"), prompt (TIẾNG ANH chuẩn Veo: [shot size+camera move+angle]·[subject=CHARACTER y hệt]·[hành động]·[bối cảnh+props]·[ánh sáng+mood+color]·[lens/DOF]·[audio: nhạc trend + SFX + voiceover lip-sync] · 6-8 CÚ CẮT NHANH nhiều góc máy sáng tạo (close-up/low-angle/POV/overhead/whip-pan/tracking/macro) trong 10s liền mạch · chèn nguyên văn: '+(_vp.realPerson?('"'+NATURAL_REAL_EN+'"'):('"'+_vp.styleEN+'. '+_vp.quality+'."'))+' · "'+SAFE_COMPLIANCE_EN+'" · "'+CUT_COHERENCE_EN+'" · shot≥2 mở đầu "Continues seamlessly from the previous shot — same character, same wardrobe, same location and lighting;"), voiceover (NGUYÊN VĂN đoạn lời nếu type=vo; rỗng nếu broll), onscreen (chữ on-screen ngắn).\nCÁC ĐOẠN LỜI:\n'+segs+'\nTrả về DUY NHẤT JSON: {"shots":[{"seq":1,"type":"vo","prompt":"","voiceover":"","onscreen":""}]}. Giữ thứ tự lời; xen broll hợp lý; TUYỆT ĐỐI KHÔNG gộp cả video thành 1 shot.',{json:true,hi:true,temp:0.5,images:_imgs});
-  let shots=_arr(o.shots).map(function(s,i){ return {seq:i+1,dur:10,prompt:ensureSafeEN(applyStyleEN(s.prompt||'',_vp)),voiceover:asText(s.voiceover||''),onscreen:asText(s.onscreen||''),broll:/broll/i.test(String(s.type||'')),on:true}; }).filter(function(s){return s.prompt;});
+  let shots=_arr(o.shots).map(function(s,i){ return {seq:i+1,dur:10,prompt:capFlowPrompt(ensureSafeEN(applyStyleEN(s.prompt||'',_vp))),voiceover:asText(s.voiceover||''),onscreen:asText(s.onscreen||''),broll:/broll/i.test(String(s.type||'')),on:true}; }).filter(function(s){return s.prompt;});
   const _prevN=(x.shots||[]).length;
   if(_prevN>=3 && shots.length < Math.max(2,Math.ceil(_prevN*0.5))) shots=x.shots;   // lưới an toàn: AI gộp bất thường → giữ bản cũ
   if(shots.length){ x.shots=shots; x.shotsAt=_today(); save(); ocRender(); }
@@ -5918,7 +5928,7 @@ async function ocVoAddBroll(id){ const x=ocItem(id); if(!x||!x.shots||!x.shots.l
   const _vp=vStylePack(); const cs=(x.cast||[]).filter(function(c){return (c.ten||'').trim();}); const _mc=cs.find(function(c){return c.vai==='chính';})||cs[0]; const _charDesc=_mc?(_mc.prompt||_mc.mo_ta||_mc.ten):'cảnh không người (b-roll)';
   const ctx=x.shots.map(function(s){return (s.broll?'[trám] ':'')+(s.voiceover||s.onscreen||String(s.prompt).slice(0,60));}).join(' | ').slice(0,1200);
   const o=await geminiCall('Bạn là đạo diễn. Đề xuất 1 "cảnh trám" (B-roll, KHÔNG người nói) minh hoạ cho video dưới, khớp mạch lời, giữ chân người xem (chi tiết cận, sản phẩm/bối cảnh/đồ hoạ). Trả 1 prompt TIẾNG ANH chuẩn Veo 10s, kèm "'+SAFE_COMPLIANCE_EN+'".\nMẠCH VIDEO: '+ctx+'\nKHOÁ NHÂN VẬT (nếu cảnh có người): '+_charDesc+'\nTrả về DUY NHẤT JSON: {"prompt":"","onscreen":""}.',{json:true,hi:true,temp:0.75});
-  const p=ensureSafeEN(applyStyleEN(asText(o.prompt||''),_vp)); if(!p){ ocFb('Không sinh được cảnh trám, thử lại.',1); return; }
+  const p=capFlowPrompt(ensureSafeEN(applyStyleEN(asText(o.prompt||''),_vp))); if(!p){ ocFb('Không sinh được cảnh trám, thử lại.',1); return; }
   const seq=Math.max.apply(null,[0].concat(x.shots.map(function(s){return s.seq||0;})))+1;
   x.shots.push({seq:seq,dur:10,prompt:p,voiceover:'',onscreen:asText(o.onscreen||''),broll:true,on:true}); save(); ocRender();
   ocFb('✅ Đã thêm 1 cảnh trám (B-roll). Bật/tắt hoặc bấm 🔁 đổi tuỳ ý.');
@@ -5926,7 +5936,7 @@ async function ocVoAddBroll(id){ const x=ocItem(id); if(!x||!x.shots||!x.shots.l
 async function ocVoRerollBroll(id,seq){ const x=ocItem(id); if(!x||!x.shots)return; const s=x.shots.find(function(s){return s.seq===seq;}); if(!s)return;
   const _vp=vStylePack();
   const o=await geminiCall('Đề xuất 1 cảnh trám B-roll KHÁC (10s, không người nói) thay cho cảnh hiện tại, vẫn khớp mạch. Trả prompt TIẾNG ANH chuẩn Veo kèm "'+SAFE_COMPLIANCE_EN+'".\nCẢNH HIỆN TẠI: '+String(s.prompt).slice(0,220)+'\nTrả về DUY NHẤT JSON: {"prompt":"","onscreen":""}.',{json:true,hi:true,temp:0.85});
-  const p=ensureSafeEN(applyStyleEN(asText(o.prompt||''),_vp)); if(p){ s.prompt=p; if(o.onscreen!=null)s.onscreen=asText(o.onscreen); save(); ocRender(); }
+  const p=capFlowPrompt(ensureSafeEN(applyStyleEN(asText(o.prompt||''),_vp))); if(p){ s.prompt=p; if(o.onscreen!=null)s.onscreen=asText(o.onscreen); save(); ocRender(); }
 }
 async function ocVoReroll(id,seq,btn){ if(!S.keys.gemini){ ocFb('Cần Gemini key.',1); return; } const o=btn?btn.innerHTML:''; if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>';} try{ await ocVoRerollBroll(id,seq); }catch(e){ ocFb('❌ '+e.message,1); } if(btn){btn.disabled=false;btn.innerHTML=o;} }
 function ocVoToggleShot(id,seq){ const x=ocItem(id); if(!x||!x.shots)return; const s=x.shots.find(function(s){return s.seq===seq;}); if(s){ s.on=(s.on===false); save(); ocRender(); } }
