@@ -5459,7 +5459,7 @@ function ocCtx(item){
     try{ const b=brandContext(500); if(b&&b.trim()&&/[A-Za-zÀ-ỹ0-9]/.test(b)) s+='\n\nGỢI Ý THƯƠNG HIỆU (dùng nếu hợp):\n'+b.slice(0,500); }catch(e){}
     try{ const dj=dojoCtx(2200); if(dj&&dj.trim()) s+='\n'+dj; }catch(e){}
   } else {
-    s+='\n\n(Chế độ SÁNG TẠO MỚI — KHÔNG dùng dữ liệu thương hiệu/DOJO mặc định. Tự do phát triển Ý TƯỞNG, SẢN PHẨM, NHÂN VẬT MỚI bám ý tưởng gốc trên'+((ch.length||p)?' + lựa chọn thủ công phía trên':'')+'; đừng nhồi thương hiệu cũ.)';
+    s+='\n\n(Chế độ SÁNG TẠO MỚI — KHÔNG dùng dữ liệu thương hiệu/DOJO mặc định. Tự do phát triển Ý TƯỞNG, SẢN PHẨM, NHÂN VẬT MỚI bám ý tưởng gốc trên'+((ch.length||_cp||_rp)?' + lựa chọn thủ công phía trên':'')+'; đừng nhồi thương hiệu cũ.)';
   }
   return s; }
 function ocScenes(out){ return (typeof normScenes==='function'?normScenes(out&&out.scenes):_arr(out&&out.scenes)); }
